@@ -1,12 +1,41 @@
 ﻿<Window x:Class="ShareClipbrdApp.Win.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ShareClipbrdApp.Win"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Height="200" Width="250"
+        MinHeight="30" MinWidth="30"
+        AllowsTransparency="True" 
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        Background="LightSteelBlue"        
+        Topmost="True"
+        Title="UsAcRe.Recorder.UI"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown" 
+        Initialized="Window_Initialized"
+        Closed="Window_Closed">
 
-    </Grid>
+    <Border BorderThickness="1" BorderBrush="DarkGoldenrod">
+        <Grid >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Content="Close" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="28" Margin="10,10,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Width="46" Click="Button_Click"/>
+
+            <!--<uc:MainMenu x:Name="MainMenu" Grid.Row="0" Grid.Column="0"
+                     OnNewProjectCommand="OnCommand_NewProject" 
+                     OnOpenProjectCommand="OnCommand_OpenProject"                      
+                     OnSaveProjectCommand="OnCommand_SaveProject" 
+                     OnExitCommand="OnCommand_Exit" 
+                     OnStartStopCommand="OnCommand_StartStop"/>
+
+            <uc:ActionsListView x:Name="ActionsList" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"/>-->
+        </Grid>
+    </Border>
 </Window>
