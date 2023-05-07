@@ -16,12 +16,10 @@ namespace ShareClipbrdApp.Win {
 
         private void Window_Initialized(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            WindowsHelper.LoadSize(Settings.Default.MainFormSize, this);
         }
 
         private void Window_Closed(object sender, System.EventArgs e) {
             Settings.Default.MainFormLocation = new System.Drawing.Point((int)Left, (int)Top);
-            Settings.Default.MainFormSize = Bounds.Size;
             Settings.Default.Save();
         }
 

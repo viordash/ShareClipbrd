@@ -4,11 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Height="200" Width="250"
+        Height="64" Width="64"
         MinHeight="30" MinWidth="30"
         AllowsTransparency="True" 
         WindowStyle="None"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="NoResize"
         Background="LightSteelBlue"        
         Topmost="True"
         Title="UsAcRe.Recorder.UI"
@@ -17,6 +17,7 @@
         Closed="Window_Closed">
 
     <Border BorderThickness="1" BorderBrush="DarkGoldenrod">
+        
         <Grid >
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -26,16 +27,9 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Content="Close" Grid.ColumnSpan="2" HorizontalAlignment="Left" Height="28" Margin="10,10,0,0" Grid.RowSpan="2" VerticalAlignment="Top" Width="46" Click="Button_Click"/>
+            <Button Content="X" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,0,0" Grid.Row="0" VerticalAlignment="Top" Width="20
+                    " Click="Button_Click"/>
 
-            <!--<uc:MainMenu x:Name="MainMenu" Grid.Row="0" Grid.Column="0"
-                     OnNewProjectCommand="OnCommand_NewProject" 
-                     OnOpenProjectCommand="OnCommand_OpenProject"                      
-                     OnSaveProjectCommand="OnCommand_SaveProject" 
-                     OnExitCommand="OnCommand_Exit" 
-                     OnStartStopCommand="OnCommand_StartStop"/>
-
-            <uc:ActionsListView x:Name="ActionsList" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"/>-->
         </Grid>
     </Border>
 </Window>
