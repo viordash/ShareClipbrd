@@ -20,6 +20,8 @@ namespace ShareClipbrdApp.Win {
 
         private void Window_Initialized(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
+            Height = SystemParameters.FullPrimaryScreenHeight / 40;
+            Width = SystemParameters.FullPrimaryScreenWidth / 40;
         }
 
         private void Window_Closed(object sender, System.EventArgs e) {
