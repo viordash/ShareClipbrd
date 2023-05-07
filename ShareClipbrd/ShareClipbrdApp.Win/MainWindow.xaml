@@ -14,10 +14,13 @@
         Title="UsAcRe.Recorder.UI"
         MouseLeftButtonDown="Window_MouseLeftButtonDown" 
         Initialized="Window_Initialized"
-        Closed="Window_Closed">
+        Closed="Window_Closed"
+        KeyDown="Window_KeyDown">
 
     <Window.ContextMenu>
         <ContextMenu>
+            <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
+            <Separator />
             <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
         </ContextMenu>
     </Window.ContextMenu>

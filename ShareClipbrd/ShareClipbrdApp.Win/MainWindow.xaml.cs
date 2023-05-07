@@ -1,5 +1,9 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
 
@@ -29,6 +33,28 @@ namespace ShareClipbrdApp.Win {
 
         private void MenuItemClose_Click(object sender, RoutedEventArgs e) {
             this.Close();
+        }
+
+        private async void Window_KeyDown(object sender, KeyEventArgs e) {
+            if(e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control) {
+                await TransmitClipboard();
+            }
+        }
+
+        private async void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
+            await TransmitClipboard();
+        }
+
+        async Task TransmitClipboard() {
+            IDataObject dataObj = Clipboard.GetDataObject();
+            if(dataObj == null) {
+                return;
+            }
+            var background = Background;
+            Background = Brushes.GreenYellow;
+            Debug.WriteLine(string.Join(", ", dataObj.GetFormats()));
+            await Task.Delay(100);
+            Background = background;
         }
     }
 }
