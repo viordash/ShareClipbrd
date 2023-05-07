@@ -9,7 +9,9 @@ namespace ShareClipbrdApp.Win {
             var services = new ServiceCollection();
 
             services.AddSingleton<MainWindow>()
-                    .AddSingleton<IDataTransferService, DataTransferService>();
+                    .AddSingleton<IDialogService, DialogService>()
+                    .AddSingleton<IDataTransferService, DataTransferService>()
+                    ;
 
             var serviceProvider = services.BuildServiceProvider();
             return serviceProvider;
