@@ -1,31 +1,9 @@
 ﻿using System;
-using Microsoft.Win32;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Win.Services {
 
     public class DialogService : IDialogService {
-
-        public string? OpenFileDialog(string filter) {
-            var fileDialog = new OpenFileDialog {
-                Filter = filter
-            };
-            if(fileDialog.ShowDialog() == true) {
-                return fileDialog.FileName;
-            }
-            return string.Empty;
-        }
-
-        public string? SaveFileDialog(string filter) {
-            var fileDialog = new SaveFileDialog {
-                Filter = filter
-            };
-            if(fileDialog.ShowDialog() == true) {
-                return fileDialog.FileName;
-            }
-            return null;
-        }
-
         public void ShowMessage(string message) {
             System.Windows.MessageBox.Show(message, string.Empty, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
         }
