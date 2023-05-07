@@ -45,6 +45,16 @@ namespace ShareClipbrdApp.Win {
             await TransmitClipboard();
         }
 
+        private void Window_Activated(object sender, System.EventArgs e) {
+            Border.BorderBrush = Brushes.Aqua;
+            Border.BorderThickness = new Thickness(2);
+        }
+
+        private void Window_Deactivated(object sender, System.EventArgs e) {
+            Border.BorderBrush = Brushes.DarkGoldenrod;
+            Border.BorderThickness = new Thickness(1);
+        }
+
         async Task TransmitClipboard() {
             IDataObject dataObj = Clipboard.GetDataObject();
             if(dataObj == null) {

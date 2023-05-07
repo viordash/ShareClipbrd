@@ -15,7 +15,9 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown" 
         Initialized="Window_Initialized"
         Closed="Window_Closed"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown"
+        Activated="Window_Activated"
+        Deactivated="Window_Deactivated">
 
     <Window.ContextMenu>
         <ContextMenu>
@@ -24,8 +26,8 @@
             <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
         </ContextMenu>
     </Window.ContextMenu>
-    
-    <Border BorderThickness="1" BorderBrush="DarkGoldenrod">
+
+    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod">
     </Border>
 
 </Window>
