@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>False</UseWindowsForms>
+    <ApplicationIcon>search-filter_3528.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="search-filter_3528.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
