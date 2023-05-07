@@ -10,7 +10,9 @@ namespace ShareClipbrdApp.Win.Services {
         }
 
         public async Task Send(ClipboardData data) {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+
+            await Task.Delay(5);
         }
     }
 }
