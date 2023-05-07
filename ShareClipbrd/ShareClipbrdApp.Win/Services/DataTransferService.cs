@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Runtime.InteropServices.ComTypes;
+using System.Threading.Tasks;
+using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Win.Services {
     internal class DataTransferService : IDataTransferService {
-        public IDataObject Receive() {
+        public Task<ClipboardData> Receive() {
             throw new NotImplementedException();
         }
 
-        public void Send(IDataObject dataObject) {
+        public async Task Send(ClipboardData data) {
             throw new NotImplementedException();
         }
     }

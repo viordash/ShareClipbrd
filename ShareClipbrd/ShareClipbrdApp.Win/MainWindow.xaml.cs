@@ -8,6 +8,8 @@ using GuardNet;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
+using ShareClipbrdApp.Win.Services;
+using UsAcRe.Core.Extensions;
 
 namespace ShareClipbrdApp.Win {
     /// <summary>
@@ -72,7 +74,10 @@ namespace ShareClipbrdApp.Win {
             var background = Background;
             Background = Brushes.GreenYellow;
             Debug.WriteLine(string.Join(", ", dataObj.GetFormats()));
+
+            await dataTransferService.Send(dataObj.ToDto());
             await Task.Delay(100);
+
             Background = background;
         }
     }

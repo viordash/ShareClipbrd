@@ -1,8 +1,6 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-
-namespace ShareClipbrd.Core.Services {
+﻿namespace ShareClipbrd.Core.Services {
     public interface IDataTransferService {
-        void Send(IDataObject dataObject);
-        IDataObject Receive();
+        Task Send(ClipboardData data);
+        Task<ClipboardData> Receive();
     }
 }
