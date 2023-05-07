@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using GuardNet;
+using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
 
@@ -14,7 +16,11 @@ namespace ShareClipbrdApp.Win {
     public partial class MainWindow : Window {
         public System.Drawing.Rectangle Bounds { get { return new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height); } }
 
-        public MainWindow() {
+        readonly IDataTransferService dataTransferService;
+        public MainWindow(IDataTransferService dataTransferService) {
+            Guard.NotNull(dataTransferService, nameof(dataTransferService));
+
+            this.dataTransferService = dataTransferService;
             InitializeComponent();
         }
 
