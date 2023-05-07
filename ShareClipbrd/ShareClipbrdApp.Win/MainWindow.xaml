@@ -16,20 +16,13 @@
         Initialized="Window_Initialized"
         Closed="Window_Closed">
 
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
+        </ContextMenu>
+    </Window.ContextMenu>
+    
     <Border BorderThickness="1" BorderBrush="DarkGoldenrod">
-        
-        <Grid >
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Button Content="X" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,0,0" Grid.Row="0" VerticalAlignment="Top" Width="20
-                    " Click="Button_Click"/>
-
-        </Grid>
     </Border>
+
 </Window>
