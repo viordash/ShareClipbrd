@@ -17,6 +17,7 @@ namespace ShareClipbrdApp.Win {
         public System.Drawing.Rectangle Bounds { get { return new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height); } }
 
         readonly IDataTransferService dataTransferService;
+
         public MainWindow(IDataTransferService dataTransferService) {
             Guard.NotNull(dataTransferService, nameof(dataTransferService));
 

@@ -7,6 +7,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>False</UseWindowsForms>
     <ApplicationIcon>search-filter_3528.ico</ApplicationIcon>
+    <StartupObject>ShareClipbrdApp.Win.App</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
