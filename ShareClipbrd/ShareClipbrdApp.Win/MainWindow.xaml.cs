@@ -16,15 +16,19 @@ namespace ShareClipbrdApp.Win {
         public System.Drawing.Rectangle Bounds { get { return new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height); } }
 
         readonly IDataTransferService dataTransferService;
+        readonly IDataServer dataServer;
         readonly IClipboardService clipboardService;
 
         public MainWindow(
             IDataTransferService dataTransferService,
+            IDataServer dataServer,
             IClipboardService clipboardService) {
             Guard.NotNull(dataTransferService, nameof(dataTransferService));
+            Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(clipboardService, nameof(clipboardService));
 
             this.dataTransferService = dataTransferService;
+            this.dataServer = dataServer;
             this.clipboardService = clipboardService;
 
             InitializeComponent();
@@ -34,9 +38,11 @@ namespace ShareClipbrdApp.Win {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = SystemParameters.FullPrimaryScreenHeight / 40;
             Width = SystemParameters.FullPrimaryScreenWidth / 40;
+            dataServer.Start();
         }
 
         void Window_Closed(object sender, System.EventArgs e) {
+            dataServer.Stop();
             Settings.Default.MainFormLocation = new System.Drawing.Point((int)Left, (int)Top);
             Settings.Default.Save();
         }

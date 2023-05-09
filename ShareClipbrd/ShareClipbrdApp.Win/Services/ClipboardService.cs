@@ -66,8 +66,9 @@ namespace ShareClipbrdApp.Win.Services {
         public ClipboardData GetSerializedFiles(StringCollection files) {
             var clipboardData = new ClipboardData();
 
-            //returnList = Clipboard.GetFileDropList();
-            //Clipboard.SetFileDropList(replacementList);
+            foreach(var file in files) {
+                //clipboardData.Add(DataFormats.FileDrop, castedValue.ToArray());
+            }
 
             return clipboardData;
         }
