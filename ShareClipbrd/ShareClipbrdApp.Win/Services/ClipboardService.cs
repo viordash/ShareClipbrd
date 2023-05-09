@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using MessagePack;
 using ShareClipbrd.Core;
+using ShareClipbrd.Core.Services;
 
-namespace UsAcRe.Core.Extensions {
-    public static class ClipboardExtension {
+namespace ShareClipbrdApp.Win.Services {
+
+    public class ClipboardService : IClipboardService {
         static Dictionary<string, Func<ClipboardData, object, bool>> converters = new(){
             { DataFormats.Text, (c,o) => {
                 if (o is string castedValue) {c.Add(DataFormats.Text, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
@@ -57,26 +62,49 @@ namespace UsAcRe.Core.Extensions {
                 else {return false;}
             } },
             { "FileDrop", (c,o) => {
-                if (o is string castedValue) {c.Add("FileDrop", System.Text.Encoding.UTF8.GetBytes(castedValue)); return true; }
+                if (o is string[] castedValue) {c.Add("FileDrop", MessagePackSerializer.Serialize(castedValue)); return true; }
+                else {return false;}
+            } },
+            { "FileNameW", (c,o) => {
+                if (o is string[] castedValue) {c.Add("FileNameW", MessagePackSerializer.Serialize(castedValue)); return true; }
+                else {return false;}
+            } },
+            { "FileName", (c,o) => {
+                if (o is string[] castedValue) {c.Add("FileName", MessagePackSerializer.Serialize(castedValue)); return true; }
                 else {return false;}
             } },
 
         };
 
-        public static ClipboardData ToDto(this IDataObject dataObject) {
+        public ClipboardData GetSerializedDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();
-            var formats = dataObject.GetFormats();
+
+            Debug.WriteLine(string.Join(", ", formats));
+
             foreach(var format in formats) {
-                var obj = dataObject.GetData(format);
+                try {
+                    var obj = getDataFunc(format);
 
-                if(!converters.TryGetValue(format, out Func<ClipboardData, object, bool>? convertFunc)) {
-                    throw new NotSupportedException(format);
-                }
+                    if(!converters.TryGetValue(format, out Func<ClipboardData, object, bool>? convertFunc)) {
+                        throw new NotSupportedException(format);
+                    }
 
-                if(!convertFunc(clipboardData, obj)) {
-                    throw new InvalidCastException(format);
+                    if(!convertFunc(clipboardData, obj)) {
+                        throw new InvalidCastException(format);
+                    }
+                } catch(System.Runtime.InteropServices.COMException e) {
+                    Debug.WriteLine(e);
                 }
             }
+            return clipboardData;
+        }
+
+        public ClipboardData GetSerializedFiles(StringCollection files) {
+            var clipboardData = new ClipboardData();
+
+            //returnList = Clipboard.GetFileDropList();
+            //Clipboard.SetFileDropList(replacementList);
+
             return clipboardData;
         }
     }

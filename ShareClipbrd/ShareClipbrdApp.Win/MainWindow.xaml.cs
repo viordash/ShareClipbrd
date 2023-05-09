@@ -1,15 +1,12 @@
-﻿using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using GuardNet;
+using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
-using ShareClipbrdApp.Win.Services;
-using UsAcRe.Core.Extensions;
 
 namespace ShareClipbrdApp.Win {
     /// <summary>
@@ -19,11 +16,17 @@ namespace ShareClipbrdApp.Win {
         public System.Drawing.Rectangle Bounds { get { return new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height); } }
 
         readonly IDataTransferService dataTransferService;
+        readonly IClipboardService clipboardService;
 
-        public MainWindow(IDataTransferService dataTransferService) {
+        public MainWindow(
+            IDataTransferService dataTransferService,
+            IClipboardService clipboardService) {
             Guard.NotNull(dataTransferService, nameof(dataTransferService));
+            Guard.NotNull(clipboardService, nameof(clipboardService));
 
             this.dataTransferService = dataTransferService;
+            this.clipboardService = clipboardService;
+
             InitializeComponent();
         }
 
@@ -68,14 +71,19 @@ namespace ShareClipbrdApp.Win {
 
         async Task TransmitClipboard() {
             await using(ProcessIndicator.Indicate(this)) {
-                IDataObject dataObj = Clipboard.GetDataObject();
-                if(dataObj == null) {
-                    return;
+                ClipboardData clipboardData;
+                if(Clipboard.ContainsFileDropList()) {
+                    clipboardData = clipboardService.GetSerializedFiles(Clipboard.GetFileDropList());
+                } else if(Clipboard.ContainsImage()) {
+                    clipboardData = new();
+                } else if(Clipboard.ContainsAudio()) {
+                    clipboardData = new();
+                } else {
+                    var dataObject = Clipboard.GetDataObject();
+                    clipboardData = clipboardService.GetSerializedDataObjects(dataObject.GetFormats(), dataObject.GetData);
                 }
 
-                Debug.WriteLine(string.Join(", ", dataObj.GetFormats()));
-
-                await dataTransferService.Send(dataObj.ToDto());
+                await dataTransferService.Send(clipboardData);
             }
         }
     }

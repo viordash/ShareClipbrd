@@ -11,6 +11,7 @@ namespace ShareClipbrdApp.Win {
             services.AddSingleton<MainWindow>()
                     .AddSingleton<IDialogService, DialogService>()
                     .AddSingleton<IDataTransferService, DataTransferService>()
+                    .AddSingleton<IClipboardService, ClipboardService>()
                     ;
 
             var serviceProvider = services.BuildServiceProvider();
