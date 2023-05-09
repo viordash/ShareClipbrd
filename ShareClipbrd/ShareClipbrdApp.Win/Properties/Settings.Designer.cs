@@ -46,5 +46,17 @@ namespace ShareClipbrdApp.Win.Properties {
                 this["MainFormSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1:8090")]
+        public string HostAddress {
+            get {
+                return ((string)(this["HostAddress"]));
+            }
+            set {
+                this["HostAddress"] = value;
+            }
+        }
     }
 }

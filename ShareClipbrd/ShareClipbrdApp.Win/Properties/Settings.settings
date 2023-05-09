@@ -8,5 +8,8 @@
     <Setting Name="MainFormSize" Type="System.Drawing.Size" Scope="User">
       <Value Profile="(Default)">100, 100</Value>
     </Setting>
+    <Setting Name="HostAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">127.0.0.1:8090</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

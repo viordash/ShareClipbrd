@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
+using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
+using ShareClipbrdApp.Win.Configuration;
 using ShareClipbrdApp.Win.Services;
 
 namespace ShareClipbrdApp.Win {
@@ -12,6 +14,7 @@ namespace ShareClipbrdApp.Win {
                     .AddSingleton<IDialogService, DialogService>()
                     .AddSingleton<IDataTransferService, DataTransferService>()
                     .AddSingleton<IClipboardService, ClipboardService>()
+                    .AddSingleton<ISystemConfiguration, SystemConfiguration>()
                     ;
 
             var serviceProvider = services.BuildServiceProvider();
