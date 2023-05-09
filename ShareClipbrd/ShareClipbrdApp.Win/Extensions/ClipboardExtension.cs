@@ -1,12 +1,67 @@
 ﻿using System;
-using System.DirectoryServices.ActiveDirectory;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using ShareClipbrd.Core;
 
 namespace UsAcRe.Core.Extensions {
     public static class ClipboardExtension {
+        static Dictionary<string, Func<ClipboardData, object, bool>> converters = new(){
+            { DataFormats.Text, (c,o) => {
+                if (o is string castedValue) {c.Add(DataFormats.Text, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+            { DataFormats.UnicodeText, (c,o) => {
+                if (o is string castedValue) {c.Add(DataFormats.UnicodeText, System.Text.Encoding.Unicode.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+            { DataFormats.StringFormat, (c,o) => {
+                if (o is string castedValue) {c.Add(DataFormats.StringFormat, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+            { DataFormats.OemText, (c,o) => {
+                if (o is string castedValue) {c.Add(DataFormats.OemText, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+            { DataFormats.Rtf, (c,o) => {
+                if (o is string castedValue) {c.Add(DataFormats.Rtf, System.Text.Encoding.UTF8.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+            { DataFormats.Locale, (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add(DataFormats.Locale, castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+
+            { "Shell IDList Array", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("Shell IDList Array", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "DataObjectAttributes", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("DataObjectAttributes", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "DataObjectAttributesRequiringElevation", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("DataObjectAttributesRequiringElevation", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "Shell Object Offsets", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("Shell Object Offsets", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "Preferred DropEffect", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("Preferred DropEffect", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "AsyncFlag", (c,o) => {
+                if (o is MemoryStream castedValue) {c.Add("AsyncFlag", castedValue.ToArray()); return true; }
+                else {return false;}
+            } },
+            { "FileDrop", (c,o) => {
+                if (o is string castedValue) {c.Add("FileDrop", System.Text.Encoding.UTF8.GetBytes(castedValue)); return true; }
+                else {return false;}
+            } },
+
+        };
 
         public static ClipboardData ToDto(this IDataObject dataObject) {
             var clipboardData = new ClipboardData();
@@ -14,34 +69,15 @@ namespace UsAcRe.Core.Extensions {
             foreach(var format in formats) {
                 var obj = dataObject.GetData(format);
 
-                if(format == DataFormats.Text && obj is string objText) {
-                    clipboardData.Add(format, System.Text.Encoding.ASCII.GetBytes(objText));
-                    continue;
+                if(!converters.TryGetValue(format, out Func<ClipboardData, object, bool>? convertFunc)) {
+                    throw new NotSupportedException(format);
                 }
-                if(format == DataFormats.UnicodeText && obj is string objUnicodeText) {
-                    clipboardData.Add(format, System.Text.Encoding.Unicode.GetBytes(objUnicodeText));
-                    continue;
-                }
-                if(format == DataFormats.StringFormat && obj is string objStringFormat) {
-                    clipboardData.Add(format, System.Text.Encoding.ASCII.GetBytes(objStringFormat));
-                    continue;
-                }
-                if(format == DataFormats.OemText && obj is string objOemText) {
-                    clipboardData.Add(format, System.Text.Encoding.ASCII.GetBytes(objOemText));
-                    continue;
-                }
-                if(format == DataFormats.Rtf && obj is string objRtf) {
-                    clipboardData.Add(format, System.Text.Encoding.Unicode.GetBytes(objRtf));
-                    continue;
-                }
-                if(format == DataFormats.Locale && obj is MemoryStream objLocale) {
-                    clipboardData.Add(format, objLocale.ToArray());
-                    continue;
+
+                if(!convertFunc(clipboardData, obj)) {
+                    throw new InvalidCastException(format);
                 }
             }
-
             return clipboardData;
         }
-
     }
 }
