@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Net.Http;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
