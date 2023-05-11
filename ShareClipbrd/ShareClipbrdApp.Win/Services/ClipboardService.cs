@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
@@ -35,10 +36,11 @@ namespace ShareClipbrdApp.Win.Services {
                 if (o is MemoryStream castedValue) {c.Add(DataFormats.Locale, castedValue.ToArray()); return true; }
                 else {return false;}
             } },
-
-
-
         };
+
+        public bool SupportedFormat(string format) {
+            return converters.Keys.Concat(new string[] { DataFormats.FileDrop, DataFormats.Bitmap, DataFormats.WaveAudio }).Contains(format);
+        }
 
         public ClipboardData GetSerializedDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();

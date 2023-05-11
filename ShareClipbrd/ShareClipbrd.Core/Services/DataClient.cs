@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Diagnostics;
+using System.Net.Sockets;
 using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
@@ -26,26 +27,40 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task Send(ClipboardData clipboardData) {
+            Memory<byte> receiveBuffer = new byte[65536];
             var cancellationToken = cts.Token;
             using TcpClient tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(systemConfiguration.HostAddress.Address, systemConfiguration.HostAddress.Port, cancellationToken);
 
+            Debug.WriteLine($"tcpClient connected  {tcpClient.Client.LocalEndPoint}");
+
+            int receivedBytes;
             var stream = tcpClient.GetStream();
-            using var reader = new StreamReader(stream, Encoding.ASCII);
 
             foreach(var format in clipboardData.Formats) {
-                await stream.WriteAsync(Encoding.ASCII.GetBytes(format.Key), cancellationToken);
-                var response = await reader.ReadToEndAsync(cancellationToken);
+                await stream.WriteAsync(Encoding.ASCII.GetBytes(format.Key));
+                await stream.FlushAsync();
+
+                Debug.WriteLine($"tcpClient send format  {format.Key}");
+                Debug.WriteLine($"tcpClient read response");
+
+                receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                if(receivedBytes == 0) {
+                    break;
+                }
+
+                var response = Encoding.ASCII.GetString(receiveBuffer[..receivedBytes].ToArray());
                 if(response != format.Key) {
                     continue;
                 }
                 await stream.WriteAsync(format.Value, cancellationToken);
-                response = await reader.ReadToEndAsync(cancellationToken);
-                if(response != "ok") {
+                await stream.FlushAsync();
+
+                response = Encoding.ASCII.GetString(receiveBuffer[..receivedBytes].ToArray());
+                if(response != "Ok") {
                     break;
                 }
             }
-
         }
     }
 }
