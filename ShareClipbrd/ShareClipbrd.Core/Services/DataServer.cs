@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
+using ShareClipbrd.Core.Extensions;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
@@ -33,36 +34,68 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        async Task HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
-            Memory<byte> receiveBuffer = new byte[65536];
+        async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
+            var clipboardData = new ClipboardData();
+            var receiveBuffer = new byte[CommunProtocol.ChunkSize];
+
             try {
                 var stream = tcpClient.GetStream();
                 int receivedBytes;
+
+
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException("Wrong version of the other side");
+                }
+                await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+
                 while(!cancellationToken.IsCancellationRequested) {
                     Debug.WriteLine($"tcpServer read format");
-
-                    receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                    if(receivedBytes == 0) {
+                    var format = await stream.ReadASCIIStringAsync(cancellationToken);
+                    Debug.WriteLine($"tcpServer readed format: '{format}'");
+                    if(string.IsNullOrEmpty(format)) {
                         break;
                     }
-                    var format = Encoding.ASCII.GetString(receiveBuffer[..receivedBytes].ToArray());
-
-                    Debug.WriteLine($"tcpServer readed format: {format}");
                     if(!clipboardService.SupportedFormat(format)) {
-                        await stream.WriteAsync(Encoding.ASCII.GetBytes("Err"), cancellationToken);
-                        continue;
+                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new NotSupportedException($"Not supported clipboard format: {format}");
                     }
-                    await stream.WriteAsync(Encoding.ASCII.GetBytes(format), cancellationToken);
+                    await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
 
-                    receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                    if(receivedBytes == 0) {
-                        break;
+
+                    Debug.WriteLine($"tcpServer read size");
+                    var size = await stream.ReadInt32Async(cancellationToken);
+                    Debug.WriteLine($"tcpServer readed size: {size}");
+                    if(!clipboardService.SupportedDataSize(size)) {
+                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new NotSupportedException($"Clipboard data size error: {size}");
                     }
-                    Debug.WriteLine($"tcpServer readed data size: {receivedBytes}");
+                    await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
-                    await stream.WriteAsync(Encoding.ASCII.GetBytes("Ok"), cancellationToken);
+                    var memoryStream = new MemoryStream(size);
+
+                    int start = 0;
+                    while(start < size) {
+
+                        receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                        if(receivedBytes == 0) {
+                            break;
+                        }
+                        memoryStream.Write(receiveBuffer, 0, receivedBytes);
+                        start += receivedBytes;
+                        Debug.WriteLine($"tcpServer read data, received: {start}");
+                    }
+
+                    if(start != size) {
+                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new InvalidDataException($"Clipboard data receive error, {start}!={size}");
+                    }
+                    await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
+                    clipboardData.Add(format, memoryStream.ToArray());
                 }
-                tcpClient.Close();
+                clipboardService.SetClipboardData(clipboardData);
+                Debug.WriteLine($"tcpServer success finished");
+
             } catch(OperationCanceledException ex) {
                 Debug.WriteLine($"tcpServer canceled {ex}");
             } catch(Exception ex) {
@@ -81,7 +114,7 @@ namespace ShareClipbrd.Core.Services {
                         tcpServer.Start();
 
                         while(!cancellationToken.IsCancellationRequested) {
-                            var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
+                            using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
                             Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
 
                             await HandleClient(tcpClient, cancellationToken);

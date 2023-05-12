@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
+using ShareClipbrd.Core.Extensions;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
@@ -32,35 +33,52 @@ namespace ShareClipbrd.Core.Services {
             using TcpClient tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(systemConfiguration.HostAddress.Address, systemConfiguration.HostAddress.Port, cancellationToken);
 
-            Debug.WriteLine($"tcpClient connected  {tcpClient.Client.LocalEndPoint}");
+            Debug.WriteLine($"        --- tcpClient connected  {tcpClient.Client.LocalEndPoint}");
 
-            int receivedBytes;
             var stream = tcpClient.GetStream();
 
+            await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException("Wrong version of the other side");
+            }
+
             foreach(var format in clipboardData.Formats) {
-                await stream.WriteAsync(Encoding.ASCII.GetBytes(format.Key));
-                await stream.FlushAsync();
-
-                Debug.WriteLine($"tcpClient send format  {format.Key}");
-                Debug.WriteLine($"tcpClient read response");
-
-                receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                if(receivedBytes == 0) {
-                    break;
+                Debug.WriteLine($"        --- tcpClient send format: {format.Key}");
+                await stream.WriteAsync(format.Key, cancellationToken);
+                Debug.WriteLine($"        --- tcpClient read format ack");
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Others do not support clipboard format: {format.Key}");
                 }
 
-                var response = Encoding.ASCII.GetString(receiveBuffer[..receivedBytes].ToArray());
-                if(response != format.Key) {
-                    continue;
+                Debug.WriteLine($"        --- tcpClient send size: {format.Value.Length}");
+                var size = format.Value.Length;
+                await stream.WriteAsync(size, cancellationToken);
+                Debug.WriteLine($"        --- tcpClient read size ack");
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Others do not support size: {size}");
                 }
-                await stream.WriteAsync(format.Value, cancellationToken);
-                await stream.FlushAsync();
+                int start = 0;
+                var remain = size;
+                while(start < size) {
+                    Debug.WriteLine($"        --- tcpClient send data, transfered: {start}");
+                    int end = start + Math.Min(CommunProtocol.ChunkSize, remain);
 
-                response = Encoding.ASCII.GetString(receiveBuffer[..receivedBytes].ToArray());
-                if(response != "Ok") {
-                    break;
+                    await stream.WriteAsync(format.Value[start..end], cancellationToken);
+                    remain -= end;
+                    start = end;
+                }
+
+                Debug.WriteLine($"        --- tcpClient read data ack");
+
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Transfer data error");
                 }
             }
+            Debug.WriteLine($"        --- tcpClient success finished");
         }
     }
 }

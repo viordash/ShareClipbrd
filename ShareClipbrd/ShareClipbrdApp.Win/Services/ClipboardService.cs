@@ -42,6 +42,10 @@ namespace ShareClipbrdApp.Win.Services {
             return converters.Keys.Concat(new string[] { DataFormats.FileDrop, DataFormats.Bitmap, DataFormats.WaveAudio }).Contains(format);
         }
 
+        public bool SupportedDataSize(Int32 size) {
+            return size > 0 && size < 2_000_000_000;
+        }
+
         public ClipboardData GetSerializedDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();
 
@@ -73,6 +77,10 @@ namespace ShareClipbrdApp.Win.Services {
             }
 
             return clipboardData;
+        }
+
+        public void SetClipboardData(ClipboardData data) {
+            //throw new NotImplementedException();
         }
     }
 }
