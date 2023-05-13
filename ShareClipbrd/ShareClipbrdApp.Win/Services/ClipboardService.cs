@@ -56,7 +56,14 @@ namespace ShareClipbrdApp.Win.Services {
                     var obj = getDataFunc(format);
 
                     if(!converters.TryGetValue(format, out Func<ClipboardData, object, bool>? convertFunc)) {
-                        throw new NotSupportedException(format);
+
+                        if(obj is MemoryStream memoryStream) {
+                            convertFunc = (c, o) => {
+                                if(o is MemoryStream castedValue) { c.Add(format, castedValue.ToArray()); return true; } else { return false; }
+                            };
+                        } else {
+                            throw new NotSupportedException(format);
+                        }
                     }
 
                     if(!convertFunc(clipboardData, obj)) {
