@@ -84,7 +84,6 @@ namespace ShareClipbrd.Core.Services {
                         }
                         memoryStream.Write(receiveBuffer, 0, receivedBytes);
                         start += receivedBytes;
-                        //Debug.WriteLine($"tcpServer read data, received: {start}");
                     }
 
                     if(start != size) {

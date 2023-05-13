@@ -8,6 +8,6 @@ namespace ShareClipbrd.Core.Services {
         bool SupportedFormat(string format);
         bool SupportedDataSize(Int32 size);
 
-        void SetClipboardData(ClipboardData data);
+        void SetClipboardData(ClipboardData clipboardData);
     }
 }
