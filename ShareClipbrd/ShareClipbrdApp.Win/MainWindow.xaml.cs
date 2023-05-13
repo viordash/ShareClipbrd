@@ -77,18 +77,7 @@ namespace ShareClipbrdApp.Win {
 
         async Task TransmitClipboard() {
             await using(ProcessIndicator.Indicate(this)) {
-                ClipboardData clipboardData;
-                if(Clipboard.ContainsFileDropList()) {
-                    clipboardData = clipboardService.GetSerializedFiles(Clipboard.GetFileDropList());
-                } else if(Clipboard.ContainsImage()) {
-                    clipboardData = new();
-                } else if(Clipboard.ContainsAudio()) {
-                    clipboardData = new();
-                } else {
-                    var dataObject = Clipboard.GetDataObject();
-                    clipboardData = clipboardService.GetSerializedDataObjects(dataObject.GetFormats(), dataObject.GetData);
-                }
-
+                var clipboardData = clipboardService.GetCurrentData();
                 await dataTransferService.Send(clipboardData);
             }
         }

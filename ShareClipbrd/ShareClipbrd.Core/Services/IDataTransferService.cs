@@ -1,19 +1,28 @@
-﻿namespace ShareClipbrd.Core.Services {
+﻿using GuardNet;
+using ShareClipbrd.Core.Configuration;
+
+namespace ShareClipbrd.Core.Services {
     public interface IDataTransferService {
         Task Send(ClipboardData data);
-        void StartServer();
     }
 
     public class DataTransferService : IDataTransferService {
+        readonly IDataServer dataServer;
+        readonly IDataClient dataClient;
 
-        public async Task Send(ClipboardData data) {
-            //throw new NotImplementedException();
 
-            await Task.Delay(5);
+        public DataTransferService(
+            IDataServer dataServer,
+            IDataClient dataClient
+            ) {
+            Guard.NotNull(dataServer, nameof(dataServer));
+            Guard.NotNull(dataClient, nameof(dataClient));
+            this.dataServer = dataServer;
+            this.dataClient = dataClient;
         }
 
-        public void StartServer() {
-            throw new NotImplementedException();
+        public async Task Send(ClipboardData data) {
+            await dataClient.Send(data);
         }
     }
 }

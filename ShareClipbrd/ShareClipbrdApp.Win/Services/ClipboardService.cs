@@ -46,7 +46,7 @@ namespace ShareClipbrdApp.Win.Services {
             return size > 0 && size < 2_000_000_000;
         }
 
-        public ClipboardData GetSerializedDataObjects(string[] formats, Func<string, object> getDataFunc) {
+        static ClipboardData GetSerializedDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();
 
             Debug.WriteLine(string.Join(", ", formats));
@@ -69,7 +69,7 @@ namespace ShareClipbrdApp.Win.Services {
             return clipboardData;
         }
 
-        public ClipboardData GetSerializedFiles(StringCollection files) {
+        static ClipboardData GetSerializedFiles(StringCollection files) {
             var clipboardData = new ClipboardData();
 
             foreach(var file in files) {
@@ -81,6 +81,21 @@ namespace ShareClipbrdApp.Win.Services {
 
         public void SetClipboardData(ClipboardData data) {
             //throw new NotImplementedException();
+        }
+
+        public ClipboardData GetCurrentData() {
+            ClipboardData clipboardData;
+            if(Clipboard.ContainsFileDropList()) {
+                clipboardData = GetSerializedFiles(Clipboard.GetFileDropList());
+            } else if(Clipboard.ContainsImage()) {
+                clipboardData = new();
+            } else if(Clipboard.ContainsAudio()) {
+                clipboardData = new();
+            } else {
+                var dataObject = Clipboard.GetDataObject();
+                clipboardData = GetSerializedDataObjects(dataObject.GetFormats(), dataObject.GetData);
+            }
+            return clipboardData;
         }
     }
 }
