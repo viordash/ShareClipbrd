@@ -20,9 +20,10 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardServiceMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns(IPEndPoint.Parse("127.0.0.1:55542"));
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns(IPEndPoint.Parse("127.0.0.1:55542"));
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, clipboardServiceMock.Object);
-            client = new DataClient(systemConfigurationMock.Object, dialogServiceMock.Object);
+            client = new DataClient(systemConfigurationMock.Object);
 
             server.Start();
         }
@@ -86,7 +87,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray());
 
             await client.Send(clipboardData);
-            await Task.Delay(500);
+            await Task.Delay(1000);
 
 
             Assert.IsNotNull(receivedClipboardData);

@@ -11,5 +11,8 @@
     <Setting Name="HostAddress" Type="System.String" Scope="User">
       <Value Profile="(Default)">127.0.0.1:8090</Value>
     </Setting>
+    <Setting Name="PartnerAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">127.0.0.1:8091</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

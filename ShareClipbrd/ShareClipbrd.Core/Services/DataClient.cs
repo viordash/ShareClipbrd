@@ -11,26 +11,22 @@ namespace ShareClipbrd.Core.Services {
 
     public class DataClient : IDataClient {
         readonly ISystemConfiguration systemConfiguration;
-        readonly IDialogService dialogService;
         readonly CancellationTokenSource cts;
 
         public DataClient(
-            ISystemConfiguration systemConfiguration,
-            IDialogService dialogService
+            ISystemConfiguration systemConfiguration
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
-            Guard.NotNull(dialogService, nameof(dialogService));
             this.systemConfiguration = systemConfiguration;
-            this.dialogService = dialogService;
 
             cts = new CancellationTokenSource();
         }
 
         public async Task Send(ClipboardData clipboardData) {
-            Memory<byte> receiveBuffer = new byte[65536];
             var cancellationToken = cts.Token;
             using TcpClient tcpClient = new TcpClient();
-            await tcpClient.ConnectAsync(systemConfiguration.HostAddress.Address, systemConfiguration.HostAddress.Port, cancellationToken);
+            var adr = systemConfiguration.PartnerAddress;
+            await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
 
             Debug.WriteLine($"        --- tcpClient connected  {tcpClient.Client.LocalEndPoint}");
 

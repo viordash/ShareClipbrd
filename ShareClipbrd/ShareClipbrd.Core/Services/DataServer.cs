@@ -107,9 +107,10 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    var tcpServer = new TcpListener(systemConfiguration.HostAddress.Address, systemConfiguration.HostAddress.Port);
+                    var adr = systemConfiguration.HostAddress;
+                    var tcpServer = new TcpListener(adr.Address, adr.Port);
                     try {
-                        Debug.WriteLine($"start tcpServer: {systemConfiguration.HostAddress}");
+                        Debug.WriteLine($"start tcpServer: {adr}");
                         tcpServer.Start();
 
                         while(!cancellationToken.IsCancellationRequested) {

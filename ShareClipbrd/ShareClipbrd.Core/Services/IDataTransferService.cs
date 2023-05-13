@@ -1,5 +1,4 @@
 ﻿using GuardNet;
-using ShareClipbrd.Core.Configuration;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataTransferService {

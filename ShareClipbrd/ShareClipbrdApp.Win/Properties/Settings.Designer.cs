@@ -58,5 +58,17 @@ namespace ShareClipbrdApp.Win.Properties {
                 this["HostAddress"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1:8091")]
+        public string PartnerAddress {
+            get {
+                return ((string)(this["PartnerAddress"]));
+            }
+            set {
+                this["PartnerAddress"] = value;
+            }
+        }
     }
 }
