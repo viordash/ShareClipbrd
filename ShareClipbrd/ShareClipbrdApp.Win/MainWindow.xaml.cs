@@ -39,6 +39,8 @@ namespace ShareClipbrdApp.Win {
             Height = SystemParameters.FullPrimaryScreenHeight / 40;
             Width = SystemParameters.FullPrimaryScreenWidth / 40;
             dataServer.Start();
+            edHostAddress.Text = Settings.Default.HostAddress;
+            edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
         void Window_Closed(object sender, System.EventArgs e) {
@@ -91,6 +93,14 @@ namespace ShareClipbrdApp.Win {
 
                 await dataTransferService.Send(clipboardData);
             }
+        }
+
+        private void edHostAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
+            Settings.Default.HostAddress = edHostAddress.Text;
+        }
+
+        private void edPartnerAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {            
+           Settings.Default.PartnerAddress = edPartnerAddress.Text;
         }
     }
 }

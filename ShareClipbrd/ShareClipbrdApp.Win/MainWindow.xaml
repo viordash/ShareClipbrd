@@ -23,11 +23,19 @@
         <ContextMenu>
             <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
             <Separator />
+            <MenuItem Header="Settings" >
+                <MenuItem Header="Host address">
+                    <TextBox x:Name="edHostAddress" Text="TextBox" Width="200" Margin="0,0,-40,0" TextChanged="edHostAddress_TextChanged"/>
+                </MenuItem>
+                <MenuItem Header="Partner address" >
+                    <TextBox x:Name="edPartnerAddress" Text="TextBox" Width="200" Margin="0,0,-40,0" TextChanged="edPartnerAddress_TextChanged"/>
+                </MenuItem>
+            </MenuItem>
+            <Separator />
             <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
         </ContextMenu>
     </Window.ContextMenu>
 
-    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod">
-    </Border>
+    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod"></Border>
 
 </Window>
