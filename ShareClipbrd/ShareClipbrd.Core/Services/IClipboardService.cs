@@ -1,6 +1,9 @@
-﻿namespace ShareClipbrd.Core.Services {
+﻿using System.Collections.Specialized;
+
+namespace ShareClipbrd.Core.Services {
     public interface IClipboardService {
-        ClipboardData GetCurrentData();
+        ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc);
+        ClipboardData SerializeFiles(StringCollection files);
 
         bool SupportedFormat(string format);
         bool SupportedDataSize(Int32 size);

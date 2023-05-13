@@ -16,7 +16,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         public void Teardown() { }
 
         bool DataFormats_Test(string dataFormat, object data, Encoding encoding) {
-            var clipboardData = testable.GetSerializedDataObjects(new[] { dataFormat }, (f) => { if(f == dataFormat) return data; else return new object(); });
+            var clipboardData = testable.SerializeDataObjects(new[] { dataFormat }, (f) => { if(f == dataFormat) return data; else return new object(); });
 
             Assert.That(clipboardData.Formats.Keys, Is.EquivalentTo(new[] { dataFormat }));
             Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { encoding.GetBytes($"{dataFormat} Кирилица") }));
@@ -29,7 +29,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_Text_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.Text }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.Text }, (f) => new object()));
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_UnicodeText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.UnicodeText }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.UnicodeText }, (f) => new object()));
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_StringFormat_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.StringFormat }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.StringFormat }, (f) => new object()));
         }
 
         [Test]
@@ -56,7 +56,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_OemText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.OemText }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.OemText }, (f) => new object()));
         }
 
         [Test]
@@ -65,12 +65,12 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_Rtf_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.Rtf }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.Rtf }, (f) => new object()));
         }
 
         [Test]
         public void DataFormats_Locale_Test() {
-            var clipboardData = testable.GetSerializedDataObjects(new[] { DataFormats.Locale }, (f) => {
+            var clipboardData = testable.SerializeDataObjects(new[] { DataFormats.Locale }, (f) => {
                 if(f == DataFormats.Locale) return new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 }); else return new object();
             });
 
@@ -79,7 +79,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
         [Test]
         public void DataFormats_Locale_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.GetSerializedDataObjects(new[] { DataFormats.Locale }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.SerializeDataObjects(new[] { DataFormats.Locale }, (f) => new object()));
         }
     }
 }
