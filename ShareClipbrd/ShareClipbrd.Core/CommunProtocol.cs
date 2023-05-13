@@ -1,6 +1,6 @@
 ﻿namespace ShareClipbrd.Core {
     public class CommunProtocol {
-        public const int ChunkSize = 65536;
+        public const int ChunkSize = 32768;
 
         public const UInt16 Version = 0x4201;
         public const UInt16 SuccessVersion = 0x1955;

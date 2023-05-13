@@ -76,14 +76,13 @@ namespace ShareClipbrd.Core.Services {
 
                     int start = 0;
                     while(start < size) {
-
                         receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
                         if(receivedBytes == 0) {
                             break;
                         }
                         memoryStream.Write(receiveBuffer, 0, receivedBytes);
                         start += receivedBytes;
-                        Debug.WriteLine($"tcpServer read data, received: {start}");
+                        //Debug.WriteLine($"tcpServer read data, received: {start}");
                     }
 
                     if(start != size) {

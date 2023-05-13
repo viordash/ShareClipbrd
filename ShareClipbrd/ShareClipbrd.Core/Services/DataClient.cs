@@ -61,13 +61,12 @@ namespace ShareClipbrd.Core.Services {
                     throw new NotSupportedException($"Others do not support size: {size}");
                 }
                 int start = 0;
-                var remain = size;
-                while(start < size) {
-                    Debug.WriteLine($"        --- tcpClient send data, transfered: {start}");
-                    int end = start + Math.Min(CommunProtocol.ChunkSize, remain);
-
-                    await stream.WriteAsync(format.Value[start..end], cancellationToken);
-                    remain -= end;
+                while(size > 0) {
+                    //Debug.WriteLine($"        --- tcpClient send data, transfered: {start}");
+                    int end = start + Math.Min(CommunProtocol.ChunkSize, size);
+                    var chunk = format.Value[start..end];
+                    await stream.WriteAsync(chunk, cancellationToken);
+                    size -= chunk.Length;
                     start = end;
                 }
 
