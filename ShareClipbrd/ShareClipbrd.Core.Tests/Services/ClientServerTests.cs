@@ -19,8 +19,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             dialogServiceMock = new();
             clipboardServiceMock = new();
 
-            systemConfigurationMock.SetupGet(x => x.HostAddress).Returns(IPEndPoint.Parse("127.0.0.1:55542"));
-            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns(IPEndPoint.Parse("127.0.0.1:55542"));
+            systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, clipboardServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object);

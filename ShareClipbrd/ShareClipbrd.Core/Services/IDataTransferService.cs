@@ -6,7 +6,6 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataTransferService : IDataTransferService {
-        readonly IDataServer dataServer;
         readonly IDataClient dataClient;
 
 
@@ -16,7 +15,6 @@ namespace ShareClipbrd.Core.Services {
             ) {
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(dataClient, nameof(dataClient));
-            this.dataServer = dataServer;
             this.dataClient = dataClient;
         }
 

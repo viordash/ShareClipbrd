@@ -1,17 +1,16 @@
-﻿using System.Net;
-using ShareClipbrd.Core.Configuration;
+﻿using ShareClipbrd.Core.Configuration;
 using ShareClipbrdApp.Win.Properties;
 
 namespace ShareClipbrdApp.Win.Configuration {
     public class SystemConfiguration : ISystemConfiguration {
-        public IPEndPoint HostAddress {
+        public string HostAddress {
             get {
-                return IPEndPoint.Parse(Settings.Default.HostAddress);
+                return Settings.Default.HostAddress;
             }
         }
-        public IPEndPoint PartnerAddress {
+        public string PartnerAddress {
             get {
-                return IPEndPoint.Parse(Settings.Default.PartnerAddress);
+                return Settings.Default.PartnerAddress;
             }
         }
     }

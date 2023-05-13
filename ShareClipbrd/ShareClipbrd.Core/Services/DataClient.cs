@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
+using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
@@ -24,8 +26,9 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task Send(ClipboardData clipboardData) {
             var cancellationToken = cts.Token;
-            using TcpClient tcpClient = new TcpClient();
-            var adr = systemConfiguration.PartnerAddress;
+            using TcpClient tcpClient = new();
+
+            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
 
             Debug.WriteLine($"        --- tcpClient connected  {tcpClient.Client.LocalEndPoint}");

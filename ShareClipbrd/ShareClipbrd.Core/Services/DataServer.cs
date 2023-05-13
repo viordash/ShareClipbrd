@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
+using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
@@ -107,7 +109,7 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    var adr = systemConfiguration.HostAddress;
+                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
                     var tcpServer = new TcpListener(adr.Address, adr.Port);
                     try {
                         Debug.WriteLine($"start tcpServer: {adr}");
