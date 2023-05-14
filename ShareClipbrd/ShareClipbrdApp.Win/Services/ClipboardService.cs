@@ -79,6 +79,22 @@ namespace ShareClipbrdApp.Win.Services {
                 (b) => System.Text.Encoding.UTF8.GetString(b)
                 )
             },
+            { "CanIncludeInClipboardHistory", new ConverterFuncs(
+                (c,o) => {
+                    if (o is MemoryStream castedValue) {c.Add("CanIncludeInClipboardHistory", castedValue.ToArray()); return true; }
+                    else {return false;}
+                },
+                (b) => new MemoryStream(b)
+                )
+            },
+            { "CanUploadToCloudClipboard", new ConverterFuncs(
+                (c,o) => {
+                    if (o is MemoryStream castedValue) {c.Add("CanUploadToCloudClipboard", castedValue.ToArray()); return true; }
+                    else {return false;}
+                },
+                (b) => new MemoryStream(b)
+                )
+            },
         };
 
         public bool SupportedFormat(string format) {
