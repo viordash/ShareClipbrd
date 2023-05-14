@@ -17,16 +17,20 @@ namespace ShareClipbrd.Core.Services {
     public class DataServer : IDataServer {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
+        readonly IClipboardSerializer clipboardSerializer;
         readonly CancellationTokenSource cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
-            IDialogService dialogService
+            IDialogService dialogService,
+            IClipboardSerializer clipboardSerializer
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
+            Guard.NotNull(clipboardSerializer, nameof(clipboardSerializer));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
+            this.clipboardSerializer = clipboardSerializer;
 
             cts = new CancellationTokenSource();
         }
@@ -59,20 +63,28 @@ namespace ShareClipbrd.Core.Services {
                     await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
 
-                   
-                    var memoryStream = new MemoryStream((int)size);
+                    if(clipboardSerializer.FormatForFiles(format)) {
 
-                    byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
-                    while(memoryStream.Length < size) {
-                        int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                        if(receivedBytes == 0) {
-                            break;
+                    } else if(clipboardSerializer.FormatForImage(format)) {
+
+                    } else if(clipboardSerializer.FormatForAudio(format)) {
+
+                    } else {
+                        var memoryStream = new MemoryStream((int)size);
+
+                        byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
+                        while(memoryStream.Length < size) {
+                            int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                            if(receivedBytes == 0) {
+                                break;
+                            }
+                            await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
                         }
-                        await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
+
+                        await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
+                        clipboardData.Add(format, memoryStream);
                     }
 
-                    await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
-                    clipboardData.Add(format, memoryStream);
                 }
                 onReceiveCb(clipboardData);
                 Debug.WriteLine($"tcpServer success finished");

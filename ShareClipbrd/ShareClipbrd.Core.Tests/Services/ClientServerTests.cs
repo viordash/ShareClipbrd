@@ -7,6 +7,7 @@ namespace ShareClipbrd.Core.Tests.Services {
     public class Tests {
         Mock<ISystemConfiguration> systemConfigurationMock;
         Mock<IDialogService> dialogServiceMock;
+        Mock<IClipboardSerializer> clipboardSerializerMock;
         DataServer server;
         DataClient client;
 
@@ -14,11 +15,12 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void Setup() {
             systemConfigurationMock = new();
             dialogServiceMock = new();
+            clipboardSerializerMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
-            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object);
+            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, clipboardSerializerMock.Object);
             client = new DataClient(systemConfigurationMock.Object);
 
         }
@@ -65,5 +67,24 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1000_000_003));
             Assert.False(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1000_000).Any(x => x != 0x20));
         }
+
+        //[Test]
+        //public async Task Send_File_Test() {
+        //    ClipboardData? receivedClipboardData = null;
+
+        //    server.Start((c) => receivedClipboardData = c);
+
+        //    var clipboardData = new ClipboardData();
+        //    clipboardData.Add("Text", new MemoryStream(Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray()));
+
+        //    await Task.Delay(100);
+        //    await client.Send(clipboardData);
+        //    await Task.Delay(1000);
+
+        //    Assert.IsNotNull(receivedClipboardData);
+        //    Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "Text" }));
+        //    Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1000_000_003));
+        //    Assert.False(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1000_000).Any(x => x != 0x20));
+        //}
     }
 }

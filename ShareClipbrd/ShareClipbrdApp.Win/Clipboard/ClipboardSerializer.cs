@@ -77,6 +77,18 @@ namespace ShareClipbrdApp.Win.Clipboard {
             },
         };
 
+        public bool FormatForFiles(string format) {
+            return format == DataFormats.FileDrop;
+        }
+
+        public bool FormatForImage(string format) {
+            return format == DataFormats.Bitmap;
+        }
+
+        public bool FormatForAudio(string format) {
+            return format == DataFormats.WaveAudio;
+        }
+
         public ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();
 

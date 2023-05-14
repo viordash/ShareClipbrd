@@ -64,6 +64,9 @@ namespace ShareClipbrd.Core.Services {
                 if(format.Value is MemoryStream memoryStream) {
                     memoryStream.Position = 0;
                     await memoryStream.CopyToAsync(stream, cancellationToken);
+                } else if(format.Value is FileStream fileStream) {
+                    fileStream.Position = 0;
+                    await fileStream.CopyToAsync(stream, cancellationToken);
                 }
 
                 Debug.WriteLine($"        --- tcpClient read data ack");
