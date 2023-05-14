@@ -78,7 +78,7 @@ namespace ShareClipbrdApp.Win {
         }
 
         async Task TransmitClipboard() {
-            await using(ProcessIndicator.Indicate(this)) {
+            await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Send)) {
                 ClipboardData clipboardData;
                 if(Clipboard.ContainsFileDropList()) {
                     clipboardData = clipboardService.SerializeFiles(Clipboard.GetFileDropList());
@@ -99,8 +99,8 @@ namespace ShareClipbrdApp.Win {
             Settings.Default.HostAddress = edHostAddress.Text;
         }
 
-        private void edPartnerAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {            
-           Settings.Default.PartnerAddress = edPartnerAddress.Text;
+        private void edPartnerAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
+            Settings.Default.PartnerAddress = edPartnerAddress.Text;
         }
     }
 }

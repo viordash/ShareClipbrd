@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Windows;
+using GuardNet;
 using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
+using ShareClipbrdApp.Win.Configuration;
 
 namespace ShareClipbrdApp.Win.Services {
 
@@ -130,18 +133,20 @@ namespace ShareClipbrdApp.Win.Services {
         public void SetClipboardData(ClipboardData clipboardData) {
             var dispatcher = Application.Current.Dispatcher;
 
-            dispatcher?.BeginInvoke(new Action(() => {
-                var dataObject = new DataObject();
+            dispatcher?.BeginInvoke(new Action(async () => {
+                await using(ProcessIndicator.Indicate(Application.Current.MainWindow as MainWindow, ProcessIndicator.Mode.Receive)) {
+                    var dataObject = new DataObject();
 
-                foreach(var format in clipboardData.Formats) {
-                    if(!converters.TryGetValue(format.Key, out ConverterFuncs? convertFunc)) {
-                        convertFunc = new ConverterFuncs((c, o) => false, (b) => new MemoryStream(b));
+                    foreach(var format in clipboardData.Formats) {
+                        if(!converters.TryGetValue(format.Key, out ConverterFuncs? convertFunc)) {
+                            convertFunc = new ConverterFuncs((c, o) => false, (b) => new MemoryStream(b));
+                        }
+                        dataObject.SetData(format.Key, convertFunc.To(format.Value));
                     }
-                    dataObject.SetData(format.Key, convertFunc.To(format.Value));
+                    Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
+                    Clipboard.Clear();
+                    Clipboard.SetDataObject(dataObject);
                 }
-                Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
-                Clipboard.Clear();
-                Clipboard.SetDataObject(dataObject);
             }));
         }
     }
