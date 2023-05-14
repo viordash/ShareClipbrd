@@ -58,12 +58,7 @@ namespace ShareClipbrd.Core.Services {
                     if(string.IsNullOrEmpty(format)) {
                         break;
                     }
-                    if(!clipboardService.SupportedFormat(format)) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException($"Not supported clipboard format: {format}");
-                    }
                     await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
-
 
                     Debug.WriteLine($"tcpServer read size");
                     var size = await stream.ReadInt32Async(cancellationToken);

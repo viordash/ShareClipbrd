@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Windows;
 using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
@@ -79,27 +76,7 @@ namespace ShareClipbrdApp.Win.Services {
                 (b) => System.Text.Encoding.UTF8.GetString(b)
                 )
             },
-            { "CanIncludeInClipboardHistory", new ConverterFuncs(
-                (c,o) => {
-                    if (o is MemoryStream castedValue) {c.Add("CanIncludeInClipboardHistory", castedValue.ToArray()); return true; }
-                    else {return false;}
-                },
-                (b) => new MemoryStream(b)
-                )
-            },
-            { "CanUploadToCloudClipboard", new ConverterFuncs(
-                (c,o) => {
-                    if (o is MemoryStream castedValue) {c.Add("CanUploadToCloudClipboard", castedValue.ToArray()); return true; }
-                    else {return false;}
-                },
-                (b) => new MemoryStream(b)
-                )
-            },
         };
-
-        public bool SupportedFormat(string format) {
-            return converters.Keys.Concat(new string[] { DataFormats.FileDrop, DataFormats.Bitmap, DataFormats.WaveAudio }).Contains(format);
-        }
 
         public bool SupportedDataSize(Int32 size) {
             return size > 0 && size < 2_000_000_000;
@@ -123,8 +100,10 @@ namespace ShareClipbrdApp.Win.Services {
                             },
                             (b) => new MemoryStream(b)
                             );
+
                         } else {
-                            throw new NotSupportedException(format);
+                            Debug.WriteLine($"not supported format: {format}");
+                            continue;
                         }
                     }
 

@@ -38,10 +38,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             ClipboardData? receivedClipboardData = null;
 
             clipboardServiceMock
-                .Setup(x => x.SupportedFormat(It.Is<string>(f => f == "UnicodeText")))
-                .Returns(true);
-
-            clipboardServiceMock
                 .Setup(x => x.SupportedDataSize(It.Is<Int32>(s => s > 0 && s < 1000)))
                 .Returns(true);
 
@@ -68,10 +64,6 @@ namespace ShareClipbrd.Core.Tests.Services {
         [Test]
         public async Task Send_Common_Big_Data_Test() {
             ClipboardData? receivedClipboardData = null;
-
-            clipboardServiceMock
-                .Setup(x => x.SupportedFormat(It.Is<string>(f => f == "Text")))
-                .Returns(true);
 
             clipboardServiceMock
                 .Setup(x => x.SupportedDataSize(It.Is<Int32>(s => s == 1000_000_003)))
