@@ -56,7 +56,12 @@ namespace ShareClipbrd.Core.Tests.Services {
             server.Start((c) => receivedClipboardData = c);
 
             var clipboardData = new ClipboardData();
-            clipboardData.Add("Text", new MemoryStream(Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray()));
+
+            var rnd = new Random();
+            var bytes = new byte[1_000_000_003];
+            rnd.NextBytes(bytes);
+
+            clipboardData.Add("Text", new MemoryStream(bytes));
 
             await Task.Delay(100);
             await client.Send(clipboardData);
@@ -64,8 +69,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             Assert.IsNotNull(receivedClipboardData);
             Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "Text" }));
-            Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1000_000_003));
-            Assert.False(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1000_000).Any(x => x != 0x20));
+            Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1_000_000_003));
+            Assert.That(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
         }
 
         //[Test]
