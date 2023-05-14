@@ -5,8 +5,6 @@ namespace ShareClipbrd.Core.Services {
         ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc);
         ClipboardData SerializeFiles(StringCollection files);
 
-        bool SupportedDataSize(Int32 size);
-
-        void SetClipboardData(ClipboardData clipboardData);
+        object DeserializeDataObject(string format, byte[] data);
     }
 }

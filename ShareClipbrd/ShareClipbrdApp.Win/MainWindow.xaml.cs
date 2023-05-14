@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -38,7 +40,7 @@ namespace ShareClipbrdApp.Win {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = SystemParameters.FullPrimaryScreenHeight / 40;
             Width = SystemParameters.FullPrimaryScreenWidth / 40;
-            dataServer.Start();
+            dataServer.Start(ReceiveClipboardDataCb);
             edHostAddress.Text = Settings.Default.HostAddress;
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
@@ -93,6 +95,22 @@ namespace ShareClipbrdApp.Win {
 
                 await dataClient.Send(clipboardData);
             }
+        }
+
+        void ReceiveClipboardDataCb(ClipboardData clipboardData) {
+            Dispatcher.BeginInvoke(new Action(async () => {
+                await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
+                    var dataObject = new DataObject();
+
+                    foreach(var format in clipboardData.Formats) {
+                        var obj = clipboardService.DeserializeDataObject(format.Key, format.Value);
+                        dataObject.SetData(format.Key, obj);
+                    }
+                    Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
+                    Clipboard.Clear();
+                    Clipboard.SetDataObject(dataObject);
+                }
+            }));
         }
 
         private void edHostAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {

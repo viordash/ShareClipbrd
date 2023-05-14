@@ -13,14 +13,16 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         }
 
         [TearDown]
-        public void Teardown() { }
+        public void Teardown() {
+        }
 
         bool DataFormats_Test(string dataFormat, object data, Encoding encoding) {
             var clipboardData = testable.SerializeDataObjects(new[] { dataFormat }, (f) => { if(f == dataFormat) return data; else return new object(); });
-
             Assert.That(clipboardData.Formats.Keys, Is.EquivalentTo(new[] { dataFormat }));
             Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { encoding.GetBytes($"{dataFormat} Кирилица") }));
             return true;
+
+
         }
 
         [Test]

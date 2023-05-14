@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Windows;
-using GuardNet;
 using ShareClipbrd.Core;
 using ShareClipbrd.Core.Services;
-using ShareClipbrdApp.Win.Configuration;
 
 namespace ShareClipbrdApp.Win.Services {
 
@@ -81,10 +78,6 @@ namespace ShareClipbrdApp.Win.Services {
             },
         };
 
-        public bool SupportedDataSize(Int32 size) {
-            return size > 0 && size < 2_000_000_000;
-        }
-
         public ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc) {
             var clipboardData = new ClipboardData();
 
@@ -130,24 +123,12 @@ namespace ShareClipbrdApp.Win.Services {
             return clipboardData;
         }
 
-        public void SetClipboardData(ClipboardData clipboardData) {
-            var dispatcher = Application.Current.Dispatcher;
 
-            dispatcher?.BeginInvoke(new Action(async () => {
-                await using(ProcessIndicator.Indicate(Application.Current.MainWindow as MainWindow, ProcessIndicator.Mode.Receive)) {
-                    var dataObject = new DataObject();
-
-                    foreach(var format in clipboardData.Formats) {
-                        if(!converters.TryGetValue(format.Key, out ConverterFuncs? convertFunc)) {
-                            convertFunc = new ConverterFuncs((c, o) => false, (b) => new MemoryStream(b));
-                        }
-                        dataObject.SetData(format.Key, convertFunc.To(format.Value));
-                    }
-                    Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
-                    Clipboard.Clear();
-                    Clipboard.SetDataObject(dataObject);
-                }
-            }));
+        public object DeserializeDataObject(string format, byte[] data) {
+            if(!converters.TryGetValue(format, out ConverterFuncs? convertFunc)) {
+                convertFunc = new ConverterFuncs((c, o) => false, (b) => new MemoryStream(b));
+            }
+            return convertFunc.To(data);
         }
     }
 }

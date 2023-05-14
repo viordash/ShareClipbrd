@@ -11,32 +11,28 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start();
+        void Start(Action<ClipboardData> onReceiveCb);
         void Stop();
     }
 
     public class DataServer : IDataServer {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
-        readonly IClipboardService clipboardService;
         readonly CancellationTokenSource cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
-            IDialogService dialogService,
-            IClipboardService clipboardService
+            IDialogService dialogService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
-            Guard.NotNull(clipboardService, nameof(clipboardService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
-            this.clipboardService = clipboardService;
 
             cts = new CancellationTokenSource();
         }
 
-        async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
+        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
             var receiveBuffer = new byte[CommunProtocol.ChunkSize];
 
@@ -63,10 +59,6 @@ namespace ShareClipbrd.Core.Services {
                     Debug.WriteLine($"tcpServer read size");
                     var size = await stream.ReadInt32Async(cancellationToken);
                     Debug.WriteLine($"tcpServer readed size: {size}");
-                    if(!clipboardService.SupportedDataSize(size)) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException($"Clipboard data size error: {size}");
-                    }
                     await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
                     var memoryStream = new MemoryStream(size);
@@ -88,7 +80,7 @@ namespace ShareClipbrd.Core.Services {
                     await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
                     clipboardData.Add(format, memoryStream.ToArray());
                 }
-                clipboardService.SetClipboardData(clipboardData);
+                onReceiveCb(clipboardData);
                 Debug.WriteLine($"tcpServer success finished");
 
             } catch(OperationCanceledException ex) {
@@ -98,7 +90,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start() {
+        public void Start(Action<ClipboardData> onReceiveCb) {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
@@ -113,7 +105,7 @@ namespace ShareClipbrd.Core.Services {
                             using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
                             Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
 
-                            await HandleClient(tcpClient, cancellationToken);
+                            await HandleClient(tcpClient, onReceiveCb, cancellationToken);
                         }
                     } catch(OperationCanceledException ex) {
                         Debug.WriteLine($"tcpServer canceled {ex}");
