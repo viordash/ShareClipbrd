@@ -1,11 +1,11 @@
 using System.Text;
 using System.Windows;
-using ShareClipbrdApp.Win.Services;
+using ShareClipbrdApp.Win.Clipboard;
 
 namespace ShareClipbrdApp.Win.Tests.Services {
     public class ClipboardServiceTests {
 
-        ClipboardService testable;
+        ClipboardSerializer testable;
 
         [SetUp]
         public void Setup() {

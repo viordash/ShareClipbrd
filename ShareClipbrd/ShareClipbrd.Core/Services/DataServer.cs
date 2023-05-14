@@ -1,10 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using GuardNet;
+using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;

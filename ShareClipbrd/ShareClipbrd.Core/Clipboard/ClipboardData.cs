@@ -1,4 +1,4 @@
-﻿namespace ShareClipbrd.Core {
+﻿namespace ShareClipbrd.Core.Clipboard {
     public class ClipboardData {
         public Dictionary<string, byte[]> Formats { get; } = new();
 

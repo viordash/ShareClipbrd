@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using GuardNet;
-using ShareClipbrd.Core;
+using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
@@ -19,12 +19,12 @@ namespace ShareClipbrdApp.Win {
 
         readonly IDataClient dataClient;
         readonly IDataServer dataServer;
-        readonly IClipboardService clipboardService;
+        readonly IClipboardSerializer clipboardService;
 
         public MainWindow(
             IDataClient dataClient,
             IDataServer dataServer,
-            IClipboardService clipboardService) {
+            IClipboardSerializer clipboardService) {
             Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(clipboardService, nameof(clipboardService));
@@ -82,14 +82,14 @@ namespace ShareClipbrdApp.Win {
         async Task TransmitClipboard() {
             await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Send)) {
                 ClipboardData clipboardData;
-                if(Clipboard.ContainsFileDropList()) {
-                    clipboardData = clipboardService.SerializeFiles(Clipboard.GetFileDropList());
-                } else if(Clipboard.ContainsImage()) {
+                if(System.Windows.Clipboard.ContainsFileDropList()) {
+                    clipboardData = clipboardService.SerializeFiles(System.Windows.Clipboard.GetFileDropList());
+                } else if(System.Windows.Clipboard.ContainsImage()) {
                     clipboardData = new();
-                } else if(Clipboard.ContainsAudio()) {
+                } else if(System.Windows.Clipboard.ContainsAudio()) {
                     clipboardData = new();
                 } else {
-                    var dataObject = Clipboard.GetDataObject();
+                    var dataObject = System.Windows.Clipboard.GetDataObject();
                     clipboardData = clipboardService.SerializeDataObjects(dataObject.GetFormats(), dataObject.GetData);
                 }
 
@@ -107,8 +107,8 @@ namespace ShareClipbrdApp.Win {
                         dataObject.SetData(format.Key, obj);
                     }
                     Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
-                    Clipboard.Clear();
-                    Clipboard.SetDataObject(dataObject);
+                    System.Windows.Clipboard.Clear();
+                    System.Windows.Clipboard.SetDataObject(dataObject);
                 }
             }));
         }

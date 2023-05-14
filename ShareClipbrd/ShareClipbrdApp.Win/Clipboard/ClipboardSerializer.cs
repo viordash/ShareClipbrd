@@ -4,12 +4,11 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using ShareClipbrd.Core;
-using ShareClipbrd.Core.Services;
+using ShareClipbrd.Core.Clipboard;
 
-namespace ShareClipbrdApp.Win.Services {
+namespace ShareClipbrdApp.Win.Clipboard {
 
-    public class ClipboardService : IClipboardService {
+    public class ClipboardSerializer : IClipboardSerializer {
         class ConverterFuncs {
             public Func<ClipboardData, object, bool> From { get; set; }
             public Func<byte[], object> To { get; set; }

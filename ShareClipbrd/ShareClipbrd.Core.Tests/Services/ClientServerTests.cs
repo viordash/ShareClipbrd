@@ -1,7 +1,5 @@
-using System.Drawing;
-using System.Net;
-using System.Text;
 using Moq;
+using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
 
