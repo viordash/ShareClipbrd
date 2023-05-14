@@ -35,7 +35,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             server.Start((c) => receivedClipboardData = c);
 
             var clipboardData = new ClipboardData();
-            clipboardData.Add("UnicodeText", System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица"));
+            clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")));
 
             await Task.Delay(100);
             await client.Send(clipboardData);
@@ -44,7 +44,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             Assert.IsNotNull(receivedClipboardData);
             Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "UnicodeText" }));
-            Assert.That(receivedClipboardData.Formats.Values, Is.EquivalentTo(new[] { System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица") }));
+            Assert.That(receivedClipboardData.Formats.Values, Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")) }));
         }
 
         [Test]
@@ -54,7 +54,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             server.Start((c) => receivedClipboardData = c);
 
             var clipboardData = new ClipboardData();
-            clipboardData.Add("Text", Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray());
+            clipboardData.Add("Text", new MemoryStream(Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray()));
 
             await Task.Delay(100);
             await client.Send(clipboardData);
@@ -63,7 +63,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.IsNotNull(receivedClipboardData);
             Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "Text" }));
             Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1000_000_003));
-            Assert.False(receivedClipboardData.Formats["Text"].Take(1000_000).Any(x => x != 0x20));
+            Assert.False(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1000_000).Any(x => x != 0x20));
         }
     }
 }

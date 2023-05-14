@@ -1,8 +1,8 @@
 ﻿namespace ShareClipbrd.Core.Clipboard {
     public class ClipboardData {
-        public Dictionary<string, byte[]> Formats { get; } = new();
+        public Dictionary<string, Stream> Formats { get; } = new();
 
-        public void Add(string format, byte[] data) {
+        public void Add(string format, Stream data) {
             Formats.Add(format, data);
         }
     }

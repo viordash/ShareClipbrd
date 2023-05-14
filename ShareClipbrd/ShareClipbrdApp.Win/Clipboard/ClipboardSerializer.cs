@@ -11,8 +11,8 @@ namespace ShareClipbrdApp.Win.Clipboard {
     public class ClipboardSerializer : IClipboardSerializer {
         class ConverterFuncs {
             public Func<ClipboardData, object, bool> From { get; set; }
-            public Func<byte[], object> To { get; set; }
-            public ConverterFuncs(Func<ClipboardData, object, bool> from, Func<byte[], object> to) {
+            public Func<Stream, object> To { get; set; }
+            public ConverterFuncs(Func<ClipboardData, object, bool> from, Func<Stream, object> to) {
                 From = from;
                 To = to;
             }
@@ -21,58 +21,58 @@ namespace ShareClipbrdApp.Win.Clipboard {
         static readonly Dictionary<string, ConverterFuncs> converters = new(){
             { DataFormats.Text, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.Text, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.Text, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.ASCII.GetString(b)
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
                 },
             { DataFormats.UnicodeText, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.UnicodeText, System.Text.Encoding.Unicode.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.Unicode.GetString(b)
+                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { DataFormats.StringFormat, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.StringFormat, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.StringFormat, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.ASCII.GetString(b)
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { DataFormats.OemText, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.OemText, System.Text.Encoding.ASCII.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.ASCII.GetString(b)
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { DataFormats.Rtf, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.Rtf, System.Text.Encoding.UTF8.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.Rtf, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.ASCII.GetString(b)
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream) stream).ToArray())
                 )
             },
             { DataFormats.Locale, new ConverterFuncs(
                 (c,o) => {
-                    if (o is MemoryStream castedValue) {c.Add(DataFormats.Locale, castedValue.ToArray()); return true; }
+                    if (o is MemoryStream castedValue) {c.Add(DataFormats.Locale, castedValue); return true; }
                     else {return false;}
                 },
-                (b) => new MemoryStream(b)
+                (stream) => stream
                 )
             },
             { DataFormats.Html, new ConverterFuncs(
                 (c,o) => {
-                    if (o is string castedValue) {c.Add(DataFormats.Html, System.Text.Encoding.UTF8.GetBytes(castedValue)); return true; }
+                    if (o is string castedValue) {c.Add(DataFormats.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
                     else {return false;}
                 },
-                (b) => System.Text.Encoding.UTF8.GetString(b)
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
             },
         };
@@ -91,9 +91,9 @@ namespace ShareClipbrdApp.Win.Clipboard {
                         if(obj is MemoryStream memoryStream) {
                             convertFunc = new ConverterFuncs(
                             (c, o) => {
-                                if(o is MemoryStream castedValue) { c.Add(format, castedValue.ToArray()); return true; } else { return false; }
+                                if(o is MemoryStream castedValue) { c.Add(format, castedValue); return true; } else { return false; }
                             },
-                            (b) => new MemoryStream(b)
+                            (stream) => stream
                             );
 
                         } else {
@@ -123,11 +123,11 @@ namespace ShareClipbrdApp.Win.Clipboard {
         }
 
 
-        public object DeserializeDataObject(string format, byte[] data) {
+        public object DeserializeDataObject(string format, Stream dataStream) {
             if(!converters.TryGetValue(format, out ConverterFuncs? convertFunc)) {
-                convertFunc = new ConverterFuncs((c, o) => false, (b) => new MemoryStream(b));
+                convertFunc = new ConverterFuncs((c, o) => false, (stream) => stream);
             }
-            return convertFunc.To(data);
+            return convertFunc.To(dataStream);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
         bool DataFormats_Test(string dataFormat, object data, Encoding encoding) {
             var clipboardData = testable.SerializeDataObjects(new[] { dataFormat }, (f) => { if(f == dataFormat) return data; else return new object(); });
             Assert.That(clipboardData.Formats.Keys, Is.EquivalentTo(new[] { dataFormat }));
-            Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { encoding.GetBytes($"{dataFormat} Кирилица") }));
+            Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { new MemoryStream(encoding.GetBytes($"{dataFormat} Кирилица")) }));
             return true;
 
 
@@ -77,7 +77,7 @@ namespace ShareClipbrdApp.Win.Tests.Services {
             });
 
             Assert.That(clipboardData.Formats.Keys, Is.EquivalentTo(new[] { DataFormats.Locale }));
-            Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { new byte[] { 0x00, 0x01, 0x02, 0x03 } }));
+            Assert.That(clipboardData.Formats.Values, Is.EquivalentTo(new[] { new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 }) }));
         }
         [Test]
         public void DataFormats_Locale_When_NoStringData_Test() {

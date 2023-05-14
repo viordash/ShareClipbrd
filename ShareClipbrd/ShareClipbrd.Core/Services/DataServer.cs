@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Buffers;
+using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
@@ -31,11 +33,9 @@ namespace ShareClipbrd.Core.Services {
 
         async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
-            var receiveBuffer = new byte[CommunProtocol.ChunkSize];
 
             try {
                 var stream = tcpClient.GetStream();
-                int receivedBytes;
 
 
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
@@ -54,28 +54,25 @@ namespace ShareClipbrd.Core.Services {
                     await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
 
                     Debug.WriteLine($"tcpServer read size");
-                    var size = await stream.ReadInt32Async(cancellationToken);
+                    var size = await stream.ReadInt64Async(cancellationToken);
                     Debug.WriteLine($"tcpServer readed size: {size}");
                     await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
-                    var memoryStream = new MemoryStream(size);
 
-                    int start = 0;
-                    while(start < size) {
-                        receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                   
+                    var memoryStream = new MemoryStream((int)size);
+
+                    byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
+                    while(memoryStream.Length < size) {
+                        int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
                         if(receivedBytes == 0) {
                             break;
                         }
-                        memoryStream.Write(receiveBuffer, 0, receivedBytes);
-                        start += receivedBytes;
+                        await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
                     }
 
-                    if(start != size) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new InvalidDataException($"Clipboard data receive error, {start}!={size}");
-                    }
                     await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
-                    clipboardData.Add(format, memoryStream.ToArray());
+                    clipboardData.Add(format, memoryStream);
                 }
                 onReceiveCb(clipboardData);
                 Debug.WriteLine($"tcpServer success finished");

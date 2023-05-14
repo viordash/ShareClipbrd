@@ -25,6 +25,17 @@ namespace ShareClipbrd.Core.Extensions {
             return BitConverter.ToInt32(receiveBuffer, 0);
         }
 
+        public static async ValueTask WriteAsync(this NetworkStream stream, Int64 value, CancellationToken cancellationToken) {
+            var bytes = BitConverter.GetBytes(value);
+            await stream.WriteAsync(bytes, cancellationToken);
+            await stream.FlushAsync(cancellationToken);
+        }
+        public static async ValueTask<Int64> ReadInt64Async(this NetworkStream stream, CancellationToken cancellationToken) {
+            var receiveBuffer = new byte[sizeof(Int64)];
+            await stream.ReadExactlyAsync(receiveBuffer, cancellationToken);
+            return BitConverter.ToInt32(receiveBuffer, 0);
+        }
+
         public static async ValueTask WriteAsync(this NetworkStream stream, string value, CancellationToken cancellationToken) {
             await stream.WriteAsync(Encoding.ASCII.GetBytes(value), cancellationToken);
             await stream.FlushAsync(cancellationToken);
