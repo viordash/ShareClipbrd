@@ -11,11 +11,11 @@ namespace ShareClipbrd.Core.Helpers {
             var ipString = hostname[..portStart];
 
             var addresses = Dns.GetHostAddresses(ipString);
-            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6);
+            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
             if(adr != null) {
                 return new IPEndPoint(adr, port);
             }
-            adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
+            adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6);
             if(adr != null) {
                 return new IPEndPoint(adr, port);
             }
