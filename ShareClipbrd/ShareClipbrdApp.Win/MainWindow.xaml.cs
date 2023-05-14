@@ -15,19 +15,19 @@ namespace ShareClipbrdApp.Win {
     public partial class MainWindow : Window {
         public System.Drawing.Rectangle Bounds { get { return new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height); } }
 
-        readonly IDataTransferService dataTransferService;
+        readonly IDataClient dataClient;
         readonly IDataServer dataServer;
         readonly IClipboardService clipboardService;
 
         public MainWindow(
-            IDataTransferService dataTransferService,
+            IDataClient dataClient,
             IDataServer dataServer,
             IClipboardService clipboardService) {
-            Guard.NotNull(dataTransferService, nameof(dataTransferService));
+            Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(clipboardService, nameof(clipboardService));
 
-            this.dataTransferService = dataTransferService;
+            this.dataClient = dataClient;
             this.dataServer = dataServer;
             this.clipboardService = clipboardService;
 
@@ -91,7 +91,7 @@ namespace ShareClipbrdApp.Win {
                     clipboardData = clipboardService.SerializeDataObjects(dataObject.GetFormats(), dataObject.GetData);
                 }
 
-                await dataTransferService.Send(clipboardData);
+                await dataClient.Send(clipboardData);
             }
         }
 

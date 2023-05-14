@@ -13,7 +13,6 @@ namespace ShareClipbrdApp.Win {
             services.AddSingleton<MainWindow>()
                     .AddSingleton<IDialogService, DialogService>()
                     .AddSingleton<ISystemConfiguration, SystemConfiguration>()
-                    .AddSingleton<IDataTransferService, DataTransferService>()
                     .AddSingleton<IClipboardService, ClipboardService>()
                     .AddSingleton<IDataServer, DataServer>()
                     .AddSingleton<IDataClient, DataClient>()
