@@ -1,3 +1,4 @@
+using System.IO;
 using Moq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -74,22 +75,100 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         //[Test]
-        //public async Task Send_File_Test() {
+        //public async Task Send_Files_Test() {
         //    ClipboardData? receivedClipboardData = null;
+
+        //    clipboardSerializerMock
+        //        .Setup(x => x.FormatForFiles(It.Is<string>(f => f == "FileDrop")))
+        //        .Returns(() => true);
 
         //    server.Start((c) => receivedClipboardData = c);
 
         //    var clipboardData = new ClipboardData();
-        //    clipboardData.Add("Text", new MemoryStream(Enumerable.Repeat<byte>(0x20, 1000_000_003).ToArray()));
 
-        //    await Task.Delay(100);
-        //    await client.Send(clipboardData);
+        //    var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+        //    Directory.CreateDirectory(testsPath);
+
+        //    var rnd = new Random();
+        //    var bytes = new byte[33_000_000];
+        //    rnd.NextBytes(bytes);
+        //    var files = new List<FileStream>();
+        //    for(int i = 0; i < 100; i++) {
+        //        var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
+        //        File.WriteAllBytes(filename, bytes.Skip(i * 33_000_000 / 100).Take(33_000_000 / 100).ToArray());
+        //        files.Add(new FileStream(filename, FileMode.Open));
+        //    }
+
+        //    try {
+        //        foreach(var fileStream in files) {
+        //            clipboardData.Add("FileDrop", fileStream);
+        //        }
+        //        await client.Send(clipboardData);
+                
+        //    } finally {
+        //        foreach(var fileStream in files) {
+        //            fileStream.Close();
+        //            File.Delete(fileStream.Name);
+        //        }
+        //    }
+
         //    await Task.Delay(1000);
 
         //    Assert.IsNotNull(receivedClipboardData);
-        //    Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "Text" }));
-        //    Assert.That(receivedClipboardData.Formats["Text"], Has.Length.EqualTo(1000_000_003));
-        //    Assert.False(((MemoryStream)receivedClipboardData.Formats["Text"]).ToArray().Take(1000_000).Any(x => x != 0x20));
+        //    Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "FileDrop" }));
+        //    var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats["FileDrop"]).ToArray());
+
+        //    Assert.That(otherFilename, Does.Exist);
+
+        //    var otherBytes = File.ReadAllBytes(otherFilename);
+        //    File.Delete(otherFilename);
+
+        //    Assert.That(otherBytes, Has.Length.EqualTo(1_000_000_003));
+        //    Assert.That(otherBytes.Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
         //}
+
+        [Test]
+        public async Task Send_Big_File_Test() {
+            ClipboardData? receivedClipboardData = null;
+
+            clipboardSerializerMock
+                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == "FileDrop")))
+                .Returns(() => true);
+
+            server.Start((c) => receivedClipboardData = c);
+
+            var rnd = new Random();
+            var bytes = new byte[1_000_000_003];
+            rnd.NextBytes(bytes);
+
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
+            var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
+            File.WriteAllBytes(filename, bytes);
+            try {
+                using(var fileStream = new FileStream(filename, FileMode.Open)) {
+                    var clipboardData = new ClipboardData();
+                    clipboardData.Add("FileDrop", fileStream);
+
+                    await client.Send(clipboardData);
+                }
+            } finally {
+                File.Delete(filename);
+            }
+            await Task.Delay(1000);
+
+            Assert.IsNotNull(receivedClipboardData);
+            Assert.That(receivedClipboardData.Formats.Keys, Is.EquivalentTo(new[] { "FileDrop" }));
+            var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats["FileDrop"]).ToArray());
+
+            Assert.That(otherFilename, Does.Exist);
+
+            var otherBytes = File.ReadAllBytes(otherFilename);
+            File.Delete(otherFilename);
+
+            Assert.That(otherBytes, Has.Length.EqualTo(1_000_000_003));
+            Assert.That(otherBytes.Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
+
+        }
     }
 }

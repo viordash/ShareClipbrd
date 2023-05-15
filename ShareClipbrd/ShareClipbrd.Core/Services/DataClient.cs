@@ -64,7 +64,15 @@ namespace ShareClipbrd.Core.Services {
                 if(format.Value is MemoryStream memoryStream) {
                     memoryStream.Position = 0;
                     await memoryStream.CopyToAsync(stream, cancellationToken);
-                } else if(format.Value is FileStream fileStream) {
+                } else if(format.Value is FileStream fileStream) {      
+                    var filename = Path.GetFileName(fileStream.Name);
+                    Debug.WriteLine($"        --- tcpClient send filename: {filename}");
+                    await stream.WriteAsync(filename, cancellationToken);
+                    Debug.WriteLine($"        --- tcpClient read filename ack");
+                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFilename) {
+                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new NotSupportedException($"Others can't receive file: {filename}");
+                    }
                     fileStream.Position = 0;
                     await fileStream.CopyToAsync(stream, cancellationToken);
                 }

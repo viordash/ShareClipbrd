@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Net.Sockets;
+using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -35,12 +38,50 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
+        static async ValueTask<Stream> HandleFile(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
+            Debug.WriteLine($"tcpServer read filename");
+            var filename = await stream.ReadASCIIStringAsync(cancellationToken);
+            Debug.WriteLine($"tcpServer readed filename: '{filename}'");
+            if(string.IsNullOrEmpty(filename)) {
+                throw new NotSupportedException("Filename receive error");
+            }
+            await stream.WriteAsync(CommunProtocol.SuccessFilename, cancellationToken);
+
+            var tempFilename = Path.Combine(Path.GetTempPath(), filename);
+            using(var fileStream = new FileStream(tempFilename, FileMode.OpenOrCreate)) {
+                byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
+                while(fileStream.Length < dataSize) {
+                    int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                    if(receivedBytes == 0) {
+                        break;
+                    }
+                    await fileStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
+                }
+                await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
+            }
+            return new MemoryStream(Encoding.UTF8.GetBytes(tempFilename));
+        }
+
+        static async ValueTask<Stream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
+            var memoryStream = new MemoryStream(dataSize);
+            byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
+            while(memoryStream.Length < dataSize) {
+                int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                if(receivedBytes == 0) {
+                    break;
+                }
+                await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
+            }
+
+            await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
+            return memoryStream;
+        }
+
         async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
 
             try {
                 var stream = tcpClient.GetStream();
-
 
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
                     await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -64,25 +105,13 @@ namespace ShareClipbrd.Core.Services {
 
 
                     if(clipboardSerializer.FormatForFiles(format)) {
-
+                        clipboardData.Add(format, await HandleFile(stream, (int)size, cancellationToken));
                     } else if(clipboardSerializer.FormatForImage(format)) {
 
                     } else if(clipboardSerializer.FormatForAudio(format)) {
 
                     } else {
-                        var memoryStream = new MemoryStream((int)size);
-
-                        byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
-                        while(memoryStream.Length < size) {
-                            int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                            if(receivedBytes == 0) {
-                                break;
-                            }
-                            await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
-                        }
-
-                        await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
-                        clipboardData.Add(format, memoryStream);
+                        clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                     }
 
                 }
