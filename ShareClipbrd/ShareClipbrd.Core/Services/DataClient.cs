@@ -43,16 +43,16 @@ namespace ShareClipbrd.Core.Services {
             }
 
             foreach(var format in clipboardData.Formats) {
-                Debug.WriteLine($"        --- tcpClient send format: {format.Key}");
-                await stream.WriteAsync(format.Key, cancellationToken);
+                Debug.WriteLine($"        --- tcpClient send format: {format.Format}");
+                await stream.WriteAsync(format.Format, cancellationToken);
                 Debug.WriteLine($"        --- tcpClient read format ack");
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
                     await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support clipboard format: {format.Key}");
+                    throw new NotSupportedException($"Others do not support clipboard format: {format.Format}");
                 }
 
-                Debug.WriteLine($"        --- tcpClient send size: {format.Value.Length}");
-                var size = format.Value.Length;
+                Debug.WriteLine($"        --- tcpClient send size: {format.Data.Length}");
+                var size = format.Data.Length;
                 await stream.WriteAsync(size, cancellationToken);
                 Debug.WriteLine($"        --- tcpClient read size ack");
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
@@ -61,10 +61,10 @@ namespace ShareClipbrd.Core.Services {
                 }
 
 
-                if(format.Value is MemoryStream memoryStream) {
+                if(format.Data is MemoryStream memoryStream) {
                     memoryStream.Position = 0;
                     await memoryStream.CopyToAsync(stream, cancellationToken);
-                } else if(format.Value is FileStream fileStream) {      
+                } else if(format.Data is FileStream fileStream) {      
                     var filename = Path.GetFileName(fileStream.Name);
                     Debug.WriteLine($"        --- tcpClient send filename: {filename}");
                     await stream.WriteAsync(filename, cancellationToken);

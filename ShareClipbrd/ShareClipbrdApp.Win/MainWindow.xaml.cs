@@ -103,8 +103,8 @@ namespace ShareClipbrdApp.Win {
                     var dataObject = new DataObject();
 
                     foreach(var format in clipboardData.Formats) {
-                        var obj = clipboardService.DeserializeDataObject(format.Key, format.Value);
-                        dataObject.SetData(format.Key, obj);
+                        var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
+                        dataObject.SetData(format.Format, obj);
                     }
                     Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
                     System.Windows.Clipboard.Clear();
