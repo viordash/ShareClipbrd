@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using ShareClipbrd.Core.Clipboard;
 
@@ -127,8 +128,8 @@ namespace ShareClipbrdApp.Win.Clipboard {
         public ClipboardData SerializeFiles(StringCollection files) {
             var clipboardData = new ClipboardData();
 
-            foreach(var file in files) {
-                //clipboardData.Add(DataFormats.FileDrop, castedValue.ToArray());
+            foreach(var file in files.OfType<string>()) {
+                clipboardData.Add(DataFormats.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read));
             }
 
             return clipboardData;
