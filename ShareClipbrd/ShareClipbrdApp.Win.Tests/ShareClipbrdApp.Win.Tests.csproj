@@ -23,4 +23,8 @@
     <ProjectReference Include="..\ShareClipbrdApp.Win\ShareClipbrdApp.Win.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

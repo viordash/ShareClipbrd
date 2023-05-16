@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
-using ShareClipbrdApp.Win.Clipboard;
 using ShareClipbrdApp.Win.Configuration;
 using ShareClipbrdApp.Win.Services;
 
