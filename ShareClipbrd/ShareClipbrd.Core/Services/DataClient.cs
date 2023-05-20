@@ -110,10 +110,7 @@ namespace ShareClipbrd.Core.Services {
             using TcpClient tcpClient = new();
 
             var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-            Debug.WriteLine($"        --- tcpClient connecting  {adr.ToString()}");
             await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
-
-            Debug.WriteLine($"        --- tcpClient connected  {tcpClient.Client.LocalEndPoint}");
 
             var stream = tcpClient.GetStream();
 

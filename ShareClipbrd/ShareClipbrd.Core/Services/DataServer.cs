@@ -47,7 +47,7 @@ namespace ShareClipbrd.Core.Services {
             if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
                 Directory.CreateDirectory(directory);
             }
-            using(var fileStream = new FileStream(tempFilename, FileMode.OpenOrCreate)) {
+            using(var fileStream = new FileStream(tempFilename, FileMode.Create)) {
                 byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
                 while(fileStream.Length < dataSize) {
                     int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
