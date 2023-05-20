@@ -43,6 +43,10 @@ namespace ShareClipbrd.Core.Services {
             await stream.WriteAsync(CommunProtocol.SuccessFilename, cancellationToken);
 
             var tempFilename = Path.Combine(sessionDir.Value, filename);
+            var directory = Path.GetDirectoryName(tempFilename);
+            if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
+                Directory.CreateDirectory(directory);
+            }
             using(var fileStream = new FileStream(tempFilename, FileMode.OpenOrCreate)) {
                 byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
                 while(fileStream.Length < dataSize) {
@@ -85,7 +89,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static string RecreateTempDirectory() {
-            const string path = "ShareClipbrd";
+            const string path = "ShareClipbrd_60D54950";
             var tempDir = Path.Combine(Path.GetTempPath(), path);
             if(Directory.Exists(tempDir)) {
                 try {
@@ -111,9 +115,7 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    Debug.WriteLine($"tcpServer read format");
                     var format = await stream.ReadASCIIStringAsync(cancellationToken);
-                    Debug.WriteLine($"tcpServer readed format: '{format}'");
                     if(string.IsNullOrEmpty(format)) {
                         break;
                     }

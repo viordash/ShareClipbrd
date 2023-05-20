@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.IO;
+using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Text;
 using GuardNet;
@@ -26,8 +28,11 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        static async Task SendFile(FileStream fileStream, NetworkStream stream, CancellationToken cancellationToken) {
-            var filename = Path.GetFileName(fileStream.Name);
+        static async Task SendFile(string? relativeTo, FileStream fileStream, NetworkStream stream, CancellationToken cancellationToken) {
+            var filename = string.IsNullOrEmpty(relativeTo)
+                ? Path.GetFileName(fileStream.Name)
+                : Path.Combine(relativeTo, Path.GetFileName(fileStream.Name));
+
             await stream.WriteAsync(filename, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFilename) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -41,21 +46,51 @@ namespace ShareClipbrd.Core.Services {
         static async Task SendDirectory(string directory, NetworkStream stream, CancellationToken cancellationToken) {
             var files = DirectoryHelper.RecursiveGetFiles(directory);
             var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
+
+            var parentPath = Path.GetDirectoryName(directory);
+            var directoryName = Path.GetRelativePath(parentPath!, directory);
+
             foreach(var file in files) {
                 var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
                 var clipboard = new ClipboardItem(ClipboardData.Format.FileDrop, fileStream);
-                await SendClipboardItem(clipboard, stream, cancellationToken);
+                await SendHeader(clipboard, stream, cancellationToken);
+                var fileDirectory = Path.GetDirectoryName(file);
+                var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
+
+                await SendFile(relative, fileStream, stream, cancellationToken);
                 fileStream.Close();
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Transfer data error");
+                }
             }
             foreach(var folder in emptyFolders) {
                 var relative = Path.GetRelativePath(directory, folder);
-                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, new MemoryStream(Encoding.UTF8.GetBytes(relative)));
-                await SendClipboardItem(clipboard, stream, cancellationToken);
+                var childDirectory = Path.Combine(directoryName, relative);
+
+                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(childDirectory));
+                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, memoryStream);
+                await SendHeader(clipboard, stream, cancellationToken);
+                await memoryStream.CopyToAsync(stream, cancellationToken);
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Transfer data error");
+                }
+            }
+
+            if(!files.Any() && !emptyFolders.Any()) {
+                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(directoryName));
+                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, memoryStream);
+                await SendHeader(clipboard, stream, cancellationToken);
+                await memoryStream.CopyToAsync(stream, cancellationToken);
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Transfer data error");
+                }
             }
         }
 
-
-        static async Task SendClipboardItem(ClipboardItem clipboard, NetworkStream stream, CancellationToken cancellationToken) {
+        static async Task SendHeader(ClipboardItem clipboard, NetworkStream stream, CancellationToken cancellationToken) {
             await stream.WriteAsync(clipboard.Format, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -67,19 +102,6 @@ namespace ShareClipbrd.Core.Services {
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException($"Others do not support size: {size}");
-            }
-
-            if(clipboard.Data is MemoryStream dataMemoryStream) {
-                dataMemoryStream.Position = 0;
-
-                await dataMemoryStream.CopyToAsync(stream, cancellationToken);
-            } else if(clipboard.Data is FileStream fileStream) {
-                await SendFile(fileStream, stream, cancellationToken);
-            }
-
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
-                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Transfer data error");
             }
         }
 
@@ -111,7 +133,20 @@ namespace ShareClipbrd.Core.Services {
                     throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
                 }
 
-                await SendClipboardItem(clipboard, stream, cancellationToken);
+                await SendHeader(clipboard, stream, cancellationToken);
+
+                if(clipboard.Data is MemoryStream dataMemoryStream) {
+                    dataMemoryStream.Position = 0;
+
+                    await dataMemoryStream.CopyToAsync(stream, cancellationToken);
+                } else if(clipboard.Data is FileStream fileStream) {
+                    await SendFile(string.Empty, fileStream, stream, cancellationToken);
+                }
+
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Transfer data error");
+                }
             }
         }
     }
