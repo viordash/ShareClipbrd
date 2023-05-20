@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Net.Sockets;
+using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;
+
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
@@ -22,6 +24,63 @@ namespace ShareClipbrd.Core.Services {
             this.systemConfiguration = systemConfiguration;
 
             cts = new CancellationTokenSource();
+        }
+
+        static async Task SendFile(FileStream fileStream, NetworkStream stream, CancellationToken cancellationToken) {
+            var filename = Path.GetFileName(fileStream.Name);
+            await stream.WriteAsync(filename, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFilename) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others can't receive file: {filename}");
+            }
+            fileStream.Position = 0;
+            await fileStream.CopyToAsync(stream, cancellationToken);
+        }
+
+
+        static async Task SendDirectory(string directory, NetworkStream stream, CancellationToken cancellationToken) {
+            var files = DirectoryHelper.RecursiveGetFiles(directory);
+            var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
+            foreach(var file in files) {
+                var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                var clipboard = new ClipboardItem(ClipboardData.Format.FileDrop, fileStream);
+                await SendClipboardItem(clipboard, stream, cancellationToken);
+                fileStream.Close();
+            }
+            foreach(var folder in emptyFolders) {
+                var relative = Path.GetRelativePath(directory, folder);
+                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, new MemoryStream(Encoding.UTF8.GetBytes(relative)));
+                await SendClipboardItem(clipboard, stream, cancellationToken);
+            }
+        }
+
+
+        static async Task SendClipboardItem(ClipboardItem clipboard, NetworkStream stream, CancellationToken cancellationToken) {
+            await stream.WriteAsync(clipboard.Format, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others do not support clipboard format: {clipboard.Format}");
+            }
+
+            var size = clipboard.Data.Length;
+            await stream.WriteAsync(size, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others do not support size: {size}");
+            }
+
+            if(clipboard.Data is MemoryStream dataMemoryStream) {
+                dataMemoryStream.Position = 0;
+
+                await dataMemoryStream.CopyToAsync(stream, cancellationToken);
+            } else if(clipboard.Data is FileStream fileStream) {
+                await SendFile(fileStream, stream, cancellationToken);
+            }
+
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Transfer data error");
+            }
         }
 
         public async Task Send(ClipboardData clipboardData) {
@@ -42,49 +101,18 @@ namespace ShareClipbrd.Core.Services {
                 throw new NotSupportedException("Wrong version of the other side");
             }
 
-            foreach(var format in clipboardData.Formats) {
-                Debug.WriteLine($"        --- tcpClient send format: {format.Format}");
-                await stream.WriteAsync(format.Format, cancellationToken);
-                Debug.WriteLine($"        --- tcpClient read format ack");
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support clipboard format: {format.Format}");
-                }
-
-                Debug.WriteLine($"        --- tcpClient send size: {format.Data.Length}");
-                var size = format.Data.Length;
-                await stream.WriteAsync(size, cancellationToken);
-                Debug.WriteLine($"        --- tcpClient read size ack");
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support size: {size}");
-                }
-
-
-                if(format.Data is MemoryStream memoryStream) {
-                    memoryStream.Position = 0;
-                    await memoryStream.CopyToAsync(stream, cancellationToken);
-                } else if(format.Data is FileStream fileStream) {      
-                    var filename = Path.GetFileName(fileStream.Name);
-                    Debug.WriteLine($"        --- tcpClient send filename: {filename}");
-                    await stream.WriteAsync(filename, cancellationToken);
-                    Debug.WriteLine($"        --- tcpClient read filename ack");
-                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFilename) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException($"Others can't receive file: {filename}");
+            foreach(var clipboard in clipboardData.Formats) {
+                if(clipboard.Format == ClipboardData.Format.DirectoryDrop) {
+                    if(clipboard.Data is MemoryStream memoryStream) {
+                        var directory = Encoding.UTF8.GetString(memoryStream.ToArray());
+                        await SendDirectory(directory, stream, cancellationToken);
+                        continue;
                     }
-                    fileStream.Position = 0;
-                    await fileStream.CopyToAsync(stream, cancellationToken);
+                    throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
                 }
 
-                Debug.WriteLine($"        --- tcpClient read data ack");
-
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Transfer data error");
-                }
+                await SendClipboardItem(clipboard, stream, cancellationToken);
             }
-            Debug.WriteLine($"        --- tcpClient success finished");
         }
     }
 }

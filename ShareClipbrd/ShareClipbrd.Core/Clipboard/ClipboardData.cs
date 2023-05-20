@@ -28,6 +28,8 @@
             public const string FileDrop = "FileDrop";
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
+
+            public const string DirectoryDrop = "DirectoryDrop_60D54950";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){

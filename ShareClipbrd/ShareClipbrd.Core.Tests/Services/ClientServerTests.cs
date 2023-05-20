@@ -1,5 +1,7 @@
+using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipes;
 using Moq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -181,6 +183,87 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(otherBytes, Has.Length.EqualTo(1_000_000_003));
             Assert.That(otherBytes.Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
 
+        }
+
+        [Test]
+        public async Task Send_Files_And_Folders_Test() {
+            ClipboardData? receivedClipboardData = null;
+
+            clipboardSerializerMock
+                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == ClipboardData.Format.FileDrop || f == ClipboardData.Format.DirectoryDrop)))
+                .Returns(() => true);
+
+            server.Start((c) => receivedClipboardData = c);
+
+            var clipboardData = new ClipboardData();
+
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
+
+            var rnd = new Random();
+            var bytes0 = new byte[555_000];
+            rnd.NextBytes(bytes0);
+            var bytes1 = new byte[777_000];
+            rnd.NextBytes(bytes1);
+
+            var filename0 = Path.Combine(testsPath, "filename0");
+            File.WriteAllBytes(filename0, bytes0);
+            clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(filename0, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+            var directory0 = Path.Combine(testsPath, "directory0");
+            Directory.CreateDirectory(directory0);
+            clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0)));
+
+            var filename1 = Path.Combine(directory0, "filename1");
+            File.WriteAllBytes(filename1, bytes1);
+            clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(filename1, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+            var directory0_Child0 = Path.Combine(directory0, "directory0_Child0");
+            Directory.CreateDirectory(directory0_Child0);
+            //clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child0)));
+
+            //var directory0_Child1 = Path.Combine(directory0, "directory0_Child1");
+            //Directory.CreateDirectory(directory0_Child1);
+            ////clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1)));
+
+            //var directory0_Child1_Child0 = Path.Combine(directory0_Child1, "directory0_Child1_Child0");
+            //Directory.CreateDirectory(directory0_Child1_Child0);
+            ////clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1_Child0)));
+
+            //var filename1 = Path.Combine(directory0_Child1_Child0, "filename1");
+            //File.WriteAllBytes(filename1, bytes1);
+            //clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(filename1, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+            //var directory1 = Path.Combine(testsPath, "directory1");
+            //Directory.CreateDirectory(directory1);
+            //clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory1)));
+
+            try {
+                await client.Send(clipboardData);
+            } finally {
+                foreach(var fileStream in clipboardData.Formats
+                    .Where(x => x.Format == ClipboardData.Format.FileDrop)
+                    .Select(x=>x.Data)
+                    .Cast<FileStream>()) {
+                    fileStream.Close();
+                }
+                Directory.Delete(testsPath, true);
+
+            }
+            await Task.Delay(1000);
+            Assert.IsNotNull(receivedClipboardData);
+            Assert.That(receivedClipboardData.Formats, Has.Count.EqualTo(7));
+
+            Assert.That(receivedClipboardData.Formats[0].Format, Is.EqualTo(ClipboardData.Format.FileDrop));
+            var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[0].Data).ToArray());
+            Assert.That(otherFilename, Does.Exist);
+            var otherBytes = File.ReadAllBytes(otherFilename);
+            File.Delete(otherFilename);
+            Assert.That(otherBytes, Is.EquivalentTo(bytes0));
+
+            Assert.That(receivedClipboardData.Formats[1].Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
+            var otherDirectory0 = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[1].Data).ToArray());
+            Assert.That(otherDirectory0, Does.Exist);
         }
     }
 }

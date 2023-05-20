@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
 
 namespace ShareClipbrd.Core.Clipboard {
     public interface IClipboardSerializer {
@@ -66,7 +67,11 @@ namespace ShareClipbrd.Core.Clipboard {
             var clipboardData = new ClipboardData();
 
             foreach(var file in files.OfType<string>()) {
-                clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read));
+                if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
+                    clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(file)));
+                } else {
+                    clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read));
+                }
             }
 
             return clipboardData;

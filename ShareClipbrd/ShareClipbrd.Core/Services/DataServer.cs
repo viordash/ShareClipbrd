@@ -1,8 +1,5 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using GuardNet;
@@ -38,16 +35,14 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        static async ValueTask<Stream> HandleFile(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
-            Debug.WriteLine($"tcpServer read filename");
+        static async ValueTask<Stream> HandleFile(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var filename = await stream.ReadASCIIStringAsync(cancellationToken);
-            Debug.WriteLine($"tcpServer readed filename: '{filename}'");
             if(string.IsNullOrEmpty(filename)) {
                 throw new NotSupportedException("Filename receive error");
             }
             await stream.WriteAsync(CommunProtocol.SuccessFilename, cancellationToken);
 
-            var tempFilename = Path.Combine(Path.GetTempPath(), filename);
+            var tempFilename = Path.Combine(sessionDir.Value, filename);
             using(var fileStream = new FileStream(tempFilename, FileMode.OpenOrCreate)) {
                 byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
                 while(fileStream.Length < dataSize) {
@@ -60,6 +55,18 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
             }
             return new MemoryStream(Encoding.UTF8.GetBytes(tempFilename));
+        }
+
+        static async ValueTask<Stream> HandleDirectory(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
+            var directory = await stream.ReadASCIIStringAsync(cancellationToken);
+            if(string.IsNullOrEmpty(directory)) {
+                throw new NotSupportedException("Directory name receive error");
+            }
+            await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
+
+            var tempDirectory = Path.Combine(sessionDir.Value, directory);
+            Directory.CreateDirectory(tempDirectory);
+            return new MemoryStream(Encoding.UTF8.GetBytes(tempDirectory));
         }
 
         static async ValueTask<Stream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -77,8 +84,22 @@ namespace ShareClipbrd.Core.Services {
             return memoryStream;
         }
 
+        static string RecreateTempDirectory() {
+            const string path = "ShareClipbrd";
+            var tempDir = Path.Combine(Path.GetTempPath(), path);
+            if(Directory.Exists(tempDir)) {
+                try {
+                    Directory.Delete(tempDir, true);
+                } catch { }
+            }
+            Directory.CreateDirectory(tempDir);
+            return tempDir;
+        }
+
         async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
+
+            var sessionDir = new Lazy<string>(RecreateTempDirectory);
 
             try {
                 var stream = tcpClient.GetStream();
@@ -104,11 +125,13 @@ namespace ShareClipbrd.Core.Services {
                     await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
 
-                    if(clipboardSerializer.FormatForFiles(format)) {
-                        clipboardData.Add(format, await HandleFile(stream, (int)size, cancellationToken));
-                    } else if(clipboardSerializer.FormatForImage(format)) {
+                    if(format == ClipboardData.Format.FileDrop) {
+                        clipboardData.Add(format, await HandleFile(stream, (int)size, sessionDir, cancellationToken));
+                    } else if(format == ClipboardData.Format.DirectoryDrop) {
+                        clipboardData.Add(format, await HandleDirectory(stream, (int)size, sessionDir, cancellationToken));
+                    } else if(format == ClipboardData.Format.Bitmap) {
 
-                    } else if(clipboardSerializer.FormatForAudio(format)) {
+                    } else if(format == ClipboardData.Format.WaveAudio) {
 
                     } else {
                         clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
