@@ -36,7 +36,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static async ValueTask<Stream> HandleFile(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
-            var filename = await stream.ReadASCIIStringAsync(cancellationToken);
+            var filename = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(filename)) {
                 throw new NotSupportedException("Filename receive error");
             }
@@ -62,7 +62,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static async ValueTask<Stream> HandleDirectory(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
-            var directory = await stream.ReadASCIIStringAsync(cancellationToken);
+            var directory = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(directory)) {
                 throw new NotSupportedException("Directory name receive error");
             }
@@ -115,7 +115,7 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    var format = await stream.ReadASCIIStringAsync(cancellationToken);
+                    var format = await stream.ReadUTF8StringAsync(cancellationToken);
                     if(string.IsNullOrEmpty(format)) {
                         break;
                     }

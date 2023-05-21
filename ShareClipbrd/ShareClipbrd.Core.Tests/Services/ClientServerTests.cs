@@ -102,7 +102,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             var buffer = new byte[3_333_333 / 100];
             testdata.Position = 0;
             for(int i = 0; i < 100; i++) {
-                var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
+                var filename = Path.Combine(testsPath, "кирилица_" + Path.GetFileName(Path.GetTempFileName()));
                 testdata.Read(buffer, 0, buffer.Length);
 
                 File.WriteAllBytes(filename, buffer);
@@ -225,7 +225,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             var directory0_Child0 = Path.Combine(directory0, "directory0_Child0");
             Directory.CreateDirectory(directory0_Child0);
 
-            var directory0_Child1 = Path.Combine(directory0, "directory0_Child1");
+            var directory0_Child1 = Path.Combine(directory0, "директория0_Child1");
             Directory.CreateDirectory(directory0_Child1);
             clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1)));
 
@@ -233,7 +233,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Directory.CreateDirectory(directory0_Child1_Child0_Empty);
             clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1_Child0_Empty)));
 
-            var filename2 = Path.Combine(directory0_Child1, "filename2.dat");
+            var filename2 = Path.Combine(directory0_Child1, "файл2.dat");
             File.WriteAllBytes(filename2, bytes1);
 
             try {
@@ -267,7 +267,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(receivedClipboardData.Formats[2].Format, Is.EqualTo(ClipboardData.Format.FileDrop));
             otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[2].Data).ToArray());
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename2.dat"));
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             Assert.That(receivedClipboardData.Formats[3].Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
@@ -278,7 +278,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(receivedClipboardData.Formats[4].Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
             otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[4].Data).ToArray());
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0\\directory0_Child1\\directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("directory0\\директория0_Child1\\directory0_Child1_Child0_Empty"));
 
             Assert.That(receivedClipboardData.Formats[5].Format, Is.EqualTo(ClipboardData.Format.FileDrop));
             otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[5].Data).ToArray());
@@ -289,13 +289,13 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(receivedClipboardData.Formats[6].Format, Is.EqualTo(ClipboardData.Format.FileDrop));
             otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[6].Data).ToArray());
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename2.dat"));
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             Assert.That(receivedClipboardData.Formats[7].Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
             otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[7].Data).ToArray());
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0_Child1\\directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
 
             Assert.That(receivedClipboardData.Formats[8].Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
             otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardData.Formats[8].Data).ToArray());

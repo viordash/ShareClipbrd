@@ -37,13 +37,13 @@ namespace ShareClipbrd.Core.Extensions {
         }
 
         public static async ValueTask WriteAsync(this NetworkStream stream, string value, CancellationToken cancellationToken) {
-            await stream.WriteAsync(Encoding.ASCII.GetBytes(value), cancellationToken);
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(value), cancellationToken);
             await stream.FlushAsync(cancellationToken);
         }
-        public static async ValueTask<string> ReadASCIIStringAsync(this NetworkStream stream, CancellationToken cancellationToken) {
-            var receiveBuffer = new byte[8192];
+        public static async ValueTask<string> ReadUTF8StringAsync(this NetworkStream stream, CancellationToken cancellationToken) {
+            var receiveBuffer = new byte[65536];
             var receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-            return Encoding.ASCII.GetString(receiveBuffer, 0, receivedBytes);
+            return Encoding.UTF8.GetString(receiveBuffer, 0, receivedBytes);
         }
 
     }
