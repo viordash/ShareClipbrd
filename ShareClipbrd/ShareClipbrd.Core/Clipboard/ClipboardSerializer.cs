@@ -1,6 +1,5 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
 
 namespace ShareClipbrd.Core.Clipboard {
     public interface IClipboardSerializer {
@@ -9,8 +8,8 @@ namespace ShareClipbrd.Core.Clipboard {
         bool FormatForAudio(string format);
 
 
-        ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc);
-        ClipboardData SerializeFiles(StringCollection files);
+        void SerializeDataObjects(ClipboardData clipboardData, string[] formats, Func<string, object> getDataFunc);
+        void SerializeFiles(ClipboardData clipboardData, StringCollection files);
 
         object DeserializeDataObject(string format, Stream dataStream);
     }
@@ -28,21 +27,18 @@ namespace ShareClipbrd.Core.Clipboard {
             return format == ClipboardData.Format.WaveAudio;
         }
 
-        public ClipboardData SerializeDataObjects(string[] formats, Func<string, object> getDataFunc) {
-            var clipboardData = new ClipboardData();
-
+        public void SerializeDataObjects(ClipboardData clipboardData, string[] formats, Func<string, object> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             foreach(var format in formats) {
                 try {
-                    var obj = getDataFunc(format);
-
                     if(!ClipboardData.Converters.TryGetValue(format, out ClipboardData.Convert? convertFunc)) {
 
+                        var obj = getDataFunc(format);
                         if(obj is MemoryStream memoryStream) {
                             convertFunc = new ClipboardData.Convert(
-                            (c, o) => {
-                                if(o is MemoryStream castedValue) { c.Add(format, castedValue); return true; } else { return false; }
+                            (c, f) => {
+                                c.Add(format, memoryStream); return true;
                             },
                             (stream) => stream
                             );
@@ -53,34 +49,39 @@ namespace ShareClipbrd.Core.Clipboard {
                         }
                     }
 
-                    if(!convertFunc.From(clipboardData, obj)) {
+                    if(!convertFunc.From(clipboardData, getDataFunc)) {
                         throw new InvalidCastException(format);
                     }
                 } catch(System.Runtime.InteropServices.COMException e) {
                     Debug.WriteLine(e);
                 }
             }
-            return clipboardData;
         }
 
-        public ClipboardData SerializeFiles(StringCollection files) {
-            var clipboardData = new ClipboardData();
-
+        public void SerializeFiles(ClipboardData clipboardData, StringCollection files) {
             foreach(var file in files.OfType<string>()) {
                 if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
                     clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(file)));
                 } else {
-                    clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read));
+                    clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
                 }
             }
 
-            return clipboardData;
         }
 
 
         public object DeserializeDataObject(string format, Stream dataStream) {
             if(!ClipboardData.Converters.TryGetValue(format, out ClipboardData.Convert? convertFunc)) {
-                convertFunc = new ClipboardData.Convert((c, o) => false, (stream) => stream);
+                convertFunc = new ClipboardData.Convert((c, o) => false, (stream) => {
+                    Debug.WriteLine($"--- >>>>");
+                    if(stream is MemoryStream ms) {
+                        var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
+                        Debug.WriteLine($"--- {format} {str}");
+                    }
+                    Debug.WriteLine($"--- <<<<");
+
+                    return stream;
+                });
             }
             return convertFunc.To(dataStream);
         }

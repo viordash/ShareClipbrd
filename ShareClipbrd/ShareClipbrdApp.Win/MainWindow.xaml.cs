@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -81,34 +84,64 @@ namespace ShareClipbrdApp.Win {
 
         async Task TransmitClipboard() {
             await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Send)) {
-                ClipboardData clipboardData;
+                var clipboardData = new ClipboardData();
                 if(System.Windows.Clipboard.ContainsFileDropList()) {
-                    clipboardData = clipboardService.SerializeFiles(System.Windows.Clipboard.GetFileDropList());
+                    clipboardService.SerializeFiles(clipboardData, System.Windows.Clipboard.GetFileDropList());
                 } else if(System.Windows.Clipboard.ContainsImage()) {
-                    clipboardData = new();
+
                 } else if(System.Windows.Clipboard.ContainsAudio()) {
-                    clipboardData = new();
+
                 } else {
                     var dataObject = System.Windows.Clipboard.GetDataObject();
-                    clipboardData = clipboardService.SerializeDataObjects(dataObject.GetFormats(), dataObject.GetData);
+                    clipboardService.SerializeDataObjects(clipboardData, dataObject.GetFormats(), dataObject.GetData);
                 }
 
                 await dataClient.Send(clipboardData);
             }
         }
 
-        void ReceiveClipboardDataCb(ClipboardData clipboardData) {
+        void ReceiveClipboardDataCb(IEnumerable<ClipboardItem> clipboardFormats) {
             Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-                    var dataObject = new DataObject();
+                    var fileDrops = clipboardFormats
+                        .Where(x => x.Format == ClipboardData.Format.FileDrop);
 
-                    foreach(var format in clipboardData.Formats) {
-                        var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
-                        dataObject.SetData(format.Format, obj);
+                    if(fileDrops.Any()) {
+                        var fileDropList = new StringCollection();
+                        foreach(var format in fileDrops) {
+                            var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
+                            fileDropList.Add(obj as string);
+                        }
+                        System.Windows.Clipboard.SetFileDropList(fileDropList);
                     }
-                    Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
-                    System.Windows.Clipboard.Clear();
-                    System.Windows.Clipboard.SetDataObject(dataObject);
+
+                    var images = clipboardFormats
+                        .Where(x => x.Format == ClipboardData.Format.Bitmap);
+                    if(images.Any()) {
+
+                    }
+
+                    var audio = clipboardFormats
+                        .Where(x => x.Format == ClipboardData.Format.WaveAudio);
+                    if(audio.Any()) {
+
+                    }
+
+                    var data = clipboardFormats
+                        .Where(x => x.Format != ClipboardData.Format.FileDrop
+                        && x.Format != ClipboardData.Format.Bitmap
+                        && x.Format != ClipboardData.Format.WaveAudio);
+                    if(data.Any()) {
+                        var dataObject = new DataObject();
+
+                        foreach(var format in data) {
+                            var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
+                            dataObject.SetData(format.Format, obj);
+                        }
+                        Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
+                        System.Windows.Clipboard.Clear();
+                        System.Windows.Clipboard.SetDataObject(dataObject);
+                    }
                 }
             }));
         }

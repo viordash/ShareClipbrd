@@ -10,7 +10,7 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start(Action<ClipboardData> onReceiveCb);
+        void Start(Action<IEnumerable<ClipboardItem>> onReceiveCb);
         void Stop();
     }
 
@@ -100,7 +100,7 @@ namespace ShareClipbrd.Core.Services {
             return tempDir;
         }
 
-        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveCb, CancellationToken cancellationToken) {
+        async ValueTask HandleClient(TcpClient tcpClient, Action<IEnumerable<ClipboardItem>> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
 
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
@@ -121,9 +121,7 @@ namespace ShareClipbrd.Core.Services {
                     }
                     await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
 
-                    Debug.WriteLine($"tcpServer read size");
                     var size = await stream.ReadInt64Async(cancellationToken);
-                    Debug.WriteLine($"tcpServer readed size: {size}");
                     await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
 
 
@@ -140,7 +138,8 @@ namespace ShareClipbrd.Core.Services {
                     }
 
                 }
-                onReceiveCb(clipboardData);
+
+                onReceiveCb(clipboardData.Formats.OrderBy(x => x.Format));
                 Debug.WriteLine($"tcpServer success finished");
 
             } catch(OperationCanceledException ex) {
@@ -150,7 +149,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start(Action<ClipboardData> onReceiveCb) {
+        public void Start(Action<IEnumerable<ClipboardItem>> onReceiveCb) {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
