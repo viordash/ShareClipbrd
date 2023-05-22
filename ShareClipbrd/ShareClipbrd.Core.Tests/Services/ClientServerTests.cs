@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -12,7 +13,6 @@ namespace ShareClipbrd.Core.Tests.Services {
     public class Tests {
         Mock<ISystemConfiguration> systemConfigurationMock;
         Mock<IDialogService> dialogServiceMock;
-        Mock<IClipboardSerializer> clipboardSerializerMock;
         DataServer server;
         DataClient client;
 
@@ -20,12 +20,11 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void Setup() {
             systemConfigurationMock = new();
             dialogServiceMock = new();
-            clipboardSerializerMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
-            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, clipboardSerializerMock.Object);
+            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object);
 
         }
@@ -37,9 +36,9 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_CommonData_Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            ClipboardData? receivedClipboard = null;
 
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => receivedClipboard = c);
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")));
@@ -49,16 +48,16 @@ namespace ShareClipbrd.Core.Tests.Services {
             await Task.Delay(100);
 
 
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText" }));
-            Assert.That(receivedClipboardFormats.Select(x => x.Data), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")) }));
+            Assert.IsNotNull(receivedClipboard);
+            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText" }));
+            Assert.That(receivedClipboard.Formats.Select(x => x.Data), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")) }));
         }
 
         [Test]
         public async Task Send_Common_Big_Data_Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            ClipboardData? receivedClipboard = null;
 
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => receivedClipboard = c);
 
             var clipboardData = new ClipboardData();
 
@@ -72,21 +71,17 @@ namespace ShareClipbrd.Core.Tests.Services {
             await client.Send(clipboardData);
             await Task.Delay(1000);
 
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
-            Assert.That(receivedClipboardFormats.First(x => x.Format == "Text").Data, Has.Length.EqualTo(1_000_000_003));
-            Assert.That(((MemoryStream)receivedClipboardFormats.First(x => x.Format == "Text").Data).ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
+            Assert.IsNotNull(receivedClipboard);
+            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
+            Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Data, Has.Length.EqualTo(1_000_000_003));
+            Assert.That(((MemoryStream)receivedClipboard.Formats.First(x => x.Format == "Text").Data).ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
         }
 
         [Test]
         public async Task Send_Files_Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            StringCollection? fileDropList = null;
 
-            clipboardSerializerMock
-                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == "FileDrop")))
-                .Returns(() => true);
-
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => fileDropList = f);
 
             var clipboardData = new ClipboardData();
 
@@ -122,14 +117,13 @@ namespace ShareClipbrd.Core.Tests.Services {
                 }
             }
             await Task.Delay(1000);
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Count(), Is.EqualTo(100));
+            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList.Count, Is.EqualTo(100));
 
 
             testdata.Position = 0;
             for(int i = 0; i < 100; i++) {
-                Assert.That(receivedClipboardFormats.ElementAt(i).Format, Is.EqualTo("FileDrop"));
-                var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(i).Data).ToArray());
+                var otherFilename = fileDropList[i];
 
                 Assert.That(otherFilename, Does.Exist);
 
@@ -144,13 +138,9 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_Big_File_Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            StringCollection? fileDropList = null;
 
-            clipboardSerializerMock
-                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == "FileDrop")))
-                .Returns(() => true);
-
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => fileDropList = f);
 
             var rnd = new Random();
             var bytes = new byte[1_000_000_003];
@@ -172,9 +162,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
             await Task.Delay(1000);
 
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Select(x => x.Format), Is.EquivalentTo(new[] { "FileDrop" }));
-            var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.First(x => x.Format == "FileDrop").Data).ToArray());
+            Assert.IsNotNull(fileDropList);
+            var otherFilename = fileDropList[0];
 
             Assert.That(otherFilename, Does.Exist);
 
@@ -188,13 +177,9 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_Files_And_Folders_Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            StringCollection? fileDropList = null;
 
-            clipboardSerializerMock
-                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == ClipboardData.Format.FileDrop || f == ClipboardData.Format.DirectoryDrop)))
-                .Returns(() => true);
-
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => fileDropList = f);
 
             var clipboardData = new ClipboardData();
 
@@ -246,69 +231,56 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             }
             await Task.Delay(500);
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Count(), Is.EqualTo(9));
+            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList.Count, Is.EqualTo(9));
 
-            Assert.That(receivedClipboardFormats.ElementAt(0).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(0).Data).ToArray());
+            var otherFilename = fileDropList[0];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            Assert.That(receivedClipboardFormats.ElementAt(1).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(1).Data).ToArray());
+            otherFilename = fileDropList[1];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            Assert.That(receivedClipboardFormats.ElementAt(2).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(2).Data).ToArray());
+            otherFilename = fileDropList[2];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            Assert.That(receivedClipboardFormats.ElementAt(3).Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
-            var otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(3).Data).ToArray());
+            var otherDirectory = fileDropList[3];
             Assert.That(otherDirectory, Does.Exist);
             Assert.That(otherDirectory, Does.EndWith("directory0\\directory0_Child0"));
 
-            Assert.That(receivedClipboardFormats.ElementAt(4).Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
-            otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(4).Data).ToArray());
+            otherDirectory = fileDropList[4];
             Assert.That(otherDirectory, Does.Exist);
             Assert.That(otherDirectory, Does.EndWith("directory0\\директория0_Child1\\directory0_Child1_Child0_Empty"));
 
-            Assert.That(receivedClipboardFormats.ElementAt(5).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(5).Data).ToArray());
+            otherFilename = fileDropList[5];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            Assert.That(receivedClipboardFormats.ElementAt(6).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(6).Data).ToArray());
+            otherFilename = fileDropList[6];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            Assert.That(receivedClipboardFormats.ElementAt(7).Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
-            otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(7).Data).ToArray());
+            otherDirectory = fileDropList[7];
             Assert.That(otherDirectory, Does.Exist);
             Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
 
-            Assert.That(receivedClipboardFormats.ElementAt(8).Format, Is.EqualTo(ClipboardData.Format.DirectoryDrop));
-            otherDirectory = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(8).Data).ToArray());
+            otherDirectory = fileDropList[8];
             Assert.That(otherDirectory, Does.Exist);
             Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
         }
 
         [Test]
         public async Task Send_identical_Files__Test() {
-            IEnumerable<ClipboardItem>? receivedClipboardFormats = null;
+            StringCollection? fileDropList = null;
 
-            clipboardSerializerMock
-                .Setup(x => x.FormatForFiles(It.Is<string>(f => f == ClipboardData.Format.FileDrop || f == ClipboardData.Format.DirectoryDrop)))
-                .Returns(() => true);
-
-            server.Start((c) => receivedClipboardFormats = c);
+            server.Start((c, f) => fileDropList = f);
 
             var clipboardData = new ClipboardData();
 
@@ -340,23 +312,20 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             }
             await Task.Delay(500);
-            Assert.IsNotNull(receivedClipboardFormats);
-            Assert.That(receivedClipboardFormats.Count(), Is.EqualTo(3));
+            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList.Count, Is.EqualTo(3));
 
-            Assert.That(receivedClipboardFormats.ElementAt(0).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            var otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(0).Data).ToArray());
+            var otherFilename = fileDropList[0];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            Assert.That(receivedClipboardFormats.ElementAt(1).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(1).Data).ToArray());
+            otherFilename = fileDropList[1];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            Assert.That(receivedClipboardFormats.ElementAt(2).Format, Is.EqualTo(ClipboardData.Format.FileDrop));
-            otherFilename = System.Text.Encoding.UTF8.GetString(((MemoryStream)receivedClipboardFormats.ElementAt(2).Data).ToArray());
+            otherFilename = fileDropList[2];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));

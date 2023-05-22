@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
@@ -10,32 +11,28 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start(Action<IEnumerable<ClipboardItem>> onReceiveCb);
+        void Start(Action<ClipboardData, StringCollection> onReceiveCb);
         void Stop();
     }
 
     public class DataServer : IDataServer {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
-        readonly IClipboardSerializer clipboardSerializer;
         readonly CancellationTokenSource cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
-            IDialogService dialogService,
-            IClipboardSerializer clipboardSerializer
+            IDialogService dialogService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
-            Guard.NotNull(clipboardSerializer, nameof(clipboardSerializer));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
-            this.clipboardSerializer = clipboardSerializer;
 
             cts = new CancellationTokenSource();
         }
 
-        static async ValueTask<Stream> HandleFile(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
+        static async ValueTask<string> HandleFile(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var filename = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(filename)) {
                 throw new NotSupportedException("Filename receive error");
@@ -58,10 +55,10 @@ namespace ShareClipbrd.Core.Services {
                 }
                 await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
             }
-            return new MemoryStream(Encoding.UTF8.GetBytes(tempFilename));
+            return tempFilename;
         }
 
-        static async ValueTask<Stream> HandleDirectory(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
+        static async ValueTask<string> HandleDirectory(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var directory = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(directory)) {
                 throw new NotSupportedException("Directory name receive error");
@@ -70,7 +67,7 @@ namespace ShareClipbrd.Core.Services {
 
             var tempDirectory = Path.Combine(sessionDir.Value, directory);
             Directory.CreateDirectory(tempDirectory);
-            return new MemoryStream(Encoding.UTF8.GetBytes(tempDirectory));
+            return tempDirectory;
         }
 
         static async ValueTask<Stream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -100,8 +97,9 @@ namespace ShareClipbrd.Core.Services {
             return tempDir;
         }
 
-        async ValueTask HandleClient(TcpClient tcpClient, Action<IEnumerable<ClipboardItem>> onReceiveCb, CancellationToken cancellationToken) {
+        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData, StringCollection> onReceiveCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
+            var fileDropList = new StringCollection();
 
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
 
@@ -126,9 +124,9 @@ namespace ShareClipbrd.Core.Services {
 
 
                     if(format == ClipboardData.Format.FileDrop) {
-                        clipboardData.Add(format, await HandleFile(stream, (int)size, sessionDir, cancellationToken));
+                        fileDropList.Add(await HandleFile(stream, (int)size, sessionDir, cancellationToken));
                     } else if(format == ClipboardData.Format.DirectoryDrop) {
-                        clipboardData.Add(format, await HandleDirectory(stream, (int)size, sessionDir, cancellationToken));
+                        fileDropList.Add(await HandleDirectory(stream, (int)size, sessionDir, cancellationToken));
                     } else if(format == ClipboardData.Format.Bitmap) {
 
                     } else if(format == ClipboardData.Format.WaveAudio) {
@@ -136,10 +134,9 @@ namespace ShareClipbrd.Core.Services {
                     } else {
                         clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                     }
-
                 }
 
-                onReceiveCb(clipboardData.Formats.OrderBy(x => x.Format));
+                onReceiveCb(clipboardData, fileDropList);
                 Debug.WriteLine($"tcpServer success finished");
 
             } catch(OperationCanceledException ex) {
@@ -149,7 +146,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start(Action<IEnumerable<ClipboardItem>> onReceiveCb) {
+        public void Start(Action<ClipboardData, StringCollection> onReceiveCb) {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 

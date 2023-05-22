@@ -100,41 +100,19 @@ namespace ShareClipbrdApp.Win {
             }
         }
 
-        void ReceiveClipboardDataCb(IEnumerable<ClipboardItem> clipboardFormats) {
+        void ReceiveClipboardDataCb(ClipboardData clipboardFormats, StringCollection fileDropList) {
             Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-                    var fileDrops = clipboardFormats
-                        .Where(x => x.Format == ClipboardData.Format.FileDrop);
 
-                    if(fileDrops.Any()) {
-                        var fileDropList = new StringCollection();
-                        foreach(var format in fileDrops) {
-                            var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
-                            fileDropList.Add(obj as string);
-                        }
+                    if(fileDropList.Count > 0) {
                         System.Windows.Clipboard.SetFileDropList(fileDropList);
                     }
 
-                    var images = clipboardFormats
-                        .Where(x => x.Format == ClipboardData.Format.Bitmap);
-                    if(images.Any()) {
 
-                    }
-
-                    var audio = clipboardFormats
-                        .Where(x => x.Format == ClipboardData.Format.WaveAudio);
-                    if(audio.Any()) {
-
-                    }
-
-                    var data = clipboardFormats
-                        .Where(x => x.Format != ClipboardData.Format.FileDrop
-                        && x.Format != ClipboardData.Format.Bitmap
-                        && x.Format != ClipboardData.Format.WaveAudio);
-                    if(data.Any()) {
+                    if(clipboardFormats.Formats.Any()) {
                         var dataObject = new DataObject();
 
-                        foreach(var format in data) {
+                        foreach(var format in clipboardFormats.Formats) {
                             var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
                             dataObject.SetData(format.Format, obj);
                         }

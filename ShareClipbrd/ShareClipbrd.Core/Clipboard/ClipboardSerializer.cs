@@ -3,10 +3,6 @@ using System.Diagnostics;
 
 namespace ShareClipbrd.Core.Clipboard {
     public interface IClipboardSerializer {
-        bool FormatForFiles(string format);
-        bool FormatForImage(string format);
-        bool FormatForAudio(string format);
-
 
         void SerializeDataObjects(ClipboardData clipboardData, string[] formats, Func<string, object> getDataFunc);
         void SerializeFiles(ClipboardData clipboardData, StringCollection files);
@@ -15,17 +11,6 @@ namespace ShareClipbrd.Core.Clipboard {
     }
 
     public class ClipboardSerializer : IClipboardSerializer {
-        public bool FormatForFiles(string format) {
-            return format == ClipboardData.Format.FileDrop;
-        }
-
-        public bool FormatForImage(string format) {
-            return format == ClipboardData.Format.Bitmap;
-        }
-
-        public bool FormatForAudio(string format) {
-            return format == ClipboardData.Format.WaveAudio;
-        }
 
         public void SerializeDataObjects(ClipboardData clipboardData, string[] formats, Func<string, object> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
