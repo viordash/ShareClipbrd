@@ -44,7 +44,7 @@ namespace ShareClipbrdApp.Win {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = SystemParameters.FullPrimaryScreenHeight / 40;
             Width = SystemParameters.FullPrimaryScreenWidth / 40;
-            dataServer.Start(ReceiveClipboardDataCb);
+            dataServer.Start(ReceiveClipboardDataCb, ReceiveClipboardFilesCb);
             edHostAddress.Text = Settings.Default.HostAddress;
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
@@ -87,7 +87,7 @@ namespace ShareClipbrdApp.Win {
             await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Send)) {
                 var clipboardData = new ClipboardData();
                 if(System.Windows.Clipboard.ContainsFileDropList()) {
-                    clipboardService.SerializeFiles(clipboardData, System.Windows.Clipboard.GetFileDropList());
+                    await dataClient.SendFileDropList(System.Windows.Clipboard.GetFileDropList());
                 } else if(System.Windows.Clipboard.ContainsImage()) {
 
                 } else if(System.Windows.Clipboard.ContainsAudio()) {
@@ -95,32 +95,36 @@ namespace ShareClipbrdApp.Win {
                 } else {
                     var dataObject = System.Windows.Clipboard.GetDataObject();
                     clipboardService.SerializeDataObjects(clipboardData, dataObject.GetFormats(), dataObject.GetData);
+                    await dataClient.SendData(clipboardData);
                 }
 
-                await dataClient.Send(clipboardData);
+
             }
         }
 
-        void ReceiveClipboardDataCb(ClipboardData clipboardFormats, StringCollection fileDropList) {
+        void ReceiveClipboardDataCb(ClipboardData clipboardFormats) {
             Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-
-                    if(fileDropList.Count > 0) {
-                        System.Windows.Clipboard.SetFileDropList(fileDropList);
-                    }
-
 
                     if(clipboardFormats.Formats.Any()) {
                         var dataObject = new DataObject();
 
                         foreach(var format in clipboardFormats.Formats) {
-                            var obj = clipboardService.DeserializeDataObject(format.Format, (Stream)format.Data);
+                            var obj = clipboardService.DeserializeDataObject(format.Format, (Stream)format.Stream);
                             dataObject.SetData(format.Format, obj);
                         }
                         Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
                         System.Windows.Clipboard.Clear();
                         System.Windows.Clipboard.SetDataObject(dataObject);
                     }
+                }
+            }));
+        }
+
+        void ReceiveClipboardFilesCb(StringCollection fileDropList) {
+            Dispatcher.BeginInvoke(new Action(async () => {
+                await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
+                    System.Windows.Clipboard.SetFileDropList(fileDropList);
                 }
             }));
         }

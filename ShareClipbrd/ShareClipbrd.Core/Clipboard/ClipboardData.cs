@@ -1,10 +1,10 @@
 ﻿namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
         public string Format { get; set; }
-        public object Data { get; set; }
-        public ClipboardItem(string format, object data) {
+        public MemoryStream Stream { get; set; }
+        public ClipboardItem(string format, MemoryStream stream) {
             Format = format;
-            Data = data;
+            Stream = stream;
         }
     }
     public class ClipboardData {
@@ -25,7 +25,6 @@
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
             public const string Html = "HTML Format";
-            public const string FileDrop = "FileDrop";
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
 
@@ -89,20 +88,12 @@
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
             },
-            { Format.FileDrop, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.FileDrop) is string[] castedValue) {/*c.Add(Format.FileDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue)));*/ return true; }
-                    else {return false;}
-                },
-               (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
-                )
-            },
         };
 
         public List<ClipboardItem> Formats { get; } = new();
 
-        public void Add(string format, object data) {
-            Formats.Add(new ClipboardItem(format, data));
+        public void Add(string format, MemoryStream stream) {
+            Formats.Add(new ClipboardItem(format, stream));
         }
     }
 }

@@ -11,7 +11,7 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start(Action<ClipboardData, StringCollection> onReceiveCb);
+        void Start(Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb);
         void Stop();
     }
 
@@ -58,18 +58,6 @@ namespace ShareClipbrd.Core.Services {
             return tempFilename;
         }
 
-        static async ValueTask<string> HandleDirectory(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
-            var directory = await stream.ReadUTF8StringAsync(cancellationToken);
-            if(string.IsNullOrEmpty(directory)) {
-                throw new NotSupportedException("Directory name receive error");
-            }
-            await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
-
-            var tempDirectory = Path.Combine(sessionDir.Value, directory);
-            Directory.CreateDirectory(tempDirectory);
-            return tempDirectory;
-        }
-
         static string[] HandleZipArchive(NetworkStream stream, int itemsCount, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var files = new List<string>();
 
@@ -96,7 +84,7 @@ namespace ShareClipbrd.Core.Services {
             return files.ToArray();
         }
 
-        static async ValueTask<Stream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
+        static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
             var memoryStream = new MemoryStream(dataSize);
             byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
             while(memoryStream.Length < dataSize) {
@@ -123,9 +111,23 @@ namespace ShareClipbrd.Core.Services {
             return tempDir;
         }
 
-        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData, StringCollection> onReceiveCb, CancellationToken cancellationToken) {
+        async ValueTask<string?> ReceiveFormat(NetworkStream stream, CancellationToken cancellationToken) {
+            var format = await stream.ReadUTF8StringAsync(cancellationToken);
+            if(string.IsNullOrEmpty(format)) {
+                return null;
+            }
+            await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
+            return format;
+        }
+
+        async ValueTask<Int64> ReceiveSize(NetworkStream stream, CancellationToken cancellationToken) {
+            var size = await stream.ReadInt64Async(cancellationToken);
+            await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
+            return size;
+        }
+
+        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
-            var fileDropList = new StringCollection();
 
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
 
@@ -138,31 +140,25 @@ namespace ShareClipbrd.Core.Services {
                 }
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
-                while(stream.CanRead && !cancellationToken.IsCancellationRequested) {
-                    var format = await stream.ReadUTF8StringAsync(cancellationToken);
-                    if(string.IsNullOrEmpty(format)) {
-                        break;
-                    }
-                    await stream.WriteAsync(CommunProtocol.SuccessFormat, cancellationToken);
+                var format = await ReceiveFormat(stream, cancellationToken);
+                if(format == ClipboardData.Format.ZipArchive) {
+                    var filesCount = await ReceiveSize(stream, cancellationToken);
+                    var fileDropList = new StringCollection();
+                    fileDropList.AddRange(HandleZipArchive(stream, (int)filesCount, sessionDir, cancellationToken));
+                    onReceiveFilesCb(fileDropList);
+                } else if(format == ClipboardData.Format.Bitmap) {
 
-                    var size = await stream.ReadInt64Async(cancellationToken);
-                    await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
+                } else if(format == ClipboardData.Format.WaveAudio) {
 
-
-                    if(format == ClipboardData.Format.FileDrop) {
-                        fileDropList.Add(await HandleFile(stream, (int)size, sessionDir, cancellationToken));
-                    } else if(format == ClipboardData.Format.Bitmap) {
-
-                    } else if(format == ClipboardData.Format.WaveAudio) {
-
-                    } else if(format == ClipboardData.Format.ZipArchive) {
-                        fileDropList.AddRange(HandleZipArchive(stream, (int)size, sessionDir, cancellationToken));
-                    } else {
+                } else {
+                    while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
+                        var size = await ReceiveSize(stream, cancellationToken);
                         clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
+                        format = await ReceiveFormat(stream, cancellationToken);
                     }
+                    onReceiveDataCb(clipboardData);
                 }
 
-                onReceiveCb(clipboardData, fileDropList);
                 Debug.WriteLine($"tcpServer success finished");
 
             } catch(OperationCanceledException ex) {
@@ -172,7 +168,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start(Action<ClipboardData, StringCollection> onReceiveCb) {
+        public void Start(Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb) {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
@@ -187,7 +183,7 @@ namespace ShareClipbrd.Core.Services {
                             using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
                             Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
 
-                            await HandleClient(tcpClient, onReceiveCb, cancellationToken);
+                            await HandleClient(tcpClient, onReceiveDataCb, onReceiveFilesCb, cancellationToken);
                         }
                     } catch(OperationCanceledException ex) {
                         Debug.WriteLine($"tcpServer canceled {ex}");

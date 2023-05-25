@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Sockets;
-using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -12,7 +11,8 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
-        Task Send(ClipboardData clipboardData);
+        Task SendFileDropList(StringCollection files);
+        Task SendData(ClipboardData clipboardData);
     }
 
     public class DataClient : IDataClient {
@@ -28,18 +28,37 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        static async Task SendHeader(string format, Int64 dataSize, NetworkStream stream, CancellationToken cancellationToken) {
-            await stream.WriteAsync(format, cancellationToken);
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
-                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Others do not support clipboard format: {format}");
-            }
+        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, CancellationToken cancellationToken) {
 
-            var size = dataSize; // ((Stream)clipboard.Data).Length;
-            await stream.WriteAsync(size, cancellationToken);
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+
+            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+            await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
+
+            var stream = tcpClient.GetStream();
+
+            await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Others do not support size: {size}");
+                throw new NotSupportedException("Wrong version of the other side");
+            }
+            return stream;
+        }
+
+        public async Task SendFileDropList(StringCollection files) {
+            var cancellationToken = cts.Token;
+            using TcpClient tcpClient = new();
+            var stream = await Connect(tcpClient, cancellationToken);
+            await SendHeader(ClipboardData.Format.ZipArchive, files.Count, stream, cancellationToken);
+
+            using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
+                foreach(var file in files.Cast<string>()) {
+                    if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
+                        Debug.WriteLine($"dir: {file}");
+                        ArchiveDirectory(file, archive);
+                    } else {
+                        archive.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.NoCompression);
+                    }
+                }
             }
         }
 
@@ -70,50 +89,31 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        static void SendZipArchive(StringCollection files, NetworkStream stream, CancellationToken cancellationToken) {
-            using(var archive = new ZipArchive(stream, ZipArchiveMode.Create, true)) {
-                foreach(var file in files.Cast<string>()) {
-                    if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-                        Debug.WriteLine($"dir: {file}");
-                        ArchiveDirectory(file, archive);
-                    } else {
-                        archive.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.Fastest);
-                    }
-                }
+        static async Task SendHeader(string format, Int64 dataSize, NetworkStream stream, CancellationToken cancellationToken) {
+            await stream.WriteAsync(format, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others do not support clipboard format: {format}");
+            }
+
+            var size = dataSize;
+            await stream.WriteAsync(size, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others do not support size: {size}");
             }
         }
 
-        public async Task Send(ClipboardData clipboardData) {
+        public async Task SendData(ClipboardData clipboardData) {
             var cancellationToken = cts.Token;
             using TcpClient tcpClient = new();
-
-            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-            await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
-
-            var stream = tcpClient.GetStream();
-
-            await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
-                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException("Wrong version of the other side");
-            }
+            var stream = await Connect(tcpClient, cancellationToken);
 
             foreach(var clipboard in clipboardData.Formats) {
-                if(clipboard.Format == ClipboardData.Format.ZipArchive) {
-                    if(clipboard.Data is StringCollection files) {
-                        await SendHeader(clipboard.Format, files.Count, stream, cancellationToken);
-                        SendZipArchive(files, stream, cancellationToken);
-                        continue;
-                    }
-                    throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
-                }
+                await SendHeader(clipboard.Format, clipboard.Stream.Length, stream, cancellationToken);
+                clipboard.Stream.Position = 0;
 
-                if(clipboard.Data is MemoryStream dataMemoryStream) {
-                    await SendHeader(clipboard.Format, dataMemoryStream.Length, stream, cancellationToken);
-                    dataMemoryStream.Position = 0;
-
-                    await dataMemoryStream.CopyToAsync(stream, cancellationToken);
-                }
+                await clipboard.Stream.CopyToAsync(stream, cancellationToken);
 
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
                     await stream.WriteAsync(CommunProtocol.Error, cancellationToken);

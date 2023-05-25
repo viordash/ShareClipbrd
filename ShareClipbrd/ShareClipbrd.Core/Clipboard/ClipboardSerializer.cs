@@ -5,7 +5,6 @@ namespace ShareClipbrd.Core.Clipboard {
     public interface IClipboardSerializer {
 
         void SerializeDataObjects(ClipboardData clipboardData, string[] formats, Func<string, object> getDataFunc);
-        void SerializeFiles(ClipboardData clipboardData, StringCollection files);
 
         object DeserializeDataObject(string format, Stream dataStream);
     }
@@ -42,11 +41,6 @@ namespace ShareClipbrd.Core.Clipboard {
                 }
             }
         }
-
-        public void SerializeFiles(ClipboardData clipboardData, StringCollection files) {
-            clipboardData.Add(ClipboardData.Format.ZipArchive, files);
-        }
-
 
         public object DeserializeDataObject(string format, Stream dataStream) {
             if(!ClipboardData.Converters.TryGetValue(format, out ClipboardData.Convert? convertFunc)) {
