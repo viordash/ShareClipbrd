@@ -1,9 +1,4 @@
-using System;
-using System.Buffers;
 using System.Collections.Specialized;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Pipes;
 using Moq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -181,7 +176,6 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start((c, f) => fileDropList = f);
 
-            var clipboardData = new ClipboardData();
 
             var testsPath = Path.Combine(Path.GetTempPath(), "tests");
             Directory.CreateDirectory(testsPath);
@@ -192,41 +186,39 @@ namespace ShareClipbrd.Core.Tests.Services {
             var bytes1 = new byte[777_000];
             rnd.NextBytes(bytes1);
 
+            var files = new StringCollection();
+
             var filename0 = Path.Combine(testsPath, "filename0");
             File.WriteAllBytes(filename0, bytes0);
-            clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(filename0, FileMode.Open, FileAccess.Read, FileShare.Read));
+            files.Add(filename0);
 
             var directory0 = Path.Combine(testsPath, "directory0");
             Directory.CreateDirectory(directory0);
-            clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0)));
+            files.Add(directory0);
 
             var filename1 = Path.Combine(directory0, "filename1.bin");
             File.WriteAllBytes(filename1, bytes1);
-            clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(filename1, FileMode.Open, FileAccess.Read, FileShare.Read));
+            files.Add(filename1);
 
             var directory0_Child0 = Path.Combine(directory0, "directory0_Child0");
             Directory.CreateDirectory(directory0_Child0);
 
             var directory0_Child1 = Path.Combine(directory0, "директория0_Child1");
             Directory.CreateDirectory(directory0_Child1);
-            clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1)));
+            files.Add(directory0_Child1);
 
             var directory0_Child1_Child0_Empty = Path.Combine(directory0_Child1, "directory0_Child1_Child0_Empty");
             Directory.CreateDirectory(directory0_Child1_Child0_Empty);
-            clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(directory0_Child1_Child0_Empty)));
+            files.Add(directory0_Child1_Child0_Empty);
 
             var filename2 = Path.Combine(directory0_Child1, "файл2.dat");
             File.WriteAllBytes(filename2, bytes1);
 
             try {
+                var clipboardData = new ClipboardData();
+                clipboardData.Add(ClipboardData.Format.ZipArchive, files);
                 await client.Send(clipboardData);
             } finally {
-                foreach(var fileStream in clipboardData.Formats
-                    .Where(x => x.Format == ClipboardData.Format.FileDrop)
-                    .Select(x => x.Data)
-                    .Cast<FileStream>()) {
-                    fileStream.Close();
-                }
                 Directory.Delete(testsPath, true);
 
             }

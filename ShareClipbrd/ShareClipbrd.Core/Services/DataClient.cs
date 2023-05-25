@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
-using System.IO;
-using System.IO.Pipes;
+﻿using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO.Compression;
 using System.Net.Sockets;
 using System.Text;
 using GuardNet;
@@ -42,7 +42,6 @@ namespace ShareClipbrd.Core.Services {
             await fileStream.CopyToAsync(stream, cancellationToken);
         }
 
-
         static async Task SendDirectory(string directory, NetworkStream stream, CancellationToken cancellationToken) {
             var files = DirectoryHelper.RecursiveGetFiles(directory);
             var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
@@ -52,8 +51,7 @@ namespace ShareClipbrd.Core.Services {
 
             foreach(var file in files) {
                 var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
-                var clipboard = new ClipboardItem(ClipboardData.Format.FileDrop, fileStream);
-                await SendHeader(clipboard, stream, cancellationToken);
+                await SendHeader(ClipboardData.Format.FileDrop, fileStream.Length, stream, cancellationToken);
                 var fileDirectory = Path.GetDirectoryName(file);
                 var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
 
@@ -69,8 +67,7 @@ namespace ShareClipbrd.Core.Services {
                 var childDirectory = Path.Combine(directoryName, relative);
 
                 var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(childDirectory));
-                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, memoryStream);
-                await SendHeader(clipboard, stream, cancellationToken);
+                await SendHeader(ClipboardData.Format.DirectoryDrop, memoryStream.Length, stream, cancellationToken);
                 await memoryStream.CopyToAsync(stream, cancellationToken);
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
                     await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -80,8 +77,7 @@ namespace ShareClipbrd.Core.Services {
 
             if(!files.Any() && !emptyFolders.Any()) {
                 var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(directoryName));
-                var clipboard = new ClipboardItem(ClipboardData.Format.DirectoryDrop, memoryStream);
-                await SendHeader(clipboard, stream, cancellationToken);
+                await SendHeader(ClipboardData.Format.DirectoryDrop, memoryStream.Length, stream, cancellationToken);
                 await memoryStream.CopyToAsync(stream, cancellationToken);
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
                     await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -90,18 +86,60 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        static async Task SendHeader(ClipboardItem clipboard, NetworkStream stream, CancellationToken cancellationToken) {
-            await stream.WriteAsync(clipboard.Format, cancellationToken);
+        static async Task SendHeader(string format, Int64 dataSize, NetworkStream stream, CancellationToken cancellationToken) {
+            await stream.WriteAsync(format, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Others do not support clipboard format: {clipboard.Format}");
+                throw new NotSupportedException($"Others do not support clipboard format: {format}");
             }
 
-            var size = clipboard.Data.Length;
+            var size = dataSize; // ((Stream)clipboard.Data).Length;
             await stream.WriteAsync(size, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException($"Others do not support size: {size}");
+            }
+        }
+
+
+
+        static void ArchiveDirectory(string directory, ZipArchive archive) {
+            var files = DirectoryHelper.RecursiveGetFiles(directory);
+            var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
+
+            var parentPath = Path.GetDirectoryName(directory);
+            var directoryName = Path.GetRelativePath(parentPath!, directory);
+
+            foreach(var file in files) {
+                var fileDirectory = Path.GetDirectoryName(file);
+                var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
+                archive.CreateEntryFromFile(file, Path.Combine(relative, Path.GetFileName(file)), CompressionLevel.Fastest);
+            }
+
+            foreach(var folder in emptyFolders) {
+                var relative = Path.GetRelativePath(directory, folder);
+                var childDirectory = Path.Combine(directoryName, relative);
+
+                var directoryEntry = archive.CreateEntry(childDirectory, CompressionLevel.Fastest);
+                directoryEntry.ExternalAttributes = (int)File.GetAttributes(folder);
+            }
+
+            if(!files.Any() && !emptyFolders.Any()) {
+                var directoryEntry = archive.CreateEntry(directoryName, CompressionLevel.Fastest);
+                directoryEntry.ExternalAttributes = (int)File.GetAttributes(directory);
+            }
+        }
+
+        static void SendZipArchive(StringCollection files, NetworkStream stream, CancellationToken cancellationToken) {
+            using(var archive = new ZipArchive(stream, ZipArchiveMode.Create, true)) {
+                foreach(var file in files.Cast<string>()) {
+                    if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
+                        Debug.WriteLine($"dir: {file}");
+                        ArchiveDirectory(file, archive);
+                    } else {
+                        archive.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.Fastest);
+                    }
+                }
             }
         }
 
@@ -128,15 +166,23 @@ namespace ShareClipbrd.Core.Services {
                         continue;
                     }
                     throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
+                } else if(clipboard.Format == ClipboardData.Format.ZipArchive) {
+                    if(clipboard.Data is StringCollection files) {
+                        await SendHeader(clipboard.Format, files.Count, stream, cancellationToken);
+                        SendZipArchive(files, stream, cancellationToken);
+                        continue;
+                    }
+                    throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
                 }
 
-                await SendHeader(clipboard, stream, cancellationToken);
 
                 if(clipboard.Data is MemoryStream dataMemoryStream) {
+                    await SendHeader(clipboard.Format, dataMemoryStream.Length, stream, cancellationToken);
                     dataMemoryStream.Position = 0;
 
                     await dataMemoryStream.CopyToAsync(stream, cancellationToken);
                 } else if(clipboard.Data is FileStream fileStream) {
+                    await SendHeader(clipboard.Format, fileStream.Length, stream, cancellationToken);
                     await SendFile(string.Empty, fileStream, stream, cancellationToken);
                 }
 

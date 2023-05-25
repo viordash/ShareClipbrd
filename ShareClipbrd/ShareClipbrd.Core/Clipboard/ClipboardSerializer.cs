@@ -44,14 +44,7 @@ namespace ShareClipbrd.Core.Clipboard {
         }
 
         public void SerializeFiles(ClipboardData clipboardData, StringCollection files) {
-            foreach(var file in files.OfType<string>()) {
-                if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-                    clipboardData.Add(ClipboardData.Format.DirectoryDrop, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(file)));
-                } else {
-                    clipboardData.Add(ClipboardData.Format.FileDrop, new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-                }
-            }
-
+            clipboardData.Add(ClipboardData.Format.ZipArchive, files);
         }
 
 

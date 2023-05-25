@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -113,7 +114,7 @@ namespace ShareClipbrdApp.Win {
                         var dataObject = new DataObject();
 
                         foreach(var format in clipboardFormats.Formats) {
-                            var obj = clipboardService.DeserializeDataObject(format.Format, format.Data);
+                            var obj = clipboardService.DeserializeDataObject(format.Format, (Stream)format.Data);
                             dataObject.SetData(format.Format, obj);
                         }
                         Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");

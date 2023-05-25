@@ -1,8 +1,8 @@
 ﻿namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
         public string Format { get; set; }
-        public Stream Data { get; set; }
-        public ClipboardItem(string format, Stream data) {
+        public object Data { get; set; }
+        public ClipboardItem(string format, object data) {
             Format = format;
             Data = data;
         }
@@ -30,6 +30,7 @@
             public const string WaveAudio = "WaveAudio";
 
             public const string DirectoryDrop = "DirectoryDrop_60D54950";
+            public const string ZipArchive = "ZipArchive_60D54950";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -96,12 +97,12 @@
                 },
                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
-            },           
+            },
         };
 
         public List<ClipboardItem> Formats { get; } = new();
 
-        public void Add(string format, Stream data) {
+        public void Add(string format, object data) {
             Formats.Add(new ClipboardItem(format, data));
         }
     }

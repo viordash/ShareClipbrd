@@ -1,8 +1,8 @@
 ﻿using System.Buffers;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Net.Sockets;
-using System.Text;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -70,6 +70,32 @@ namespace ShareClipbrd.Core.Services {
             return tempDirectory;
         }
 
+        static string[] HandleZipArchive(NetworkStream stream, int itemsCount, Lazy<string> sessionDir, CancellationToken cancellationToken) {
+            var files = new List<string>();
+
+            using(var archive = new ZipArchive(stream, ZipArchiveMode.Read)) {
+                Debug.WriteLine($"  Count: {archive.Entries.Count}");
+
+                foreach(var entry in archive.Entries) {
+                    var fileAttributes = (FileAttributes)entry.ExternalAttributes;
+                    if(fileAttributes.HasFlag(FileAttributes.Directory)) {
+                        var tempDirectory = Path.Combine(sessionDir.Value, entry.FullName);
+                        Directory.CreateDirectory(tempDirectory);
+                        files.Add(tempDirectory);
+                    } else {
+                        var tempFilename = Path.Combine(sessionDir.Value, entry.FullName);
+                        var directory = Path.GetDirectoryName(tempFilename);
+                        if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
+                            Directory.CreateDirectory(directory);
+                        }
+                        entry.ExtractToFile(tempFilename, true);
+                        files.Add(tempFilename);
+                    }
+                }
+            }
+            return files.ToArray();
+        }
+
         static async ValueTask<Stream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
             var memoryStream = new MemoryStream(dataSize);
             byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
@@ -112,7 +138,7 @@ namespace ShareClipbrd.Core.Services {
                 }
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
-                while(!cancellationToken.IsCancellationRequested) {
+                while(stream.CanRead && !cancellationToken.IsCancellationRequested) {
                     var format = await stream.ReadUTF8StringAsync(cancellationToken);
                     if(string.IsNullOrEmpty(format)) {
                         break;
@@ -131,6 +157,8 @@ namespace ShareClipbrd.Core.Services {
 
                     } else if(format == ClipboardData.Format.WaveAudio) {
 
+                    } else if(format == ClipboardData.Format.ZipArchive) {
+                        fileDropList.AddRange(HandleZipArchive(stream, (int)size, sessionDir, cancellationToken));
                     } else {
                         clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                     }
