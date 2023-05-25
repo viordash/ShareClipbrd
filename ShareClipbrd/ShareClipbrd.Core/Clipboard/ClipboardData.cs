@@ -29,7 +29,6 @@
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
 
-            public const string DirectoryDrop = "DirectoryDrop_60D54950";
             public const string ZipArchive = "ZipArchive_60D54950";
         }
 

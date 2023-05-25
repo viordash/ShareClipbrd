@@ -151,8 +151,6 @@ namespace ShareClipbrd.Core.Services {
 
                     if(format == ClipboardData.Format.FileDrop) {
                         fileDropList.Add(await HandleFile(stream, (int)size, sessionDir, cancellationToken));
-                    } else if(format == ClipboardData.Format.DirectoryDrop) {
-                        fileDropList.Add(await HandleDirectory(stream, (int)size, sessionDir, cancellationToken));
                     } else if(format == ClipboardData.Format.Bitmap) {
 
                     } else if(format == ClipboardData.Format.WaveAudio) {

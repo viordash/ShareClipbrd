@@ -28,64 +28,6 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        static async Task SendFile(string? relativeTo, FileStream fileStream, NetworkStream stream, CancellationToken cancellationToken) {
-            var filename = string.IsNullOrEmpty(relativeTo)
-                ? Path.GetFileName(fileStream.Name)
-                : Path.Combine(relativeTo, Path.GetFileName(fileStream.Name));
-
-            await stream.WriteAsync(filename, cancellationToken);
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFilename) {
-                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Others can't receive file: {filename}");
-            }
-            fileStream.Position = 0;
-            await fileStream.CopyToAsync(stream, cancellationToken);
-        }
-
-        static async Task SendDirectory(string directory, NetworkStream stream, CancellationToken cancellationToken) {
-            var files = DirectoryHelper.RecursiveGetFiles(directory);
-            var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
-
-            var parentPath = Path.GetDirectoryName(directory);
-            var directoryName = Path.GetRelativePath(parentPath!, directory);
-
-            foreach(var file in files) {
-                var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
-                await SendHeader(ClipboardData.Format.FileDrop, fileStream.Length, stream, cancellationToken);
-                var fileDirectory = Path.GetDirectoryName(file);
-                var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
-
-                await SendFile(relative, fileStream, stream, cancellationToken);
-                fileStream.Close();
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Transfer data error");
-                }
-            }
-            foreach(var folder in emptyFolders) {
-                var relative = Path.GetRelativePath(directory, folder);
-                var childDirectory = Path.Combine(directoryName, relative);
-
-                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(childDirectory));
-                await SendHeader(ClipboardData.Format.DirectoryDrop, memoryStream.Length, stream, cancellationToken);
-                await memoryStream.CopyToAsync(stream, cancellationToken);
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Transfer data error");
-                }
-            }
-
-            if(!files.Any() && !emptyFolders.Any()) {
-                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(directoryName));
-                await SendHeader(ClipboardData.Format.DirectoryDrop, memoryStream.Length, stream, cancellationToken);
-                await memoryStream.CopyToAsync(stream, cancellationToken);
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Transfer data error");
-                }
-            }
-        }
-
         static async Task SendHeader(string format, Int64 dataSize, NetworkStream stream, CancellationToken cancellationToken) {
             await stream.WriteAsync(format, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
@@ -100,8 +42,6 @@ namespace ShareClipbrd.Core.Services {
                 throw new NotSupportedException($"Others do not support size: {size}");
             }
         }
-
-
 
         static void ArchiveDirectory(string directory, ZipArchive archive) {
             var files = DirectoryHelper.RecursiveGetFiles(directory);
@@ -159,14 +99,7 @@ namespace ShareClipbrd.Core.Services {
             }
 
             foreach(var clipboard in clipboardData.Formats) {
-                if(clipboard.Format == ClipboardData.Format.DirectoryDrop) {
-                    if(clipboard.Data is MemoryStream memoryStream) {
-                        var directory = Encoding.UTF8.GetString(memoryStream.ToArray());
-                        await SendDirectory(directory, stream, cancellationToken);
-                        continue;
-                    }
-                    throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
-                } else if(clipboard.Format == ClipboardData.Format.ZipArchive) {
+                if(clipboard.Format == ClipboardData.Format.ZipArchive) {
                     if(clipboard.Data is StringCollection files) {
                         await SendHeader(clipboard.Format, files.Count, stream, cancellationToken);
                         SendZipArchive(files, stream, cancellationToken);
@@ -175,15 +108,11 @@ namespace ShareClipbrd.Core.Services {
                     throw new NotSupportedException($"Data error, clipboard format: {clipboard.Format}");
                 }
 
-
                 if(clipboard.Data is MemoryStream dataMemoryStream) {
                     await SendHeader(clipboard.Format, dataMemoryStream.Length, stream, cancellationToken);
                     dataMemoryStream.Position = 0;
 
                     await dataMemoryStream.CopyToAsync(stream, cancellationToken);
-                } else if(clipboard.Data is FileStream fileStream) {
-                    await SendHeader(clipboard.Format, fileStream.Length, stream, cancellationToken);
-                    await SendFile(string.Empty, fileStream, stream, cancellationToken);
                 }
 
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
