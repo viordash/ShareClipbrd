@@ -56,7 +56,7 @@ namespace ShareClipbrd.Core.Services {
                         Debug.WriteLine($"dir: {file}");
                         ArchiveDirectory(file, archive);
                     } else {
-                        archive.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.NoCompression);
+                        archive.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.Fastest);
                     }
                 }
             }
