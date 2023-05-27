@@ -150,10 +150,11 @@ namespace ShareClipbrd.Core.Services {
                 }
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
+                var total = await ReceiveSize(stream, cancellationToken);
                 var format = await ReceiveFormat(stream, cancellationToken);
+
                 if(format == ClipboardData.Format.ZipArchive) {
-                    var filesCount = await ReceiveSize(stream, cancellationToken);
-                    await using(_ = progressService.Begin(filesCount)) {
+                    await using(_ = progressService.Begin(total)) {
                         var fileDropList = new StringCollection();
                         fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
                         dispatchService.ReceiveFiles(fileDropList);
@@ -163,8 +164,7 @@ namespace ShareClipbrd.Core.Services {
                 } else if(format == ClipboardData.Format.WaveAudio) {
 
                 } else {
-                    var totalLenght = await ReceiveSize(stream, cancellationToken);
-                    await using(_ = progressService.Begin(totalLenght)) {
+                    await using(_ = progressService.Begin(total)) {
                         while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
                             var size = await ReceiveSize(stream, cancellationToken);
                             clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));

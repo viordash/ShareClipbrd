@@ -36,7 +36,7 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, CancellationToken cancellationToken) {
+        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, Int64 total, CancellationToken cancellationToken) {
             var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
 
@@ -47,6 +47,12 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException("Wrong version of the other side");
             }
+
+            await stream.WriteAsync(total, cancellationToken);
+            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                throw new NotSupportedException($"Others do not support total: {total}");
+            }
             return stream;
         }
 
@@ -55,8 +61,8 @@ namespace ShareClipbrd.Core.Services {
                 var cancellationToken = cts.Token;
                 var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
                 using TcpClient tcpClient = new();
-                var stream = await Connect(tcpClient, cancellationToken);
-                await SendHeader(ClipboardData.Format.ZipArchive, files.Count, stream, cancellationToken);
+                var stream = await Connect(tcpClient, files.Count, cancellationToken);
+                await SendFormat(ClipboardData.Format.ZipArchive, stream, cancellationToken);
 
                 using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
                     foreach(var file in files.Cast<string>()) {
@@ -99,14 +105,15 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        static async Task SendHeader(string format, Int64 dataSize, NetworkStream stream, CancellationToken cancellationToken) {
+        static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
             await stream.WriteAsync(format, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException($"Others do not support clipboard format: {format}");
             }
+        }
 
-            var size = dataSize;
+        static async Task SendSize(Int64 size, NetworkStream stream, CancellationToken cancellationToken) {
             await stream.WriteAsync(size, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -119,17 +126,12 @@ namespace ShareClipbrd.Core.Services {
             await using(_ = progressService.Begin(totalLenght)) {
                 var cancellationToken = cts.Token;
                 using TcpClient tcpClient = new();
-                var stream = await Connect(tcpClient, cancellationToken);
-                                
-                await stream.WriteAsync(totalLenght, cancellationToken);
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support total: {totalLenght}");
-                }
+                var stream = await Connect(tcpClient, totalLenght, cancellationToken);
 
                 foreach(var clipboard in clipboardData.Formats) {
                     progressService.Tick(clipboard.Stream.Length);
-                    await SendHeader(clipboard.Format, clipboard.Stream.Length, stream, cancellationToken);
+                    await SendFormat(clipboard.Format, stream, cancellationToken);
+                    await SendSize(clipboard.Stream.Length, stream, cancellationToken);
                     clipboard.Stream.Position = 0;
 
                     await clipboard.Stream.CopyToAsync(stream, cancellationToken);
