@@ -1,4 +1,6 @@
-﻿namespace ShareClipbrd.Core.Clipboard {
+﻿using System.Diagnostics;
+
+namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
         public string Format { get; set; }
         public MemoryStream Stream { get; set; }
@@ -94,6 +96,56 @@
 
         public void Add(string format, MemoryStream stream) {
             Formats.Add(new ClipboardItem(format, stream));
+        }
+
+        public void Serialize(string[] formats, Func<string, object> getDataFunc) {
+            Debug.WriteLine(string.Join(", ", formats));
+
+            foreach(var format in formats) {
+                try {
+                    if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
+
+                        var obj = getDataFunc(format);
+                        if(obj is MemoryStream memoryStream) {
+                            convertFunc = new Convert(
+                            (c, f) => {
+                                c.Add(format, memoryStream); return true;
+                            },
+                            (stream) => stream
+                            );
+
+                        } else {
+                            Debug.WriteLine($"not supported format: {format}");
+                            continue;
+                        }
+                    }
+
+                    if(!convertFunc.From(this, getDataFunc)) {
+                        throw new InvalidCastException(format);
+                    }
+                } catch(System.Runtime.InteropServices.COMException e) {
+                    Debug.WriteLine(e);
+                }
+            }
+        }
+
+        public void Deserialize(Action<string, object> setDataFunc) {
+            if(!Formats.Any()) {
+                return;
+            }
+
+            foreach(var format in Formats) {
+                if(!Converters.TryGetValue(format.Format, out Convert? convertFunc)) {
+                    convertFunc = new Convert((c, o) => false, (stream) => {
+                        if(stream is MemoryStream ms) {
+                            var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
+                            Debug.WriteLine($"--- {format} {str}");
+                        }
+                        return stream;
+                    });
+                }
+                setDataFunc(format.Format, convertFunc.To(format.Stream));
+            }
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,7 +9,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
-using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
@@ -25,19 +23,15 @@ namespace ShareClipbrdApp.Win {
 
         readonly IDataClient dataClient;
         readonly IDataServer dataServer;
-        readonly IClipboardSerializer clipboardService;
 
         public MainWindow(
             IDataClient dataClient,
-            IDataServer dataServer,
-            IClipboardSerializer clipboardService) {
+            IDataServer dataServer) {
             Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
-            Guard.NotNull(clipboardService, nameof(clipboardService));
 
             this.dataClient = dataClient;
             this.dataServer = dataServer;
-            this.clipboardService = clipboardService;
 
             InitializeComponent();
 
@@ -99,25 +93,18 @@ namespace ShareClipbrdApp.Win {
 
                 } else {
                     var dataObject = System.Windows.Clipboard.GetDataObject();
-                    clipboardService.SerializeDataObjects(clipboardData, dataObject.GetFormats(), dataObject.GetData);
+                    clipboardData.Serialize(dataObject.GetFormats(), dataObject.GetData);
                     await dataClient.SendData(clipboardData);
                 }
-
-
             }
         }
 
-        void ReceiveClipboardDataCb(ClipboardData clipboardFormats) {
+        void ReceiveClipboardDataCb(ClipboardData clipboardData) {
             Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-
-                    if(clipboardFormats.Formats.Any()) {
-                        var dataObject = new DataObject();
-
-                        foreach(var format in clipboardFormats.Formats) {
-                            var obj = clipboardService.DeserializeDataObject(format.Format, (Stream)format.Stream);
-                            dataObject.SetData(format.Format, obj);
-                        }
+                    var dataObject = new DataObject();
+                    clipboardData.Deserialize((f, o) => dataObject.SetData(f, o));
+                    if(dataObject.GetFormats().Any()) {
                         Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
                         System.Windows.Clipboard.Clear();
                         System.Windows.Clipboard.SetDataObject(dataObject);
