@@ -57,7 +57,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection files) {
-            await using(_ = progressService.Begin(files.Count)) {
+            await using(_ = progressService.Begin(files.Count, ProgressMode.Send)) {
                 var cancellationToken = cts.Token;
                 var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
                 using TcpClient tcpClient = new();
@@ -123,7 +123,7 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task SendData(ClipboardData clipboardData) {
             var totalLenght = clipboardData.GetTotalLenght();
-            await using(_ = progressService.Begin(totalLenght)) {
+            await using(_ = progressService.Begin(totalLenght, ProgressMode.Send)) {
                 var cancellationToken = cts.Token;
                 using TcpClient tcpClient = new();
                 var stream = await Connect(tcpClient, totalLenght, cancellationToken);

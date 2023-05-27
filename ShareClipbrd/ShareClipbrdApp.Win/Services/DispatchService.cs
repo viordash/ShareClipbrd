@@ -10,7 +10,7 @@ namespace ShareClipbrdApp.Win.Services {
     public class DispatchService : IDispatchService {
         public void ReceiveData(ClipboardData clipboardData) {
             var mainWindow = Application.Current.MainWindow as MainWindow;
-            mainWindow?.Dispatcher.BeginInvoke(new Action(async () => {
+            mainWindow!.Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(mainWindow, ProcessIndicator.Mode.Receive)) {
                     var dataObject = new DataObject();
                     clipboardData.Deserialize((f, o) => dataObject.SetData(f, o));
@@ -25,7 +25,7 @@ namespace ShareClipbrdApp.Win.Services {
 
         public void ReceiveFiles(StringCollection files) {
             var mainWindow = Application.Current.MainWindow as MainWindow;
-            mainWindow?.Dispatcher.BeginInvoke(new Action(async () => {
+            mainWindow!.Dispatcher.BeginInvoke(new Action(async () => {
                 await using(ProcessIndicator.Indicate(mainWindow, ProcessIndicator.Mode.Receive)) {
                     System.Windows.Clipboard.SetFileDropList(files);
                 }
