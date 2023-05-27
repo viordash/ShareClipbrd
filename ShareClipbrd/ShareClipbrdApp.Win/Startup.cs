@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
-using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Configuration;
@@ -17,6 +16,7 @@ namespace ShareClipbrdApp.Win {
                     .AddSingleton<IDataServer, DataServer>()
                     .AddSingleton<IDataClient, DataClient>()
                     .AddSingleton<IDispatchService, DispatchService>()
+                    .AddSingleton<IProgressService, ProgressService>()
                     ;
 
             var serviceProvider = services.BuildServiceProvider();

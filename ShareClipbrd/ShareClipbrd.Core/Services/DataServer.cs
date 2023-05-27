@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO.Compression;
 using System.Net.Sockets;
 using GuardNet;
@@ -20,18 +21,22 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly CancellationTokenSource cts;
         readonly IDispatchService dispatchService;
+        readonly IProgressService progressService;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
             IDialogService dialogService,
-            IDispatchService dispatchService
+            IDispatchService dispatchService,
+            IProgressService progressService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(dispatchService, nameof(dispatchService));
+            Guard.NotNull(progressService, nameof(progressService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
+            this.progressService = progressService;
 
             cts = new CancellationTokenSource();
         }
@@ -62,13 +67,14 @@ namespace ShareClipbrd.Core.Services {
             return tempFilename;
         }
 
-        static string[] HandleZipArchive(NetworkStream stream, int itemsCount, Lazy<string> sessionDir, CancellationToken cancellationToken) {
+        string[] HandleZipArchive(NetworkStream stream, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var files = new List<string>();
 
             using(var archive = new ZipArchive(stream, ZipArchiveMode.Read)) {
                 Debug.WriteLine($"  Count: {archive.Entries.Count}");
 
                 foreach(var entry in archive.Entries) {
+                    progressService.Tick(1);
                     var fileAttributes = (FileAttributes)entry.ExternalAttributes;
                     if(fileAttributes.HasFlag(FileAttributes.Directory)) {
                         var tempDirectory = Path.Combine(sessionDir.Value, entry.FullName);
@@ -147,18 +153,23 @@ namespace ShareClipbrd.Core.Services {
                 var format = await ReceiveFormat(stream, cancellationToken);
                 if(format == ClipboardData.Format.ZipArchive) {
                     var filesCount = await ReceiveSize(stream, cancellationToken);
-                    var fileDropList = new StringCollection();
-                    fileDropList.AddRange(HandleZipArchive(stream, (int)filesCount, sessionDir, cancellationToken));
-                    dispatchService.ReceiveFiles(fileDropList);
+                    await using(_ = progressService.Begin(filesCount)) {
+                        var fileDropList = new StringCollection();
+                        fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
+                        dispatchService.ReceiveFiles(fileDropList);
+                    }
                 } else if(format == ClipboardData.Format.Bitmap) {
 
                 } else if(format == ClipboardData.Format.WaveAudio) {
 
                 } else {
-                    while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
-                        var size = await ReceiveSize(stream, cancellationToken);
-                        clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
-                        format = await ReceiveFormat(stream, cancellationToken);
+                    var totalLenght = await ReceiveSize(stream, cancellationToken);
+                    await using(_ = progressService.Begin(totalLenght)) {
+                        while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
+                            var size = await ReceiveSize(stream, cancellationToken);
+                            clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
+                            format = await ReceiveFormat(stream, cancellationToken);
+                        }
                     }
                     dispatchService.ReceiveData(clipboardData);
                 }

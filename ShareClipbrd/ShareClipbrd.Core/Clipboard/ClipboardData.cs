@@ -147,5 +147,9 @@ namespace ShareClipbrd.Core.Clipboard {
                 setDataFunc(format.Format, convertFunc.To(format.Stream));
             }
         }
+
+        public Int64 GetTotalLenght() {
+            return Formats.Sum(x => x.Stream.Length);
+        }
     }
 }

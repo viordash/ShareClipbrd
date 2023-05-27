@@ -9,6 +9,7 @@ namespace ShareClipbrd.Core.Tests.Services {
         Mock<ISystemConfiguration> systemConfigurationMock;
         Mock<IDialogService> dialogServiceMock;
         Mock<IDispatchService> dispatchServiceMock;
+        Mock<IProgressService> progressServiceMock;
         DataServer server;
         DataClient client;
 
@@ -17,12 +18,14 @@ namespace ShareClipbrd.Core.Tests.Services {
             systemConfigurationMock = new();
             dialogServiceMock = new();
             dispatchServiceMock = new();
+            progressServiceMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
-            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object);
-            client = new DataClient(systemConfigurationMock.Object);
+            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
+                progressServiceMock.Object);
+            client = new DataClient(systemConfigurationMock.Object, dispatchServiceMock.Object, progressServiceMock.Object);
             server.Start();
         }
 

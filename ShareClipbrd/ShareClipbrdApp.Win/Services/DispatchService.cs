@@ -8,11 +8,6 @@ using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Win.Services {
     public class DispatchService : IDispatchService {
-
-        public void Progress(int percent) {
-            throw new NotImplementedException();
-        }
-
         public void ReceiveData(ClipboardData clipboardData) {
             var mainWindow = Application.Current.MainWindow as MainWindow;
             mainWindow?.Dispatcher.BeginInvoke(new Action(async () => {
