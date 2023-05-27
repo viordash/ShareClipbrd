@@ -13,5 +13,11 @@ namespace ShareClipbrdApp.Win.Configuration {
                 return Settings.Default.PartnerAddress;
             }
         }
+
+        public CompressionLevel Compression {
+            get {
+                return (CompressionLevel)Settings.Default.Compression;         
+            }
+        }
     }
 }

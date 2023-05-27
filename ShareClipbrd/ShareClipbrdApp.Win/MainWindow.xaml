@@ -1,5 +1,5 @@
 ﻿<Window x:Class="ShareClipbrdApp.Win.MainWindow"
-       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -19,6 +19,7 @@
         Activated="Window_Activated"
         Deactivated="Window_Deactivated">
 
+    
     <Window.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
@@ -29,6 +30,9 @@
                 </MenuItem>
                 <MenuItem Header="Partner address" >
                     <TextBox x:Name="edPartnerAddress" Width="200" Margin="0,0,-40,0" TextChanged="edPartnerAddress_TextChanged"/>
+                </MenuItem>
+                <MenuItem Header="Files compression level" >
+                    <ComboBox x:Name="edCompressionLevel" Width="160" Margin="0,0,-40,0" SelectionChanged="edCompressionLevel_SelectionChanged"/>
                 </MenuItem>
             </MenuItem>
             <Separator />

@@ -11,9 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Clipboard\**" />
     <Compile Remove="Extensions\**" />
+    <EmbeddedResource Remove="Clipboard\**" />
     <EmbeddedResource Remove="Extensions\**" />
+    <None Remove="Clipboard\**" />
     <None Remove="Extensions\**" />
+    <Page Remove="Clipboard\**" />
     <Page Remove="Extensions\**" />
   </ItemGroup>
 
@@ -42,10 +46,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Clipboard\" />
   </ItemGroup>
 
 </Project>

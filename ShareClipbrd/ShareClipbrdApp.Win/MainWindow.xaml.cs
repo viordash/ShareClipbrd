@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
+using ShareClipbrd.Core.Configuration;
+using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
@@ -38,6 +40,7 @@ namespace ShareClipbrdApp.Win {
             this.clipboardService = clipboardService;
 
             InitializeComponent();
+
         }
 
         void Window_Initialized(object sender, System.EventArgs e) {
@@ -47,6 +50,8 @@ namespace ShareClipbrdApp.Win {
             dataServer.Start(ReceiveClipboardDataCb, ReceiveClipboardFilesCb);
             edHostAddress.Text = Settings.Default.HostAddress;
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
+            edCompressionLevel.ItemsSource = CompressionLevelHelper.Names.Values;
+            edCompressionLevel.Text = CompressionLevelHelper.GetName(Settings.Default.Compression);
         }
 
         void Window_Closed(object sender, System.EventArgs e) {
@@ -135,6 +140,10 @@ namespace ShareClipbrdApp.Win {
 
         private void edPartnerAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
             Settings.Default.PartnerAddress = edPartnerAddress.Text;
+        }
+
+        private void edCompressionLevel_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
+            Settings.Default.Compression = (int)CompressionLevelHelper.GetValue(edCompressionLevel.SelectedItem as string);
         }
     }
 }
