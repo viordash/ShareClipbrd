@@ -1,8 +1,8 @@
 ﻿namespace ShareClipbrd.Core.Configuration {
     public enum CompressionLevel {
-        Optimal = 0,
-        Fastest = 1,
-        NoCompression = 2
+        NoCompression = 0,
+        Optimal = 1,
+        Fastest = 2
     }
 
 }
