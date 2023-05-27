@@ -41,7 +41,7 @@ namespace ShareClipbrdApp.Win {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = SystemParameters.FullPrimaryScreenHeight / 40;
             Width = SystemParameters.FullPrimaryScreenWidth / 40;
-            dataServer.Start(ReceiveClipboardDataCb, ReceiveClipboardFilesCb);
+            dataServer.Start();
             edHostAddress.Text = Settings.Default.HostAddress;
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
             edCompressionLevel.ItemsSource = CompressionLevelHelper.Names.Values;
@@ -97,29 +97,7 @@ namespace ShareClipbrdApp.Win {
                     await dataClient.SendData(clipboardData);
                 }
             }
-        }
-
-        void ReceiveClipboardDataCb(ClipboardData clipboardData) {
-            Dispatcher.BeginInvoke(new Action(async () => {
-                await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-                    var dataObject = new DataObject();
-                    clipboardData.Deserialize((f, o) => dataObject.SetData(f, o));
-                    if(dataObject.GetFormats().Any()) {
-                        Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetFormats())}");
-                        System.Windows.Clipboard.Clear();
-                        System.Windows.Clipboard.SetDataObject(dataObject);
-                    }
-                }
-            }));
-        }
-
-        void ReceiveClipboardFilesCb(StringCollection fileDropList) {
-            Dispatcher.BeginInvoke(new Action(async () => {
-                await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Receive)) {
-                    System.Windows.Clipboard.SetFileDropList(fileDropList);
-                }
-            }));
-        }
+        }        
 
         private void edHostAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
             Settings.Default.HostAddress = edHostAddress.Text;

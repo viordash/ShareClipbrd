@@ -8,6 +8,7 @@ namespace ShareClipbrd.Core.Tests.Services {
     public class Tests {
         Mock<ISystemConfiguration> systemConfigurationMock;
         Mock<IDialogService> dialogServiceMock;
+        Mock<IDispatchService> dispatchServiceMock;
         DataServer server;
         DataClient client;
 
@@ -15,13 +16,14 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void Setup() {
             systemConfigurationMock = new();
             dialogServiceMock = new();
+            dispatchServiceMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
-            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object);
+            server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object);
-
+            server.Start();
         }
 
         [TearDown]
@@ -33,7 +35,9 @@ namespace ShareClipbrd.Core.Tests.Services {
         public async Task Send_CommonData_Test() {
             ClipboardData? receivedClipboard = null;
 
-            server.Start((c) => receivedClipboard = c, _ => { });
+            dispatchServiceMock
+                .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
+                .Callback<ClipboardData>(x => receivedClipboard = x);
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")));
@@ -42,7 +46,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             await client.SendData(clipboardData);
             await Task.Delay(100);
 
-
+            dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(receivedClipboard);
             Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText" }));
             Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")) }));
@@ -52,7 +56,9 @@ namespace ShareClipbrd.Core.Tests.Services {
         public async Task Send_Common_Big_Data_Test() {
             ClipboardData? receivedClipboard = null;
 
-            server.Start((c) => receivedClipboard = c, _ => { });
+            dispatchServiceMock
+                .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
+                .Callback<ClipboardData>(x => receivedClipboard = x);
 
             var clipboardData = new ClipboardData();
 
@@ -66,6 +72,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             await client.SendData(clipboardData);
             await Task.Delay(1000);
 
+            dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(receivedClipboard);
             Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
             Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream, Has.Length.EqualTo(1_000_000_003));
@@ -76,7 +83,9 @@ namespace ShareClipbrd.Core.Tests.Services {
         public async Task Send_Files_Test() {
             StringCollection? fileDropList = null;
 
-            server.Start(_ => { }, (f) => fileDropList = f);
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
+                .Callback<StringCollection>(x => fileDropList = x);
 
             var clipboardData = new ClipboardData();
 
@@ -106,6 +115,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 Directory.Delete(testsPath, true);
             }
             await Task.Delay(1000);
+
+            dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
             Assert.That(fileDropList.Count, Is.EqualTo(100));
 
@@ -129,7 +140,9 @@ namespace ShareClipbrd.Core.Tests.Services {
         public async Task Send_Big_File_Test() {
             StringCollection? fileDropList = null;
 
-            server.Start(_ => { }, (f) => fileDropList = f);
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
+                .Callback<StringCollection>(x => fileDropList = x);
 
             var rnd = new Random();
             var bytes = new byte[1_000_000_003];
@@ -150,6 +163,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
             await Task.Delay(1000);
 
+            dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
             var otherFilename = fileDropList[0];
 
@@ -167,7 +181,9 @@ namespace ShareClipbrd.Core.Tests.Services {
         public async Task Send_Files_And_Folders_Test() {
             StringCollection? fileDropList = null;
 
-            server.Start(_ => { }, (f) => fileDropList = f);
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
+                .Callback<StringCollection>(x => fileDropList = x);
 
 
             var testsPath = Path.Combine(Path.GetTempPath(), "tests");
@@ -214,6 +230,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             }
             await Task.Delay(500);
+
+            dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
             Assert.That(fileDropList.Count, Is.EqualTo(9));
 

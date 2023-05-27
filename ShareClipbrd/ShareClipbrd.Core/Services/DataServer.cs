@@ -11,7 +11,7 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start(Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb);
+        void Start();
         void Stop();
     }
 
@@ -19,15 +19,19 @@ namespace ShareClipbrd.Core.Services {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
         readonly CancellationTokenSource cts;
+        readonly IDispatchService dispatchService;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
-            IDialogService dialogService
+            IDialogService dialogService,
+            IDispatchService dispatchService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
+            Guard.NotNull(dispatchService, nameof(dispatchService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
+            this.dispatchService = dispatchService;
 
             cts = new CancellationTokenSource();
         }
@@ -126,7 +130,7 @@ namespace ShareClipbrd.Core.Services {
             return size;
         }
 
-        async ValueTask HandleClient(TcpClient tcpClient, Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb, CancellationToken cancellationToken) {
+        async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
 
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
@@ -145,7 +149,7 @@ namespace ShareClipbrd.Core.Services {
                     var filesCount = await ReceiveSize(stream, cancellationToken);
                     var fileDropList = new StringCollection();
                     fileDropList.AddRange(HandleZipArchive(stream, (int)filesCount, sessionDir, cancellationToken));
-                    onReceiveFilesCb(fileDropList);
+                    dispatchService.ReceiveFiles(fileDropList);
                 } else if(format == ClipboardData.Format.Bitmap) {
 
                 } else if(format == ClipboardData.Format.WaveAudio) {
@@ -156,7 +160,7 @@ namespace ShareClipbrd.Core.Services {
                         clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                         format = await ReceiveFormat(stream, cancellationToken);
                     }
-                    onReceiveDataCb(clipboardData);
+                    dispatchService.ReceiveData(clipboardData);
                 }
 
                 Debug.WriteLine($"tcpServer success finished");
@@ -168,7 +172,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start(Action<ClipboardData> onReceiveDataCb, Action<StringCollection> onReceiveFilesCb) {
+        public void Start() {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
@@ -183,7 +187,7 @@ namespace ShareClipbrd.Core.Services {
                             using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
                             Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
 
-                            await HandleClient(tcpClient, onReceiveDataCb, onReceiveFilesCb, cancellationToken);
+                            await HandleClient(tcpClient, cancellationToken);
                         }
                     } catch(OperationCanceledException ex) {
                         Debug.WriteLine($"tcpServer canceled {ex}");

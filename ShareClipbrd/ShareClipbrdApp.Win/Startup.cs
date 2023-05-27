@@ -16,6 +16,7 @@ namespace ShareClipbrdApp.Win {
                     .AddSingleton<ISystemConfiguration, SystemConfiguration>()
                     .AddSingleton<IDataServer, DataServer>()
                     .AddSingleton<IDataClient, DataClient>()
+                    .AddSingleton<IDispatchService, DispatchService>()
                     ;
 
             var serviceProvider = services.BuildServiceProvider();
