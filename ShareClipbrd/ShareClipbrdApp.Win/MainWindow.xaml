@@ -8,9 +8,9 @@
         MinHeight="24" MinWidth="24"
         AllowsTransparency="True" 
         WindowStyle="None"
-        ResizeMode="NoResize"
-        Background="LightSteelBlue"        
+        ResizeMode="NoResize"       
         Topmost="True"
+        Opacity="0.545"
         Title="UsAcRe.Recorder.UI"
         MouseLeftButtonDown="Window_MouseLeftButtonDown" 
         Initialized="Window_Initialized"
@@ -19,7 +19,7 @@
         Activated="Window_Activated"
         Deactivated="Window_Deactivated">
 
-    
+
     <Window.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
@@ -40,6 +40,8 @@
         </ContextMenu>
     </Window.ContextMenu>
 
-    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod"></Border>
+    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod">
+        <ProgressBar x:Name="pbOperation" Background="LightSteelBlue" Value="55" />
+    </Border>
 
 </Window>

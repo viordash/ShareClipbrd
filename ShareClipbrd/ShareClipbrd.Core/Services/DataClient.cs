@@ -1,7 +1,9 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
 using System.Net.Sockets;
+using System.Reflection.PortableExecutable;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -56,52 +58,96 @@ namespace ShareClipbrd.Core.Services {
             return stream;
         }
 
-        public async Task SendFileDropList(StringCollection files) {
-            await using(_ = progressService.Begin(files.Count, ProgressMode.Send)) {
-                var cancellationToken = cts.Token;
-                var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
-                using TcpClient tcpClient = new();
-                var stream = await Connect(tcpClient, files.Count, cancellationToken);
-                await SendFormat(ClipboardData.Format.ZipArchive, stream, cancellationToken);
+        static void FlatFilesList(StringCollection fileDropList, out Dictionary<string, List<string>> files,
+                out Dictionary<string, List<string>?> directories) {
+            files = new Dictionary<string, List<string>>() {
+                { string.Empty, fileDropList
+                                .Cast<string>()
+                                .Where(x => !File.GetAttributes(x).HasFlag(FileAttributes.Directory))
+                                .Distinct()
+                                .ToList()
+                }
+            };
 
-                using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
-                    foreach(var file in files.Cast<string>()) {
-                        progressService.Tick(1);
-                        if(File.GetAttributes(file).HasFlag(FileAttributes.Directory)) {
-                            Debug.WriteLine($"dir: {file}");
-                            ArchiveDirectory(file, archive, compressionLevel);
-                        } else {
-                            archive.CreateEntryFromFile(file, Path.GetFileName(file), compressionLevel);
-                        }
-                    }
+            directories = new Dictionary<string, List<string>?>();
+
+            foreach(var dir in fileDropList.Cast<string>()
+                                .Where(x => File.GetAttributes(x).HasFlag(FileAttributes.Directory))
+                                .Distinct()) {
+
+                var dirFiles = DirectoryHelper.RecursiveGetFiles(dir);
+                var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(dir);
+
+                if(!dirFiles.Any() && !emptyFolders.Any()) {
+                    directories[dir] = null;
+                    continue;
+                }
+
+                if(dirFiles.Any()) {
+                    files[dir] = dirFiles;
+                }
+
+                if(emptyFolders.Any()) {
+                    directories[dir] = emptyFolders;
                 }
             }
         }
 
-        static void ArchiveDirectory(string directory, ZipArchive archive, System.IO.Compression.CompressionLevel compressionLevel) {
-            var files = DirectoryHelper.RecursiveGetFiles(directory);
-            var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory);
+        public async Task SendFileDropList(StringCollection fileDropList) {
+            FlatFilesList(fileDropList, out Dictionary<string, List<string>> files, out Dictionary<string, List<string>?> directories);
 
-            var parentPath = Path.GetDirectoryName(directory);
-            var directoryName = Path.GetRelativePath(parentPath!, directory);
+            var total = files.Values.Sum(x => x.Count) + directories.Values.Sum(x => x?.Count ?? 1);
 
-            foreach(var file in files) {
-                var fileDirectory = Path.GetDirectoryName(file);
-                var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
-                archive.CreateEntryFromFile(file, Path.Combine(relative, Path.GetFileName(file)), compressionLevel);
-            }
+            await using(_ = progressService.Begin(total, ProgressMode.Send)) {
+                var cancellationToken = cts.Token;
+                var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
+                using TcpClient tcpClient = new();
 
-            foreach(var folder in emptyFolders) {
-                var relative = Path.GetRelativePath(directory, folder);
-                var childDirectory = Path.Combine(directoryName, relative);
+                var stream = await Connect(tcpClient, total, cancellationToken);
+                await SendFormat(ClipboardData.Format.ZipArchive, stream, cancellationToken);
 
-                var directoryEntry = archive.CreateEntry(childDirectory, compressionLevel);
-                directoryEntry.ExternalAttributes = (int)File.GetAttributes(folder);
-            }
+                using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
+                    foreach(var parent in directories) {
+                        var parentPath = Path.GetDirectoryName(parent.Key);
+                        var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
 
-            if(!files.Any() && !emptyFolders.Any()) {
-                var directoryEntry = archive.CreateEntry(directoryName, compressionLevel);
-                directoryEntry.ExternalAttributes = (int)File.GetAttributes(directory);
+                        if(parent.Value == null) {
+                            progressService.Tick(1);
+                            var archiveEntry = archive.CreateEntry(directoryName, compressionLevel);
+                            archiveEntry.ExternalAttributes = (int)File.GetAttributes(parent.Key);
+                        } else {
+                            foreach(var directory in parent.Value) {
+                                progressService.Tick(1);
+                                var relative = Path.GetRelativePath(parent.Key, directory);
+                                var childDirectory = Path.Combine(directoryName, relative);
+                                var archiveEntry = archive.CreateEntry(childDirectory, compressionLevel);
+                                archiveEntry.ExternalAttributes = (int)File.GetAttributes(directory);
+                            }
+                        }
+                    }
+
+                    var filesInRoot = files
+                        .Where(x => string.IsNullOrEmpty(x.Key))
+                        .SelectMany(x => x.Value);
+                    foreach(var file in filesInRoot) {
+                        progressService.Tick(1);
+                        var archiveEntry = archive.CreateEntryFromFile(file, Path.GetFileName(file), compressionLevel);
+                        archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
+                    }
+
+                    foreach(var parent in files.Where(x => !string.IsNullOrEmpty(x.Key))) {
+                        var parentPath = Path.GetDirectoryName(parent.Key);
+                        var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
+
+                        foreach(var file in parent.Value) {
+                            progressService.Tick(1);
+                            var fileDirectory = Path.GetDirectoryName(file);
+                            var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
+                            var archiveEntry = archive.CreateEntryFromFile(file, Path.Combine(relative, Path.GetFileName(file)), compressionLevel);
+                            archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
+                        }
+                    }
+                }
             }
         }
 

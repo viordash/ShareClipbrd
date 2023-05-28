@@ -12,7 +12,7 @@
             }
         }
 
-        public static IList<string> RecursiveGetFiles(string targetDirectory) {
+        public static List<string> RecursiveGetFiles(string targetDirectory) {
             var files = new List<string>();
             GetFiles(targetDirectory, files);
             return files;
@@ -37,7 +37,7 @@
             }
         }
 
-        public static IList<string> RecursiveGetEmptyFolders(string targetDirectory) {
+        public static List<string> RecursiveGetEmptyFolders(string targetDirectory) {
             var folders = new List<string>();
             GeFolders(targetDirectory, folders);
             return folders;

@@ -83,21 +83,19 @@ namespace ShareClipbrdApp.Win {
         }
 
         async Task TransmitClipboard() {
-            await using(ProcessIndicator.Indicate(this, ProcessIndicator.Mode.Send)) {
-                var clipboardData = new ClipboardData();
-                if(System.Windows.Clipboard.ContainsFileDropList()) {
-                    await dataClient.SendFileDropList(System.Windows.Clipboard.GetFileDropList());
-                } else if(System.Windows.Clipboard.ContainsImage()) {
+            var clipboardData = new ClipboardData();
+            if(System.Windows.Clipboard.ContainsFileDropList()) {
+                await dataClient.SendFileDropList(System.Windows.Clipboard.GetFileDropList());
+            } else if(System.Windows.Clipboard.ContainsImage()) {
 
-                } else if(System.Windows.Clipboard.ContainsAudio()) {
+            } else if(System.Windows.Clipboard.ContainsAudio()) {
 
-                } else {
-                    var dataObject = System.Windows.Clipboard.GetDataObject();
-                    clipboardData.Serialize(dataObject.GetFormats(), dataObject.GetData);
-                    await dataClient.SendData(clipboardData);
-                }
+            } else {
+                var dataObject = System.Windows.Clipboard.GetDataObject();
+                clipboardData.Serialize(dataObject.GetFormats(), dataObject.GetData);
+                await dataClient.SendData(clipboardData);
             }
-        }        
+        }
 
         private void edHostAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
             Settings.Default.HostAddress = edHostAddress.Text;
