@@ -16,7 +16,7 @@ namespace ShareClipbrdApp.Win.Services {
         class ProgressSession : IAsyncDisposable {
             static readonly Dictionary<ProgressMode, Brush> brushes = new(){
                 { ProgressMode.Send, Brushes.GreenYellow },
-                { ProgressMode.Receive, Brushes.LightSeaGreen },
+                { ProgressMode.Receive, Brushes.LightYellow },
             };
 
             readonly IDialogService dialogService;
@@ -53,7 +53,7 @@ namespace ShareClipbrdApp.Win.Services {
                 progress += steps;
 
                 if(updateCounter > updatePeriod) {
-                    Application.Current.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                         var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                         mainWindow.pbOperation.Value = progress;
                     }));
@@ -67,7 +67,7 @@ namespace ShareClipbrdApp.Win.Services {
                     await Task.Delay((int)elapsed);
                 }
 
-                Application.Current.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => {
+                await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Value = 0;
                     if(progress < max) {
