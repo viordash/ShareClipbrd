@@ -114,47 +114,47 @@ namespace ShareClipbrd.Core.Services {
             var clipboardData = new ClipboardData();
 
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
+            await using(progressService.Begin(ProgressMode.Receive)) {
+                try {
+                    var stream = tcpClient.GetStream();
 
-            try {
-                var stream = tcpClient.GetStream();
+                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
+                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new NotSupportedException("Wrong version of the other side");
+                    }
+                    await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException("Wrong version of the other side");
-                }
-                await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+                    var total = await ReceiveSize(stream, cancellationToken);
+                    var format = await ReceiveFormat(stream, cancellationToken);
 
-                var total = await ReceiveSize(stream, cancellationToken);
-                var format = await ReceiveFormat(stream, cancellationToken);
-
-                if(format == ClipboardData.Format.ZipArchive) {
-                    await using(progressService.Begin(total, ProgressMode.Receive)) {
+                    if(format == ClipboardData.Format.ZipArchive) {
+                        progressService.SetMaxTick(total);
                         var fileDropList = new StringCollection();
                         fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
                         dispatchService.ReceiveFiles(fileDropList);
-                    }
-                } else if(format == ClipboardData.Format.Bitmap) {
 
-                } else if(format == ClipboardData.Format.WaveAudio) {
+                    } else if(format == ClipboardData.Format.Bitmap) {
 
-                } else {
-                    await using(progressService.Begin(total, ProgressMode.Receive)) {
+                    } else if(format == ClipboardData.Format.WaveAudio) {
+
+                    } else {
+                        progressService.SetMaxTick(total);
                         while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
                             var size = await ReceiveSize(stream, cancellationToken);
                             progressService.Tick(size);
                             clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                             format = await ReceiveFormat(stream, cancellationToken);
                         }
+                        dispatchService.ReceiveData(clipboardData);
                     }
-                    dispatchService.ReceiveData(clipboardData);
+
+                    Debug.WriteLine($"tcpServer success finished");
+
+                } catch(OperationCanceledException ex) {
+                    Debug.WriteLine($"tcpServer canceled {ex}");
+                } catch(Exception ex) {
+                    dialogService.ShowError(ex);
                 }
-
-                Debug.WriteLine($"tcpServer success finished");
-
-            } catch(OperationCanceledException ex) {
-                Debug.WriteLine($"tcpServer canceled {ex}");
-            } catch(Exception ex) {
-                dialogService.ShowError(ex);
             }
         }
 

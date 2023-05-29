@@ -5,7 +5,8 @@
     };
 
     public interface IProgressService {
-        IAsyncDisposable Begin(Int64 max, ProgressMode mode);
+        IAsyncDisposable Begin(ProgressMode mode);
+        void SetMaxTick(Int64 max);
         void Tick(Int64 steps);
     }
 }

@@ -23,26 +23,37 @@ namespace ShareClipbrdApp.Win.Services {
             readonly Stopwatch stopwatch;
             readonly ProgressMode mode;
             readonly Action onDispose;
-            readonly Int64 max;
-            readonly Int64 updatePeriod;
+            Int64 max;
+            Int64 updatePeriod;
             Int64 updateCounter;
             Int64 progress;
 
-            public ProgressSession(IDialogService dialogService, ProgressMode mode, Int64 max, Action onDispose) {
+            public ProgressSession(IDialogService dialogService, ProgressMode mode, Action onDispose) {
                 this.dialogService = dialogService;
                 this.mode = mode;
-                this.max = max;
                 this.onDispose = onDispose;
                 stopwatch = Stopwatch.StartNew();
                 updateCounter = 0;
                 progress = 0;
+                max = 100;
+                updatePeriod = 1;
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
+                    var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                    mainWindow.pbOperation.Background = brushes[mode];
+                    mainWindow.pbOperation.Maximum = max;
+                    mainWindow.pbOperation.Value = 0;
+                }));
+            }
+
+            public void SetMaxTick(Int64 max) {
+                this.max = max;
                 updatePeriod = max / 100;
                 if(updatePeriod == 0) {
                     updatePeriod = 1;
                 }
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.pbOperation.Background = brushes[mode];
                     mainWindow.pbOperation.Maximum = max;
                     mainWindow.pbOperation.Value = 0;
                 }));
@@ -53,7 +64,7 @@ namespace ShareClipbrdApp.Win.Services {
                 progress += steps;
 
                 if(updateCounter > updatePeriod) {
-                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                         var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                         mainWindow.pbOperation.Value = progress;
                     }));
@@ -67,7 +78,7 @@ namespace ShareClipbrdApp.Win.Services {
                     await Task.Delay((int)elapsed);
                 }
 
-                await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Value = 0;
                     if(progress < max) {
@@ -93,17 +104,26 @@ namespace ShareClipbrdApp.Win.Services {
             this.dialogService = dialogService;
         }
 
-        public IAsyncDisposable Begin(Int64 max, ProgressMode mode) {
+        public IAsyncDisposable Begin(ProgressMode mode) {
             lock(lockObj) {
                 if(progressSession != null) {
                     throw new InvalidOperationException("Progress does not support multithreading");
                 }
-                progressSession = new(dialogService, mode, max, () => {
+                progressSession = new(dialogService, mode, () => {
                     lock(lockObj) {
                         progressSession = null;
                     }
                 });
                 return progressSession;
+            }
+        }
+
+        public void SetMaxTick(Int64 max) {
+            lock(lockObj) {
+                if(progressSession == null) {
+                    throw new InvalidOperationException("Progress is out of scope");
+                }
+                progressSession.SetMaxTick(max);
             }
         }
 

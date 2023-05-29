@@ -279,7 +279,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("פאיכ2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            progressServiceMock.Verify(x => x.Begin(It.IsAny<Int64>(), It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Once);
             progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(9));
         }
 
@@ -325,7 +326,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            progressServiceMock.Verify(x => x.Begin(It.IsAny<Int64>(), It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Once);
             progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(1));
 
         }
