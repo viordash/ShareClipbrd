@@ -62,14 +62,14 @@ namespace ShareClipbrdApp.Win {
             this.Close();
         }
 
-        async void Window_KeyDown(object sender, KeyEventArgs e) {
+        void Window_KeyDown(object sender, KeyEventArgs e) {
             if(e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control) {
-                await TransmitClipboard();
+                TransmitClipboard();
             }
         }
 
-        async void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
-            await TransmitClipboard();
+        void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
+            TransmitClipboard();
         }
 
         void Window_Activated(object sender, System.EventArgs e) {
@@ -82,10 +82,11 @@ namespace ShareClipbrdApp.Win {
             Border.BorderThickness = new Thickness(1);
         }
 
-        async Task TransmitClipboard() {
+        void TransmitClipboard() {
             var clipboardData = new ClipboardData();
             if(System.Windows.Clipboard.ContainsFileDropList()) {
-                await dataClient.SendFileDropList(System.Windows.Clipboard.GetFileDropList());
+                var fileDropList = System.Windows.Clipboard.GetFileDropList();
+                _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
             } else if(System.Windows.Clipboard.ContainsImage()) {
 
             } else if(System.Windows.Clipboard.ContainsAudio()) {
@@ -93,7 +94,7 @@ namespace ShareClipbrdApp.Win {
             } else {
                 var dataObject = System.Windows.Clipboard.GetDataObject();
                 clipboardData.Serialize(dataObject.GetFormats(), dataObject.GetData);
-                await dataClient.SendData(clipboardData);
+                _ = Task.Run(async () => await dataClient.SendData(clipboardData));
             }
         }
 
