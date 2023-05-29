@@ -41,32 +41,6 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        static async ValueTask<string> HandleFile(NetworkStream stream, int dataSize, Lazy<string> sessionDir, CancellationToken cancellationToken) {
-            var filename = await stream.ReadUTF8StringAsync(cancellationToken);
-            if(string.IsNullOrEmpty(filename)) {
-                throw new NotSupportedException("Filename receive error");
-            }
-            await stream.WriteAsync(CommunProtocol.SuccessFilename, cancellationToken);
-
-            var tempFilename = Path.Combine(sessionDir.Value, filename);
-            var directory = Path.GetDirectoryName(tempFilename);
-            if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
-                Directory.CreateDirectory(directory);
-            }
-            using(var fileStream = new FileStream(tempFilename, FileMode.Create)) {
-                byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
-                while(fileStream.Length < dataSize) {
-                    int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                    if(receivedBytes == 0) {
-                        break;
-                    }
-                    await fileStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
-                }
-                await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
-            }
-            return tempFilename;
-        }
-
         string[] HandleZipArchive(NetworkStream stream, Lazy<string> sessionDir, CancellationToken cancellationToken) {
             var files = new List<string>();
 
@@ -167,6 +141,7 @@ namespace ShareClipbrd.Core.Services {
                     await using(_ = progressService.Begin(total, ProgressMode.Receive)) {
                         while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
                             var size = await ReceiveSize(stream, cancellationToken);
+                            progressService.Tick(size);
                             clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
                             format = await ReceiveFormat(stream, cancellationToken);
                         }

@@ -23,7 +23,6 @@ namespace ShareClipbrdApp.Win.Services {
             readonly Stopwatch stopwatch;
             readonly ProgressMode mode;
             readonly Action onDispose;
-            readonly MainWindow mainWindow;
             readonly Int64 max;
             readonly Int64 updatePeriod;
             Int64 updateCounter;
@@ -35,15 +34,14 @@ namespace ShareClipbrdApp.Win.Services {
                 this.max = max;
                 this.onDispose = onDispose;
                 stopwatch = Stopwatch.StartNew();
-                var mw = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                mainWindow = mw;
                 updateCounter = 0;
                 progress = 0;
                 updatePeriod = max / 100;
                 if(updatePeriod == 0) {
                     updatePeriod = 1;
                 }
-                Application.Current.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => {
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                    var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Background = brushes[mode];
                     mainWindow.pbOperation.Maximum = max;
                     mainWindow.pbOperation.Value = 0;
@@ -56,6 +54,7 @@ namespace ShareClipbrdApp.Win.Services {
 
                 if(updateCounter > updatePeriod) {
                     Application.Current.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => {
+                        var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                         mainWindow.pbOperation.Value = progress;
                     }));
                     updateCounter = 0;
@@ -68,7 +67,8 @@ namespace ShareClipbrdApp.Win.Services {
                     await Task.Delay((int)elapsed);
                 }
 
-                mainWindow.Dispatcher.Invoke(DispatcherPriority.Render, new Action(async () => {
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => {
+                    var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Value = 0;
                     if(progress < max) {
                         mainWindow.pbOperation.Background = Brushes.IndianRed;
