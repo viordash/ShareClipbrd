@@ -280,8 +280,9 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
-            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Once);
-            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(9));
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
+            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(9 * 2));
         }
 
         [Test]
@@ -327,8 +328,9 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
-            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Once);
-            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(1));
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
+            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(2));
 
         }
     }
