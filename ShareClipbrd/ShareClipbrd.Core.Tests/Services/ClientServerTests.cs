@@ -148,7 +148,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<StringCollection>(x => fileDropList = x);
 
             var rnd = new Random();
-            var bytes = new byte[1_000_000_003];
+            var bytes = new byte[1_000_003];
             rnd.NextBytes(bytes);
 
             var testsPath = Path.Combine(Path.GetTempPath(), "tests");
@@ -156,7 +156,13 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             var files = new StringCollection();
             var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
-            File.WriteAllBytes(filename, bytes);
+
+            using(var fs = new FileStream(filename, FileMode.CreateNew)) {
+                fs.Write(bytes);
+                fs.Seek(4096L * 1024 * 1024, SeekOrigin.Begin);
+                fs.WriteByte(0);
+            }
+
             files.Add(filename);
 
             try {
@@ -172,11 +178,15 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             Assert.That(otherFilename, Does.Exist);
 
-            var otherBytes = File.ReadAllBytes(otherFilename);
-            File.Delete(otherFilename);
 
-            Assert.That(otherBytes, Has.Length.EqualTo(1_000_000_003));
-            Assert.That(otherBytes.Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
+            using(var fs = new FileStream(otherFilename, FileMode.Open)) {
+                Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
+
+                var otherBytes = new byte[1_000_003];
+                fs.Read(otherBytes);
+                Assert.That(otherBytes, Is.EquivalentTo(bytes));
+            }
+            File.Delete(otherFilename);
 
         }
 
