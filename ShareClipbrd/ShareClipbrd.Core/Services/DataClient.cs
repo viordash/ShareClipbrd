@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Sockets;
 using System.Reflection.PortableExecutable;
+using System.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -38,7 +39,7 @@ namespace ShareClipbrd.Core.Services {
             cts = new CancellationTokenSource();
         }
 
-        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, Int64 total, CancellationToken cancellationToken) {
+        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, CancellationToken cancellationToken) {
             var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
 
@@ -50,105 +51,107 @@ namespace ShareClipbrd.Core.Services {
                 throw new NotSupportedException("Wrong version of the other side");
             }
 
-            await stream.WriteAsync(total, cancellationToken);
-            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
-                await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                throw new NotSupportedException($"Others do not support total: {total}");
-            }
             return stream;
         }
 
-        static void FlatFilesList(StringCollection fileDropList, out Dictionary<string, List<string>> files,
-                out Dictionary<string, List<string>?> directories) {
-            files = new Dictionary<string, List<string>>() {
-                { string.Empty, fileDropList
-                                .Cast<string>()
-                                .Where(x => !File.GetAttributes(x).HasFlag(FileAttributes.Directory))
-                                .Distinct()
-                                .ToList()
-                }
-            };
+        //static void FlatFilesList(StringCollection fileDropList, out Dictionary<string, List<string>> files,
+        //        out Dictionary<string, List<string>?> directories) {
+        //    files = new Dictionary<string, List<string>>() {
+        //        { string.Empty, fileDropList
+        //                        .Cast<string>()
+        //                        .Where(x => !File.GetAttributes(x).HasFlag(FileAttributes.Directory))
+        //                        .Distinct()
+        //                        .ToList()
+        //        }
+        //    };
 
-            directories = new Dictionary<string, List<string>?>();
+        //    directories = new Dictionary<string, List<string>?>();
 
-            foreach(var dir in fileDropList.Cast<string>()
-                                .Where(x => File.GetAttributes(x).HasFlag(FileAttributes.Directory))
-                                .Distinct()) {
+        //    foreach(var dir in fileDropList.Cast<string>()
+        //                        .Where(x => File.GetAttributes(x).HasFlag(FileAttributes.Directory))
+        //                        .Distinct()) {
 
-                var dirFiles = DirectoryHelper.RecursiveGetFiles(dir);
-                var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(dir);
+        //        var dirFiles = DirectoryHelper.RecursiveGetFiles(dir);
+        //        var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(dir);
 
-                if(!dirFiles.Any() && !emptyFolders.Any()) {
-                    directories[dir] = null;
-                    continue;
-                }
+        //        if(!dirFiles.Any() && !emptyFolders.Any()) {
+        //            directories[dir] = null;
+        //            continue;
+        //        }
 
-                if(dirFiles.Any()) {
-                    files[dir] = dirFiles;
-                }
+        //        if(dirFiles.Any()) {
+        //            files[dir] = dirFiles;
+        //        }
 
-                if(emptyFolders.Any()) {
-                    directories[dir] = emptyFolders;
-                }
-            }
-        }
+        //        if(emptyFolders.Any()) {
+        //            directories[dir] = emptyFolders;
+        //        }
+        //    }
+        //}
 
         public async Task SendFileDropList(StringCollection fileDropList) {
-            await using(progressService.Begin(ProgressMode.Send)) {
-                FlatFilesList(fileDropList, out Dictionary<string, List<string>> files, out Dictionary<string, List<string>?> directories);
+            using TcpClient tcpClient = new();
 
-                var total = files.Values.Sum(x => x.Count) + directories.Values.Sum(x => x?.Count ?? 1);
-                progressService.SetMaxTick(total);
-                var cancellationToken = cts.Token;
-                var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
-                using TcpClient tcpClient = new();
+            var cancellationToken = cts.Token;
+            var stream = await Connect(tcpClient, cancellationToken);
+            var fileTransmitter = new FileTransmitter(progressService, stream);
+            await fileTransmitter.Send(fileDropList, cancellationToken);
 
-                var stream = await Connect(tcpClient, total, cancellationToken);
-                await SendFormat(ClipboardData.Format.ZipArchive, stream, cancellationToken);
+            //await using(progressService.Begin(ProgressMode.Send)) {
+            //    FlatFilesList(fileDropList, out Dictionary<string, List<string>> files, out Dictionary<string, List<string>?> directories);
 
-                using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
-                    foreach(var parent in directories) {
-                        var parentPath = Path.GetDirectoryName(parent.Key);
-                        var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
+            //    var total = files.Values.Sum(x => x.Count) + directories.Values.Sum(x => x?.Count ?? 1);
+            //    progressService.SetMaxTick(total);
+            //    var cancellationToken = cts.Token;
+            //    var compressionLevel = CompressionLevelHelper.GetLevel(systemConfiguration.Compression);
+            //    using TcpClient tcpClient = new();
 
-                        if(parent.Value == null) {
-                            progressService.Tick(1);
-                            var archiveEntry = archive.CreateEntry(directoryName, compressionLevel);
-                            archiveEntry.ExternalAttributes = (int)File.GetAttributes(parent.Key);
-                        } else {
-                            foreach(var directory in parent.Value) {
-                                progressService.Tick(1);
-                                var relative = Path.GetRelativePath(parent.Key, directory);
-                                var childDirectory = Path.Combine(directoryName, relative);
-                                var archiveEntry = archive.CreateEntry(childDirectory, compressionLevel);
-                                archiveEntry.ExternalAttributes = (int)File.GetAttributes(directory);
-                            }
-                        }
-                    }
+            //    var stream = await Connect(tcpClient, total, cancellationToken);
+            //    await SendFormat(ClipboardData.Format.ZipArchive, stream, cancellationToken);
 
-                    var filesInRoot = files
-                        .Where(x => string.IsNullOrEmpty(x.Key))
-                        .SelectMany(x => x.Value);
-                    foreach(var file in filesInRoot) {
-                        progressService.Tick(1);
-                        var archiveEntry = archive.CreateEntryFromFile(file, Path.GetFileName(file), compressionLevel);
-                        archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
-                    }
+            //    using(var archive = new ZipArchive(stream, ZipArchiveMode.Create)) {
+            //        foreach(var parent in directories) {
+            //            var parentPath = Path.GetDirectoryName(parent.Key);
+            //            var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
 
-                    foreach(var parent in files.Where(x => !string.IsNullOrEmpty(x.Key))) {
-                        var parentPath = Path.GetDirectoryName(parent.Key);
-                        var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
+            //            if(parent.Value == null) {
+            //                progressService.Tick(1);
+            //                var archiveEntry = archive.CreateEntry(directoryName, compressionLevel);
+            //                archiveEntry.ExternalAttributes = (int)File.GetAttributes(parent.Key);
+            //            } else {
+            //                foreach(var directory in parent.Value) {
+            //                    progressService.Tick(1);
+            //                    var relative = Path.GetRelativePath(parent.Key, directory);
+            //                    var childDirectory = Path.Combine(directoryName, relative);
+            //                    var archiveEntry = archive.CreateEntry(childDirectory, compressionLevel);
+            //                    archiveEntry.ExternalAttributes = (int)File.GetAttributes(directory);
+            //                }
+            //            }
+            //        }
 
-                        foreach(var file in parent.Value) {
-                            progressService.Tick(1);
-                            var fileDirectory = Path.GetDirectoryName(file);
-                            var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
-                            var archiveEntry = archive.CreateEntryFromFile(file, Path.Combine(relative, Path.GetFileName(file)), compressionLevel);
-                            archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
-                        }
-                    }
-                }
-            }
+            //        var filesInRoot = files
+            //            .Where(x => string.IsNullOrEmpty(x.Key))
+            //            .SelectMany(x => x.Value);
+            //        foreach(var file in filesInRoot) {
+            //            progressService.Tick(1);
+            //            var archiveEntry = archive.CreateEntryFromFile(file, Path.GetFileName(file), compressionLevel);
+            //            archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
+            //        }
+
+            //        foreach(var parent in files.Where(x => !string.IsNullOrEmpty(x.Key))) {
+            //            var parentPath = Path.GetDirectoryName(parent.Key);
+            //            var directoryName = Path.GetRelativePath(parentPath!, parent.Key);
+
+            //            foreach(var file in parent.Value) {
+            //                progressService.Tick(1);
+            //                var fileDirectory = Path.GetDirectoryName(file);
+            //                var relative = Path.GetRelativePath(parentPath!, fileDirectory!);
+            //                var archiveEntry = archive.CreateEntryFromFile(file, Path.Combine(relative, Path.GetFileName(file)), compressionLevel);
+            //                archiveEntry.ExternalAttributes = (int)File.GetAttributes(file);
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
@@ -173,7 +176,13 @@ namespace ShareClipbrd.Core.Services {
                 progressService.SetMaxTick(totalLenght);
                 var cancellationToken = cts.Token;
                 using TcpClient tcpClient = new();
-                var stream = await Connect(tcpClient, totalLenght, cancellationToken);
+                var stream = await Connect(tcpClient, cancellationToken);
+
+                await stream.WriteAsync(totalLenght, cancellationToken);
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Others do not support total: {totalLenght}");
+                }
 
                 foreach(var clipboard in clipboardData.Formats) {
                     progressService.Tick(clipboard.Stream.Length);

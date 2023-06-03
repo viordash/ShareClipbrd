@@ -238,46 +238,47 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.IsNotNull(fileDropList);
             Assert.That(fileDropList.Count, Is.EqualTo(9));
 
-            var otherDirectory = fileDropList[0];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0\\directory0_Child0"));
-
-            otherDirectory = fileDropList[1];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0\\директория0_Child1\\directory0_Child1_Child0_Empty"));
-
-            otherDirectory = fileDropList[2];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
-
-            otherDirectory = fileDropList[3];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
-
-            var otherFilename = fileDropList[4];
+            var otherFilename = fileDropList[0];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            otherFilename = fileDropList[5];
+            otherFilename = fileDropList[1];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            otherFilename = fileDropList[6];
+            var otherDirectory = fileDropList[2];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+
+            otherFilename = fileDropList[3];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherFilename = fileDropList[4];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(otherFilename, Does.EndWith("directory0\\директория0_Child1\\файл2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherDirectory = fileDropList[5];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0\\directory0_Child0"));
+
+            otherDirectory = fileDropList[6];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
 
             otherFilename = fileDropList[7];
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
+            Assert.That(otherFilename, Does.EndWith("директория0_Child1\\файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            otherFilename = fileDropList[8];
-            Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("файл2.dat"));
-            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+            otherDirectory = fileDropList[8];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
+
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);

@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Drawing;
@@ -71,12 +72,16 @@ namespace ShareClipbrd.Core.Services {
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
             var memoryStream = new MemoryStream(dataSize);
             byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
-            while(memoryStream.Length < dataSize) {
-                int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
-                if(receivedBytes == 0) {
-                    break;
+            try {
+                while(memoryStream.Length < dataSize) {
+                    int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                    if(receivedBytes == 0) {
+                        break;
+                    }
+                    await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
                 }
-                await memoryStream.WriteAsync(new ReadOnlyMemory<byte>(receiveBuffer, 0, receivedBytes), cancellationToken);
+            } finally {
+                ArrayPool<byte>.Shared.Return(receiveBuffer);
             }
 
             await stream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
@@ -128,10 +133,15 @@ namespace ShareClipbrd.Core.Services {
                     var format = await ReceiveFormat(stream, cancellationToken);
 
                     if(format == ClipboardData.Format.ZipArchive) {
-                        progressService.SetMaxTick(total);
                         var fileDropList = new StringCollection();
-                        fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
+                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, fileDropList, cancellationToken);
+                        await fileReceiver.Receive();
                         dispatchService.ReceiveFiles(fileDropList);
+
+                        //progressService.SetMaxTick(total);
+                        //var fileDropList = new StringCollection();
+                        //fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
+                        //dispatchService.ReceiveFiles(fileDropList);
 
                     } else if(format == ClipboardData.Format.Bitmap) {
 
