@@ -1,7 +1,5 @@
 ﻿using System.Buffers;
 using System.Collections.Specialized;
-using System.IO;
-using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Text;
 using ShareClipbrd.Core.Extensions;

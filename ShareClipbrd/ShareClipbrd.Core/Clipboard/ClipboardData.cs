@@ -30,7 +30,7 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
 
-            public const string ZipArchive = "ZipArchive_60D54950";
+            public const string FileDrop = "FileDrop";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){

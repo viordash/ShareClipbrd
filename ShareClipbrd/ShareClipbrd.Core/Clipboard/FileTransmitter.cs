@@ -66,10 +66,10 @@ namespace ShareClipbrd.Core.Clipboard {
                     throw new NotSupportedException($"Others can't receive total files: {total}");
                 }
 
-                await networkStream.WriteAsync(ClipboardData.Format.ZipArchive, cancellationToken);
+                await networkStream.WriteAsync(ClipboardData.Format.FileDrop, cancellationToken);
                 if(await networkStream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessFormat) {
                     await networkStream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support clipboard format: {ClipboardData.Format.ZipArchive}");
+                    throw new NotSupportedException($"Others do not support clipboard format: {ClipboardData.Format.FileDrop}");
                 }
 
                 foreach(var entry in flatFiles) {

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO.Compression;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
@@ -40,33 +37,6 @@ namespace ShareClipbrd.Core.Services {
             this.progressService = progressService;
 
             cts = new CancellationTokenSource();
-        }
-
-        string[] HandleZipArchive(NetworkStream stream, Lazy<string> sessionDir, CancellationToken cancellationToken) {
-            var files = new List<string>();
-
-            using(var archive = new ZipArchive(stream, ZipArchiveMode.Read)) {
-                Debug.WriteLine($"  Count: {archive.Entries.Count}");
-
-                foreach(var entry in archive.Entries) {
-                    progressService.Tick(1);
-                    var fileAttributes = (FileAttributes)entry.ExternalAttributes;
-                    if(fileAttributes.HasFlag(FileAttributes.Directory)) {
-                        var tempDirectory = Path.Combine(sessionDir.Value, entry.FullName);
-                        Directory.CreateDirectory(tempDirectory);
-                        files.Add(tempDirectory);
-                    } else {
-                        var tempFilename = Path.Combine(sessionDir.Value, entry.FullName);
-                        var directory = Path.GetDirectoryName(tempFilename);
-                        if(!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
-                            Directory.CreateDirectory(directory);
-                        }
-                        entry.ExtractToFile(tempFilename, true);
-                        files.Add(tempFilename);
-                    }
-                }
-            }
-            return files.ToArray();
         }
 
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -132,16 +102,11 @@ namespace ShareClipbrd.Core.Services {
                     var total = await ReceiveSize(stream, cancellationToken);
                     var format = await ReceiveFormat(stream, cancellationToken);
 
-                    if(format == ClipboardData.Format.ZipArchive) {
+                    if(format == ClipboardData.Format.FileDrop) {
                         var fileDropList = new StringCollection();
                         var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, fileDropList, cancellationToken);
                         await fileReceiver.Receive();
                         dispatchService.ReceiveFiles(fileDropList);
-
-                        //progressService.SetMaxTick(total);
-                        //var fileDropList = new StringCollection();
-                        //fileDropList.AddRange(HandleZipArchive(stream, sessionDir, cancellationToken));
-                        //dispatchService.ReceiveFiles(fileDropList);
 
                     } else if(format == ClipboardData.Format.Bitmap) {
 
