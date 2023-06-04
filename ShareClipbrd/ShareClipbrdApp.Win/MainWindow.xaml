@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Height="48" Width="48"
+        Height="50" Width="48"
         MinHeight="24" MinWidth="24"
         AllowsTransparency="True" 
         WindowStyle="None"
@@ -38,7 +38,14 @@
     </Window.ContextMenu>
 
     <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod">
-        <ProgressBar x:Name="pbOperation" Background="LightSteelBlue" Value="55" />
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="0.8*"> </RowDefinition>
+                <RowDefinition Height="0.2*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <ProgressBar Grid.Row="0"  x:Name="pbOperation" Background="LightSteelBlue" Value="65"  />
+            <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor" Background="LightSteelBlue" Value="23"  />
+        </Grid>
     </Border>
 
 </Window>

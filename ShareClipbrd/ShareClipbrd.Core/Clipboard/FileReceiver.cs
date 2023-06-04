@@ -62,10 +62,12 @@ namespace ShareClipbrd.Core.Clipboard {
                     byte[] buffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
                     try {
                         using(var fileStream = new FileStream(tempFilename, FileMode.Create)) {
+                            progressService.SetMaxMinorTick(dataLength);
                             while(fileStream.Length < dataLength) {
                                 var readCount = Math.Min(dataLength - fileStream.Length, (Int64)CommunProtocol.ChunkSize);
                                 int readed = await networkStream.ReadAsync(buffer, 0, (int)readCount, cancellationToken).ConfigureAwait(false);
                                 await fileStream.WriteAsync(buffer, 0, readed, cancellationToken).ConfigureAwait(false);
+                                progressService.MinorTick(readed);
                             }
                             ValidateFile(fileStream, dataLength);
                         }

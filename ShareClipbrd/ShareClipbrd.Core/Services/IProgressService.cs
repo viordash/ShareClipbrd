@@ -8,5 +8,7 @@
         IAsyncDisposable Begin(ProgressMode mode);
         void SetMaxTick(Int64 max);
         void Tick(Int64 steps);
+        void SetMaxMinorTick(Int64 max);
+        void MinorTick(Int64 steps);
     }
 }

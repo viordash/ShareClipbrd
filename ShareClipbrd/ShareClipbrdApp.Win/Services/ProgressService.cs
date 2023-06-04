@@ -12,6 +12,13 @@ namespace ShareClipbrdApp.Win.Services {
     public class ProgressService : IProgressService {
 
         class ProgressSession : IAsyncDisposable {
+            struct DiscontinuousProgress {
+                public Int64 max;
+                public Int64 updatePeriod;
+                public Int64 updateCounter;
+                public Int64 progress;
+            }
+
             static readonly Dictionary<ProgressMode, Brush> brushes = new(){
                 { ProgressMode.Send, Brushes.GreenYellow },
                 { ProgressMode.Receive, Brushes.LightYellow },
@@ -21,52 +28,87 @@ namespace ShareClipbrdApp.Win.Services {
             readonly Stopwatch stopwatch;
             readonly ProgressMode mode;
             readonly Action onDispose;
-            Int64 max;
-            Int64 updatePeriod;
-            Int64 updateCounter;
-            Int64 progress;
+            DiscontinuousProgress major = new();
+            DiscontinuousProgress minor = new();
 
             public ProgressSession(IDialogService dialogService, ProgressMode mode, Action onDispose) {
                 this.dialogService = dialogService;
                 this.mode = mode;
                 this.onDispose = onDispose;
                 stopwatch = Stopwatch.StartNew();
-                updateCounter = 0;
-                progress = 0;
-                max = 100;
-                updatePeriod = 1;
+                major.progress = 0;
+                major.max = 100;
+                major.updatePeriod = 1;
+                major.updateCounter = 0;
+                minor.progress = 0;
+                minor.max = 100;
+                minor.updatePeriod = 1;
+                minor.updateCounter = 0;
+
+
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Background = brushes[mode];
-                    mainWindow.pbOperation.Maximum = max;
+                    mainWindow.pbOperation.Maximum = major.max;
                     mainWindow.pbOperation.Value = 0;
+
+                    mainWindow.pbOperationMinor.Background = brushes[mode];
+                    mainWindow.pbOperationMinor.Maximum = minor.max;
+                    mainWindow.pbOperationMinor.Value = 0;
                 }));
             }
 
             public void SetMaxTick(Int64 max) {
-                this.max = max;
-                updatePeriod = max / 100;
-                if(updatePeriod == 0) {
-                    updatePeriod = 1;
+                major.max = max;
+                major.updatePeriod = max / 100;
+                if(major.updatePeriod == 0) {
+                    major.updatePeriod = 1;
                 }
 
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.pbOperation.Maximum = max;
+                    mainWindow.pbOperation.Maximum = major.max;
                     mainWindow.pbOperation.Value = 0;
                 }));
             }
 
             public void Tick(Int64 steps) {
-                updateCounter += steps;
-                progress += steps;
+                major.updateCounter += steps;
+                major.progress += steps;
 
-                if(updateCounter > updatePeriod) {
+                if(major.updateCounter > major.updatePeriod) {
                     Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
                         var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.pbOperation.Value = progress;
+                        mainWindow.pbOperation.Value = major.progress;
                     }));
-                    updateCounter = 0;
+                    major.updateCounter = 0;
+                }
+            }
+
+            public void SetMaxMinorTick(long max) {
+                minor.max = max;
+                minor.updatePeriod = max / 100;
+                if(minor.updatePeriod == 0) {
+                    minor.updatePeriod = 1;
+                }
+
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
+                    var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                    mainWindow.pbOperationMinor.Maximum = minor.max;
+                    mainWindow.pbOperationMinor.Value = 0;
+                }));
+            }
+
+            public void MinorTick(long steps) {
+                minor.updateCounter += steps;
+                minor.progress += steps;
+
+                if(minor.updateCounter > minor.updatePeriod) {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
+                        var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                        mainWindow.pbOperationMinor.Value = minor.progress;
+                    }));
+                    minor.updateCounter = 0;
                 }
             }
 
@@ -79,14 +121,17 @@ namespace ShareClipbrdApp.Win.Services {
                 await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(async () => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Value = 0;
-                    if(progress < max) {
+                    mainWindow.pbOperationMinor.Value = 0;
+                    if(major.progress < major.max) {
                         mainWindow.pbOperation.Background = Brushes.IndianRed;
+                        mainWindow.pbOperationMinor.Background = Brushes.IndianRed;
                         await Task.Delay(500);
                         Debug.WriteLine(mode == ProgressMode.Send
                             ? "Data transmit error"
                             : "Data receive error");
                     }
                     mainWindow.pbOperation.Background = Brushes.LightSteelBlue;
+                    mainWindow.pbOperationMinor.Background = Brushes.LightSteelBlue;
                 }));
 
                 onDispose();
@@ -135,5 +180,22 @@ namespace ShareClipbrdApp.Win.Services {
             }
         }
 
+        public void SetMaxMinorTick(long max) {
+            lock(lockObj) {
+                if(progressSession == null) {
+                    throw new InvalidOperationException("Progress is out of scope");
+                }
+                progressSession.SetMaxMinorTick(max);
+            }
+        }
+
+        public void MinorTick(long steps) {
+            lock(lockObj) {
+                if(progressSession == null) {
+                    throw new InvalidOperationException("Progress is out of scope");
+                }
+                progressSession.MinorTick(steps);
+            }
+        }
     }
 }
