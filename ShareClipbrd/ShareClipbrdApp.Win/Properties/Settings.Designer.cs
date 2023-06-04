@@ -70,17 +70,5 @@ namespace ShareClipbrdApp.Win.Properties {
                 this["PartnerAddress"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int Compression {
-            get {
-                return ((int)(this["Compression"]));
-            }
-            set {
-                this["Compression"] = value;
-            }
-        }
     }
 }

@@ -40,8 +40,6 @@ namespace ShareClipbrdApp.Win {
             dataServer.Start();
             edHostAddress.Text = Settings.Default.HostAddress;
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
-            edCompressionLevel.ItemsSource = CompressionLevelHelper.Names.Values;
-            edCompressionLevel.Text = CompressionLevelHelper.GetName(Settings.Default.Compression);
         }
 
         void Window_Closed(object sender, System.EventArgs e) {
@@ -100,10 +98,6 @@ namespace ShareClipbrdApp.Win {
 
         private void edPartnerAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) {
             Settings.Default.PartnerAddress = edPartnerAddress.Text;
-        }
-
-        private void edCompressionLevel_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-            Settings.Default.Compression = (int)CompressionLevelHelper.GetValue(edCompressionLevel.SelectedItem as string);
         }
     }
 }

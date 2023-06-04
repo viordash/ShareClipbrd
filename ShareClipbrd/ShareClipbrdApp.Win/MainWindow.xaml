@@ -31,9 +31,6 @@
                 <MenuItem Header="Partner address" >
                     <TextBox x:Name="edPartnerAddress" Width="200" Margin="0,0,-40,0" TextChanged="edPartnerAddress_TextChanged"/>
                 </MenuItem>
-                <MenuItem Header="Files compression level" >
-                    <ComboBox x:Name="edCompressionLevel" Width="160" Margin="0,0,-40,0" SelectionChanged="edCompressionLevel_SelectionChanged"/>
-                </MenuItem>
             </MenuItem>
             <Separator />
             <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>

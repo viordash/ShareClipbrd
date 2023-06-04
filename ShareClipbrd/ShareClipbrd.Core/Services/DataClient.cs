@@ -45,7 +45,6 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException("Wrong version of the other side");
             }
-
             return stream;
         }
 
