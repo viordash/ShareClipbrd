@@ -76,12 +76,13 @@ namespace ShareClipbrdApp.Win.Services {
                     await Task.Delay((int)elapsed);
                 }
 
-                await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
+                await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(async () => {
                     var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
                     mainWindow.pbOperation.Value = 0;
                     if(progress < max) {
                         mainWindow.pbOperation.Background = Brushes.IndianRed;
-                        dialogService.ShowMessage(mode == ProgressMode.Send
+                        await Task.Delay(500);
+                        Debug.WriteLine(mode == ProgressMode.Send
                             ? "Data transmit error"
                             : "Data receive error");
                     }
