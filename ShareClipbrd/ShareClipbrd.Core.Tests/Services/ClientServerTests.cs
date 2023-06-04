@@ -179,7 +179,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(otherFilename, Does.Exist);
 
 
-            using(var fs = new FileStream(otherFilename, FileMode.Open)) {
+            using(var fs = new FileStream(otherFilename, FileMode.Open, FileAccess.Read)) {
                 Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
 
                 var otherBytes = new byte[1_000_003];

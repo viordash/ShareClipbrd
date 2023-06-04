@@ -47,7 +47,7 @@ namespace ShareClipbrd.Core.Clipboard {
             if(attributes.HasFlag(FileAttributes.Directory)) {
                 await networkStream.WriteAsync((Int64)0, cancellationToken);
             } else {
-                using(var fileStream = new FileStream(name, FileMode.Open)) {
+                using(var fileStream = new FileStream(name, FileMode.Open, FileAccess.Read)) {
                     await networkStream.WriteAsync((Int64)fileStream.Length, cancellationToken);
                     await fileStream.CopyToAsync(networkStream, cancellationToken);
                 }
