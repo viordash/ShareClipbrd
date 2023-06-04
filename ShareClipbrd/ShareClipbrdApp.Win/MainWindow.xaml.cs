@@ -69,11 +69,13 @@ namespace ShareClipbrdApp.Win {
         void Window_Activated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.Aqua;
             Border.BorderThickness = new Thickness(2);
+            Opacity = 1;
         }
 
         void Window_Deactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
             Border.BorderThickness = new Thickness(1);
+            Opacity = 0.545;
         }
 
         void TransmitClipboard() {
