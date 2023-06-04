@@ -1,4 +1,6 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Buffers;
+using System.Collections.Specialized;
 using System.Net.Sockets;
 using System.Text;
 using ShareClipbrd.Core.Extensions;
@@ -51,7 +53,19 @@ namespace ShareClipbrd.Core.Clipboard {
                 using(var fileStream = new FileStream(name, FileMode.Open, FileAccess.Read)) {
                     progressService.SetMaxMinorTick(fileStream.Length);
                     await networkStream.WriteAsync((Int64)fileStream.Length, cancellationToken);
-                    await fileStream.CopyToAsync(networkStream, cancellationToken);
+                    byte[] buffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
+                    try {
+                        Int64 dataLength = 0;
+                        while(dataLength < fileStream.Length) {
+                            var sendCount = Math.Min(fileStream.Length - dataLength, (Int64)CommunProtocol.ChunkSize);
+                            int sended = await fileStream.ReadAsync(buffer, 0, (int)sendCount, cancellationToken).ConfigureAwait(false);
+                            await networkStream.WriteAsync(buffer, 0, sended, cancellationToken).ConfigureAwait(false);
+                            progressService.MinorTick(sended);
+                            dataLength += sended;
+                        }
+                    } finally {
+                        ArrayPool<byte>.Shared.Return(buffer);
+                    }
                 }
             }
         }
