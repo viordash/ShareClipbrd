@@ -43,8 +43,8 @@
                 <RowDefinition Height="0.8*"> </RowDefinition>
                 <RowDefinition Height="0.2*"></RowDefinition>
             </Grid.RowDefinitions>
-            <ProgressBar Grid.Row="0"  x:Name="pbOperation" Background="LightSteelBlue" Value="65"  />
-            <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor" Background="LightSteelBlue" Value="23"  />
+            <ProgressBar Grid.Row="0"  x:Name="pbOperation" Background="LightSteelBlue" Value="0"  />
+            <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor" Background="LightSteelBlue" Value="0"  />
         </Grid>
     </Border>
 
