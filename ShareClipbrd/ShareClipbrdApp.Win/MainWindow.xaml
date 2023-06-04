@@ -17,7 +17,8 @@
         Closed="Window_Closed"
         KeyDown="Window_KeyDown"
         Activated="Window_Activated"
-        Deactivated="Window_Deactivated">
+        Deactivated="Window_Deactivated"
+        Background="Transparent" >
 
 
     <Window.ContextMenu>
@@ -37,14 +38,14 @@
         </ContextMenu>
     </Window.ContextMenu>
 
-    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod">
-        <Grid>
+    <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
+        <Grid Margin="2,2,2,2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="0.8*"> </RowDefinition>
+                <RowDefinition Height="0.8*"></RowDefinition>
                 <RowDefinition Height="0.2*"></RowDefinition>
             </Grid.RowDefinitions>
-            <ProgressBar Grid.Row="0"  x:Name="pbOperation" Background="LightSteelBlue" Value="0"  />
-            <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor" Background="LightSteelBlue" Value="0"  />
+            <ProgressBar Grid.Row="0"  x:Name="pbOperation"  Value="0" Background="LightSteelBlue" />
+            <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor"  Value="0" Background="LightSteelBlue" />
         </Grid>
     </Border>
 

@@ -5,7 +5,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
-using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Win.Helpers;
 using ShareClipbrdApp.Win.Properties;
@@ -30,7 +29,6 @@ namespace ShareClipbrdApp.Win {
             this.dataServer = dataServer;
 
             InitializeComponent();
-
         }
 
         void Window_Initialized(object sender, System.EventArgs e) {
