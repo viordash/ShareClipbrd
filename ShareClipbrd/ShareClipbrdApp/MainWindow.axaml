@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ShareClipbrdApp.MainWindow"
+        Title="ShareClipbrd"
+        
+        Height="50" Width="48"
+        Topmost="True"
+        Opacity="0.545"
+        Background="Transparent"        
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        SystemDecorations="BorderOnly"
+        CanResize="False"
+        Initialized="OnInitialized"
+        Closed="OnClosed"
+        Activated="OnActivated"
+        Deactivated="OnDeactivated"
+        
+        PointerPressed="OnPointerPressedEvent"
+        PointerReleased="OnPointerReleasedEvent"
+        PointerMoved="OnPointerMoved"
+        >
+
+  <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
+    <Grid Margin="2,2,2,2">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="0.8*"></RowDefinition>
+        <RowDefinition Height="0.2*"></RowDefinition>
+      </Grid.RowDefinitions>
+      <ProgressBar Grid.Row="0"  x:Name="pbOperation"  Value="77" Background="LightSteelBlue" Height="10"/>
+      <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor"  Value="47" Background="LightSteelBlue" Height="10"/>
+    </Grid>
+  </Border>
+
+</Window>

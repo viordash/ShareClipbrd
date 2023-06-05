@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrd.Core", "ShareC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrdApp.Win.Tests", "ShareClipbrdApp.Win.Tests\ShareClipbrdApp.Win.Tests.csproj", "{825BE8AA-7FE9-4296-8C7A-3D806A109052}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareClipbrd.Core.Tests", "ShareClipbrd.Core.Tests\ShareClipbrd.Core.Tests.csproj", "{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrd.Core.Tests", "ShareClipbrd.Core.Tests\ShareClipbrd.Core.Tests.csproj", "{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareClipbrdApp", "ShareClipbrdApp\ShareClipbrdApp.csproj", "{D17F8E3C-4EFF-4D3B-851D-0995FAF0C16F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D17F8E3C-4EFF-4D3B-851D-0995FAF0C16F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D17F8E3C-4EFF-4D3B-851D-0995FAF0C16F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D17F8E3C-4EFF-4D3B-851D-0995FAF0C16F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D17F8E3C-4EFF-4D3B-851D-0995FAF0C16F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
