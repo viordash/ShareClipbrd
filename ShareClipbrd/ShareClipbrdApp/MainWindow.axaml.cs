@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using ShareClipbrd.Core.Services;
+using Avalonia.Platform;
+using ShareClipbrdApp.Helpers;
 
 namespace ShareClipbrdApp {
     public partial class MainWindow : Window {
@@ -21,8 +21,9 @@ namespace ShareClipbrdApp {
 
         void OnInitialized(object sender, System.EventArgs e) {
             //WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            //Height = SystemParameters.FullPrimaryScreenHeight / 40;
-            //Width = SystemParameters.FullPrimaryScreenWidth / 40;
+            Height = Screens.Primary.WorkingArea.Height / 40;
+            Width = Screens.Primary.WorkingArea.Width / 40;
+            
             //dataServer.Start();
             //edHostAddress.Text = Settings.Default.HostAddress;
             //edPartnerAddress.Text = Settings.Default.PartnerAddress;
@@ -43,7 +44,7 @@ namespace ShareClipbrdApp {
         void OnDeactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
             Border.BorderThickness = new Thickness(1);
-            Opacity = 0.545;
+            Opacity = 0.345;
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {

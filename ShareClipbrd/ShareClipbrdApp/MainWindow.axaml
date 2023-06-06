@@ -8,13 +8,17 @@
         
         Height="50" Width="48"
         Topmost="True"
-        Opacity="0.545"
+        Opacity="0.145"
         Background="Transparent"        
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
         SystemDecorations="BorderOnly"
         CanResize="False"
+        TransparencyLevelHint="Transparent"
+        TransparencyBackgroundFallback="Black"
+        
+        
         Initialized="OnInitialized"
         Closed="OnClosed"
         Activated="OnActivated"
@@ -31,8 +35,8 @@
         <RowDefinition Height="0.8*"></RowDefinition>
         <RowDefinition Height="0.2*"></RowDefinition>
       </Grid.RowDefinitions>
-      <ProgressBar Grid.Row="0"  x:Name="pbOperation"  Value="77" Background="LightSteelBlue" Height="10"/>
-      <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor"  Value="47" Background="LightSteelBlue" Height="10"/>
+      <ProgressBar Grid.Row="0"  x:Name="pbOperation"  Value="57"  Height="10"/>
+      <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor"  Value="47"  Height="10"/>
     </Grid>
   </Border>
 
