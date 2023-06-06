@@ -1,13 +1,13 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Platform;
 using ShareClipbrdApp.Helpers;
+using ShareClipbrdApp.Properties;
 
 namespace ShareClipbrdApp {
     public partial class MainWindow : Window {
-        //bool mouseDownForWindowMoving = false;
         PointerPoint? originalPoint;
 
 
@@ -20,19 +20,19 @@ namespace ShareClipbrdApp {
         }
 
         void OnInitialized(object sender, System.EventArgs e) {
-            //WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
+            WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = Screens.Primary.WorkingArea.Height / 40;
             Width = Screens.Primary.WorkingArea.Width / 40;
-            
+
             //dataServer.Start();
             //edHostAddress.Text = Settings.Default.HostAddress;
             //edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
-        void OnClosed(object sender, System.EventArgs e) {
+        void OnClosing(object sender, CancelEventArgs e) {
             //dataServer.Stop();
-            //Settings.Default.MainFormLocation = new System.Drawing.Point((int)Left, (int)Top);
-            //Settings.Default.Save();
+            Settings.Default.MainFormLocation = new System.Drawing.Point(Position.X, Position.Y);
+            Settings.Default.Save();
         }
 
         void OnActivated(object sender, System.EventArgs e) {

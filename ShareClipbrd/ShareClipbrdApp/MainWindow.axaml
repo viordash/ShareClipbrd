@@ -20,7 +20,7 @@
         
         
         Initialized="OnInitialized"
-        Closed="OnClosed"
+        Closing="OnClosing"
         Activated="OnActivated"
         Deactivated="OnDeactivated"
         
