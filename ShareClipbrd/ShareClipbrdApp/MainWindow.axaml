@@ -19,7 +19,7 @@
         TransparencyBackgroundFallback="Black"
         
         
-        Initialized="OnInitialized"
+        Opened="OnOpened"
         Closing="OnClosing"
         Activated="OnActivated"
         Deactivated="OnDeactivated"
@@ -29,6 +29,23 @@
         PointerMoved="OnPointerMoved"
         >
 
+  <Window.ContextMenu>
+    <ContextMenu>
+      <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
+      <Separator />
+      <MenuItem Header="Settings" >
+        <MenuItem Header="Host address">
+          <TextBox x:Name="edHostAddress" Width="200" Margin="0,0,-40,0" TextInput="edHostAddress_TextChanged" />
+        </MenuItem>
+        <MenuItem Header="Partner address" >
+          <TextBox x:Name="edPartnerAddress" Width="200" Margin="0,0,-40,0" TextInput="edPartnerAddress_TextChanged"/>
+        </MenuItem>
+      </MenuItem>
+      <Separator />
+      <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
+    </ContextMenu>
+  </Window.ContextMenu>
+  
   <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
     <Grid Margin="2,2,2,2">
       <Grid.RowDefinitions>

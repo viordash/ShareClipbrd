@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using GuardNet;
 using ShareClipbrd.Core.Services;
@@ -32,14 +33,14 @@ namespace ShareClipbrdApp {
 #endif
         }
 
-        void OnInitialized(object sender, System.EventArgs e) {
+        void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
             Height = Screens.Primary.WorkingArea.Height / 40;
             Width = Screens.Primary.WorkingArea.Width / 40;
 
             dataServer?.Start();
-            //edHostAddress.Text = Settings.Default.HostAddress;
-            //edPartnerAddress.Text = Settings.Default.PartnerAddress;
+            edHostAddress.Text = Settings.Default.HostAddress;
+            edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
         void OnClosing(object sender, CancelEventArgs e) {
@@ -76,6 +77,23 @@ namespace ShareClipbrdApp {
             PointerPoint currentPoint = e.GetCurrentPoint(this);
             Position = new PixelPoint(Position.X + (int)(currentPoint.Position.X - originalPoint.Position.X),
                 Position.Y + (int)(currentPoint.Position.Y - originalPoint.Position.Y));
+        }
+
+        void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
+            //TransmitClipboard();
+            //edHostAddress.cha
+        }
+
+        void MenuItemClose_Click(object sender, RoutedEventArgs e) {
+            this.Close();
+        }
+
+        private void edHostAddress_TextChanged(object sender, TextInputEventArgs e) {
+            Settings.Default.HostAddress = edHostAddress.Text;
+        }
+
+        private void edPartnerAddress_TextChanged(object sender, TextInputEventArgs e) {
+            Settings.Default.PartnerAddress = edPartnerAddress.Text;
         }
     }
 }
