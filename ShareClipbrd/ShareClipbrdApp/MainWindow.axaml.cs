@@ -3,13 +3,26 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using GuardNet;
+using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Helpers;
 using ShareClipbrdApp.Properties;
 
 namespace ShareClipbrdApp {
     public partial class MainWindow : Window {
         PointerPoint? originalPoint;
+        readonly IDataClient? dataClient;
+        readonly IDataServer? dataServer;
 
+        public MainWindow(
+            IDataClient dataClient,
+            IDataServer dataServer) : this() {
+            Guard.NotNull(dataClient, nameof(dataClient));
+            Guard.NotNull(dataServer, nameof(dataServer));
+
+            this.dataClient = dataClient;
+            this.dataServer = dataServer;
+        }
 
         public MainWindow() {
             InitializeComponent();
@@ -24,13 +37,13 @@ namespace ShareClipbrdApp {
             Height = Screens.Primary.WorkingArea.Height / 40;
             Width = Screens.Primary.WorkingArea.Width / 40;
 
-            //dataServer.Start();
+            dataServer?.Start();
             //edHostAddress.Text = Settings.Default.HostAddress;
             //edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
         void OnClosing(object sender, CancelEventArgs e) {
-            //dataServer.Stop();
+            dataServer?.Stop();
             Settings.Default.MainFormLocation = new System.Drawing.Point(Position.X, Position.Y);
             Settings.Default.Save();
         }
