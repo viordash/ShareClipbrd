@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
+using Avalonia.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Services;
 
@@ -45,16 +47,19 @@ namespace ShareClipbrdApp.Services {
                 minor.updateCounter = 0;
 
 
-                //Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => {
-                //    var mainWindow = Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                //    mainWindow.pbOperation.Background = brushes[mode];
-                //    mainWindow.pbOperation.Maximum = major.max;
-                //    mainWindow.pbOperation.Value = 0;
+                Dispatcher.UIThread.InvokeAsync(new Action(() => {
+                    if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
+                        return;
+                    }
+                    var mainWindow = desktop.MainWindow;// Application.Current.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                    //mainWindow.pbOperation.Background = brushes[mode];
+                    //mainWindow.pbOperation.Maximum = major.max;
+                    //mainWindow.pbOperation.Value = 0;
 
-                //    mainWindow.pbOperationMinor.Background = brushes[mode];
-                //    mainWindow.pbOperationMinor.Maximum = minor.max;
-                //    mainWindow.pbOperationMinor.Value = 0;
-                //}));
+                    //mainWindow.pbOperationMinor.Background = brushes[mode];
+                    //mainWindow.pbOperationMinor.Maximum = minor.max;
+                    //mainWindow.pbOperationMinor.Value = 0;
+                }), DispatcherPriority.Send);
             }
 
             public void SetMaxTick(Int64 max) {
