@@ -93,13 +93,16 @@ namespace ShareClipbrdApp {
             this.Close();
         }
 
-        private void edHostAddress_TextChanged(object sender, TextInputEventArgs e) {
-            Settings.Default.HostAddress = edHostAddress.Text;
-            //edHostAddress.TextChanged
+        private void edHostAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.TextProperty) {
+                Settings.Default.HostAddress = edHostAddress.Text;
+            }
         }
 
-        private void edPartnerAddress_TextChanged(object sender, TextInputEventArgs e) {
-            Settings.Default.PartnerAddress = edPartnerAddress.Text;
+        private void edPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.TextProperty) {
+                Settings.Default.PartnerAddress = edPartnerAddress.Text;
+            }
         }
     }
 }
