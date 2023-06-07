@@ -62,7 +62,9 @@ namespace ShareClipbrdApp {
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
-            originalPoint = e.GetCurrentPoint(this);
+            if(e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
+                originalPoint = e.GetCurrentPoint(this);
+            }
         }
 
         private void OnPointerReleasedEvent(object? sender, PointerReleasedEventArgs e) {
@@ -70,6 +72,9 @@ namespace ShareClipbrdApp {
         }
 
         private void OnPointerMoved(object? sender, PointerEventArgs e) {
+            if(!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
+                return;
+            }
             if(originalPoint == null) {
                 return;
             }
