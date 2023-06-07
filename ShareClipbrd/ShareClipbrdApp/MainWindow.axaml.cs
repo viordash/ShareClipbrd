@@ -90,6 +90,7 @@ namespace ShareClipbrdApp {
 
         private void edHostAddress_TextChanged(object sender, TextInputEventArgs e) {
             Settings.Default.HostAddress = edHostAddress.Text;
+            //edHostAddress.TextChanged
         }
 
         private void edPartnerAddress_TextChanged(object sender, TextInputEventArgs e) {

@@ -35,10 +35,10 @@
       <Separator />
       <MenuItem Header="Settings" >
         <MenuItem Header="Host address">
-          <TextBox x:Name="edHostAddress" Width="200" Margin="0,0,-40,0" TextInput="edHostAddress_TextChanged" />
+          <TextBox x:Name="edHostAddress" Width="250" Margin="0,0,-10,0" TextInput="edHostAddress_TextChanged" />
         </MenuItem>
         <MenuItem Header="Partner address" >
-          <TextBox x:Name="edPartnerAddress" Width="200" Margin="0,0,-40,0" TextInput="edPartnerAddress_TextChanged"/>
+          <TextBox x:Name="edPartnerAddress" Width="250" Margin="0,0,-10,0" TextInput="edPartnerAddress_TextChanged"/>
         </MenuItem>
       </MenuItem>
       <Separator />
