@@ -16,7 +16,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         bool DataFormats_Test(string dataFormat, object data, Encoding encoding) {
-            testable.Serialize(new[] { dataFormat }, (f) => { if(f == dataFormat) return data; else return new object(); });
+            testable.Serialize(new[] { dataFormat }, (f) => { if(f == dataFormat) return Task.FromResult(data); else return Task.FromResult(new object()); });
             Assert.That(testable.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { dataFormat }));
             Assert.That(testable.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(encoding.GetBytes($"{dataFormat} Кирилица")) }));
             return true;
@@ -28,7 +28,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_Text_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Text }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Text }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_UnicodeText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.UnicodeText }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.UnicodeText }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_StringFormat_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_OemText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
@@ -64,13 +64,13 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_Rtf_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Rtf }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Rtf }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
         public void DataFormats_Locale_Test() {
             testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => {
-                if(f == ClipboardData.Format.Locale) return new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 }); else return new object();
+                if(f == ClipboardData.Format.Locale) return Task.FromResult(new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 }) as object); else return Task.FromResult(new object());
             });
 
             Assert.That(testable.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { ClipboardData.Format.Locale }));
@@ -78,7 +78,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_Locale_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => new object()));
+            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => Task.FromResult(new object())));
         }
     }
 }
