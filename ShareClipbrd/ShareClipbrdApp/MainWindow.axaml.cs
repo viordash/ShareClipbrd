@@ -1,5 +1,5 @@
+using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -123,6 +123,32 @@ namespace ShareClipbrdApp {
 
             await dataClient!.SendData(clipboardData);
             //}
+        }
+
+        public void SetProgress(double percent) {
+            pbOperation.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
+        }
+
+        public void SetProgressMinor(double percent) {
+            pbOperationMinor.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
+        }
+
+        public void SetProgressMode(ProgressMode mode) {
+            switch(mode) {
+                case ProgressMode.Send:
+                    Border.Background = new SolidColorBrush(Colors.GreenYellow);
+                    break;
+                case ProgressMode.Receive:
+                    Border.Background = new SolidColorBrush(Colors.LightYellow);
+                    break;
+                case ProgressMode.Error:
+                    Border.Background = new SolidColorBrush(Colors.IndianRed);
+                    break;
+                default:
+                    Border.Background = new SolidColorBrush(Colors.LightSteelBlue);
+                    break;
+
+            }
         }
     }
 }

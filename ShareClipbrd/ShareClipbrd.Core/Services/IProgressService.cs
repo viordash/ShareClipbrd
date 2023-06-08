@@ -1,7 +1,9 @@
 ﻿namespace ShareClipbrd.Core.Services {
     public enum ProgressMode {
+        None = 0,
         Send,
-        Receive
+        Receive,
+        Error
     };
 
     public interface IProgressService {

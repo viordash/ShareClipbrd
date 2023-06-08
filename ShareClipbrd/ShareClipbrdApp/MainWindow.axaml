@@ -47,8 +47,8 @@
 
   <Border x:Name="Border" BorderThickness="2" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
     <Canvas Margin="1" >
-      <Rectangle Fill="#FF06B025" Height="28" Width="29" Opacity="0.5"/>
-      <Rectangle Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="29"/>
+      <Rectangle x:Name="pbOperation" Fill="#FF06B025" Height="28" Width="29" Opacity="0.5"/>
+      <Rectangle x:Name="pbOperationMinor" Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="29"/>
     </Canvas>
   </Border>
 
