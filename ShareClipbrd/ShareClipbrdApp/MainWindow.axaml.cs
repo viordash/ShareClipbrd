@@ -1,10 +1,12 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using GuardNet;
+using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Helpers;
 using ShareClipbrdApp.Properties;
@@ -35,8 +37,6 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            //Height = Screens.Primary.WorkingArea.Height / 40;
-            //Width = Screens.Primary.WorkingArea.Width / 40;
 
             dataServer?.Start();
             edHostAddress.Text = Settings.Default.HostAddress;
@@ -83,8 +83,7 @@ namespace ShareClipbrdApp {
         }
 
         void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
-            //TransmitClipboard();
-            //edHostAddress.cha
+            TransmitClipboard();
         }
 
         void MenuItemClose_Click(object sender, RoutedEventArgs e) {
@@ -101,6 +100,29 @@ namespace ShareClipbrdApp {
             if(e.Property == TextBox.TextProperty) {
                 Settings.Default.PartnerAddress = edPartnerAddress.Text;
             }
+        }
+
+        void OnKeyDown(object sender, KeyEventArgs e) {
+            if(e.Key == Key.V && e.KeyModifiers == KeyModifiers.Control) {
+                TransmitClipboard();
+            }
+        }
+
+        async void TransmitClipboard() {
+            var clipboardData = new ClipboardData();
+            //if(System.Windows.Clipboard.ContainsFileDropList()) {
+            //    var fileDropList = System.Windows.Clipboard.GetFileDropList();
+            //    _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
+            //} else if(System.Windows.Clipboard.ContainsImage()) {
+
+            //} else if(System.Windows.Clipboard.ContainsAudio()) {
+
+            //} else {
+            var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
+            clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
+
+            await dataClient!.SendData(clipboardData);
+            //}
         }
     }
 }

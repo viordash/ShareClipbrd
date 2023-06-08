@@ -11,9 +11,9 @@ namespace ShareClipbrd.Core.Clipboard {
     }
     public class ClipboardData {
         public class Convert {
-            public Func<ClipboardData, Func<string, object>, bool> From { get; set; }
+            public Func<ClipboardData, Func<string, Task<object>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
-            public Convert(Func<ClipboardData, Func<string, object>, bool> from, Func<Stream, object> to) {
+            public Convert(Func<ClipboardData, Func<string, Task<object>>, Task<bool>> from, Func<Stream, object> to) {
                 From = from;
                 To = to;
             }
@@ -35,56 +35,70 @@ namespace ShareClipbrd.Core.Clipboard {
 
         public static readonly Dictionary<string, Convert> Converters = new(){
             { Format.Text, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.Text) is string castedValue) {c.Add(Format.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Text);
+                    if (data is string castedValue) {c.Add(Format.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
                 },
             { Format.UnicodeText, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.UnicodeText) is string castedValue) {c.Add(Format.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.UnicodeText);
+                    if (data is string castedValue) {c.Add(Format.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { Format.StringFormat, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.StringFormat) is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.StringFormat);
+                    if (data is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { Format.OemText, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.OemText) is string castedValue) {c.Add(Format.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.OemText);
+                    if (data is string castedValue) {c.Add(Format.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
             },
             { Format.Rtf, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.Rtf) is string castedValue) {c.Add(Format.Rtf, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Rtf);
+                    if (data is string castedValue) {c.Add(Format.Rtf, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.Rtf, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
             },
             { Format.Locale, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.Locale) is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Locale);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.Locale, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => stream
                 )
             },
             { Format.Html, new Convert(
-                (c,getDataFunc) => {
-                    if (getDataFunc(Format.Html) is string castedValue) {c.Add(Format.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Html);
+                    if (data is string castedValue) {c.Add(Format.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
@@ -98,18 +112,21 @@ namespace ShareClipbrd.Core.Clipboard {
             Formats.Add(new ClipboardItem(format, stream));
         }
 
-        public void Serialize(string[] formats, Func<string, object> getDataFunc) {
+        public async void Serialize(string[] formats, Func<string, Task<object>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             foreach(var format in formats) {
                 try {
                     if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
 
-                        var obj = getDataFunc(format);
+                        var obj = await getDataFunc(format);
+                        if(obj is byte[] bytes) {
+                            obj = new MemoryStream(bytes);
+                        }
                         if(obj is MemoryStream memoryStream) {
                             convertFunc = new Convert(
                             (c, f) => {
-                                c.Add(format, memoryStream); return true;
+                                c.Add(format, memoryStream); return Task.FromResult(true);
                             },
                             (stream) => stream
                             );
@@ -120,7 +137,7 @@ namespace ShareClipbrd.Core.Clipboard {
                         }
                     }
 
-                    if(!convertFunc.From(this, getDataFunc)) {
+                    if(!await convertFunc.From(this, getDataFunc)) {
                         throw new InvalidCastException(format);
                     }
                 } catch(System.Runtime.InteropServices.COMException e) {
@@ -136,7 +153,7 @@ namespace ShareClipbrd.Core.Clipboard {
 
             foreach(var format in Formats) {
                 if(!Converters.TryGetValue(format.Format, out Convert? convertFunc)) {
-                    convertFunc = new Convert((c, o) => false, (stream) => {
+                    convertFunc = new Convert((c, o) => Task.FromResult(false), (stream) => {
                         if(stream is MemoryStream ms) {
                             var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
                             Debug.WriteLine($"--- {format} {str}");

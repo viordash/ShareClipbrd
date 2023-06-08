@@ -87,7 +87,7 @@ namespace ShareClipbrdApp.Win {
 
             } else {
                 var dataObject = System.Windows.Clipboard.GetDataObject();
-                clipboardData.Serialize(dataObject.GetFormats(), dataObject.GetData);
+                clipboardData.Serialize(dataObject.GetFormats(), (format) => { return Task.FromResult(dataObject.GetData(format)); });
                 _ = Task.Run(async () => await dataClient.SendData(clipboardData));
             }
         }

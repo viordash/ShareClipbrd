@@ -25,6 +25,7 @@
         PointerPressed="OnPointerPressedEvent"
         PointerReleased="OnPointerReleasedEvent"
         PointerMoved="OnPointerMoved"
+        KeyDown="OnKeyDown"
         >
 
   <Window.ContextMenu>
