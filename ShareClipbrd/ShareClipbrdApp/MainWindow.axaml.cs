@@ -35,8 +35,8 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            Height = Screens.Primary.WorkingArea.Height / 40;
-            Width = Screens.Primary.WorkingArea.Width / 40;
+            //Height = Screens.Primary.WorkingArea.Height / 40;
+            //Width = Screens.Primary.WorkingArea.Width / 40;
 
             dataServer?.Start();
             edHostAddress.Text = Settings.Default.HostAddress;
@@ -51,14 +51,12 @@ namespace ShareClipbrdApp {
 
         void OnActivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.Aqua;
-            Border.BorderThickness = new Thickness(2);
-            Opacity = 1;
+            Border.Opacity = 1;
         }
 
         void OnDeactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
-            Border.BorderThickness = new Thickness(1);
-            Opacity = 0.345;
+            Border.Opacity = 0.5;
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {

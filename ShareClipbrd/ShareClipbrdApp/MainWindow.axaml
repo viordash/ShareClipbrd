@@ -2,22 +2,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+        mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="39"
         x:Class="ShareClipbrdApp.MainWindow"
         Title="ShareClipbrd"
         
-        Height="50" Width="48"
+        Height="32" Width="64"
         Topmost="True"
-        Opacity="0.145"
-        Background="Transparent"        
+        Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
         SystemDecorations="BorderOnly"
         CanResize="False"
         TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="Black"
-        
+        TransparencyBackgroundFallback="Black"        
         
         Opened="OnOpened"
         Closing="OnClosing"
@@ -45,16 +43,12 @@
       <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
     </ContextMenu>
   </Window.ContextMenu>
-  
-  <Border x:Name="Border" BorderThickness="1" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
-    <Grid Margin="2,2,2,2">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="0.8*"></RowDefinition>
-        <RowDefinition Height="0.2*"></RowDefinition>
-      </Grid.RowDefinitions>
-      <ProgressBar Grid.Row="0"  x:Name="pbOperation"  Value="57"  Height="10"/>
-      <ProgressBar Grid.Row="1"  x:Name="pbOperationMinor"  Value="47"  Height="10"/>
-    </Grid>
+
+  <Border x:Name="Border" BorderThickness="2" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
+    <Canvas Margin="1" >
+      <Rectangle Fill="#FF06B025" Height="28" Width="29" Opacity="0.5"/>
+      <Rectangle Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="29"/>
+    </Canvas>
   </Border>
 
 </Window>
