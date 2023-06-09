@@ -1,6 +1,8 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -115,21 +117,22 @@ namespace ShareClipbrdApp {
 
         async void TransmitClipboard() {
             try {
-                var clipboardData = new ClipboardData();
-                //if(System.Windows.Clipboard.ContainsFileDropList()) {
-                //    var fileDropList = System.Windows.Clipboard.GetFileDropList();
-                //    _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
-                //} else if(System.Windows.Clipboard.ContainsImage()) {
-
-                //} else if(System.Windows.Clipboard.ContainsAudio()) {
-
-                //} else {
                 var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
-                clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
+                var clipboardData = new ClipboardData();
+                if(clipboardData.ContainsFileDropList(formats)) {
+                    var fileDropList = await clipboardData.GetFileDropList(Application.Current.Clipboard.GetDataAsync);
+                    await dataClient!.SendFileDropList(fileDropList);
+                    //} else if(System.Windows.Clipboard.ContainsImage()) {
 
-                await dataClient!.SendData(clipboardData);
-                //}
+                    //} else if(System.Windows.Clipboard.ContainsAudio()) {
+
+                } else {
+                    await clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
+                    await dataClient!.SendData(clipboardData);
+                }
             } catch(SocketException ex) {
+                dialogService?.ShowError(ex);
+            } catch(InvalidDataException ex) {
                 dialogService?.ShowError(ex);
             }
         }

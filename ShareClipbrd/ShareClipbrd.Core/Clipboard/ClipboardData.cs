@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO;
+using static ShareClipbrd.Core.Clipboard.ClipboardData;
 
 namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
@@ -31,6 +34,7 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string WaveAudio = "WaveAudio";
 
             public const string FileDrop = "FileDrop";
+            public const string FileNames = "FileNames";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -112,7 +116,7 @@ namespace ShareClipbrd.Core.Clipboard {
             Formats.Add(new ClipboardItem(format, stream));
         }
 
-        public async void Serialize(string[] formats, Func<string, Task<object>> getDataFunc) {
+        public async Task Serialize(string[] formats, Func<string, Task<object>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             foreach(var format in formats) {
@@ -138,7 +142,7 @@ namespace ShareClipbrd.Core.Clipboard {
                     }
 
                     if(!await convertFunc.From(this, getDataFunc)) {
-                        throw new InvalidCastException(format);
+                        throw new InvalidDataException(format);
                     }
                 } catch(System.Runtime.InteropServices.COMException e) {
                     Debug.WriteLine(e);
@@ -167,6 +171,20 @@ namespace ShareClipbrd.Core.Clipboard {
 
         public Int64 GetTotalLenght() {
             return Formats.Sum(x => x.Stream.Length);
+        }
+
+        public bool ContainsFileDropList(string[] formats) {
+            return formats.Any(x => x == Format.FileNames);
+        }
+
+        public async Task<StringCollection> GetFileDropList(Func<string, Task<object>> getDataFunc) {
+            var obj = await getDataFunc(Format.FileNames);
+            if(!(obj is IList<string> files)) {
+                throw new InvalidDataException(Format.FileNames);
+            }
+            var fileDropList = new StringCollection();
+            fileDropList.AddRange(files.ToArray());
+            return fileDropList;
         }
     }
 }
