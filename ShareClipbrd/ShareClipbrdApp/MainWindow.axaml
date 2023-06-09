@@ -2,11 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="39"
+        mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="40"
         x:Class="ShareClipbrdApp.MainWindow"
         Title="ShareClipbrd"
         
-        Height="32" Width="64"
+        Height="40" Width="64"
         Topmost="True"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
@@ -45,10 +45,10 @@
     </ContextMenu>
   </Window.ContextMenu>
 
-  <Border x:Name="Border" BorderThickness="2" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="LightSteelBlue">
+  <Border x:Name="Border" BorderThickness="2" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="PowderBlue">
     <Canvas Margin="1" >
-      <Rectangle x:Name="pbOperation" Fill="#FF06B025" Height="28" Width="29" Opacity="0.5"/>
-      <Rectangle x:Name="pbOperationMinor" Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="29"/>
+      <Rectangle x:Name="pbOperation" Fill="#FF06B025" Height="30" Width="29" Opacity="0.5"/>
+      <Rectangle x:Name="pbOperationMinor" Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="30"/>
     </Canvas>
   </Border>
 

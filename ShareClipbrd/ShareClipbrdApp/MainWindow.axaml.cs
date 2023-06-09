@@ -56,7 +56,7 @@ namespace ShareClipbrdApp {
 
         void OnDeactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
-            Border.Opacity = 0.5;
+            Border.Opacity = 0.7;
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
@@ -145,7 +145,7 @@ namespace ShareClipbrdApp {
                     Border.Background = new SolidColorBrush(Colors.IndianRed);
                     break;
                 default:
-                    Border.Background = new SolidColorBrush(Colors.LightSteelBlue);
+                    Border.Background = new SolidColorBrush(Colors.PowderBlue);
                     break;
 
             }
