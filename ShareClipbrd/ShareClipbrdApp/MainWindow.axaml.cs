@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Net.Sockets;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -16,15 +17,19 @@ namespace ShareClipbrdApp {
         PointerPoint? originalPoint;
         readonly IDataClient? dataClient;
         readonly IDataServer? dataServer;
+        readonly IDialogService? dialogService;
 
         public MainWindow(
             IDataClient dataClient,
-            IDataServer dataServer) : this() {
+            IDataServer dataServer,
+            IDialogService dialogService) : this() {
             Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
+            Guard.NotNull(dialogService, nameof(dialogService));
 
             this.dataClient = dataClient;
             this.dataServer = dataServer;
+            this.dialogService = dialogService;
         }
 
         public MainWindow() {
@@ -109,20 +114,24 @@ namespace ShareClipbrdApp {
         }
 
         async void TransmitClipboard() {
-            var clipboardData = new ClipboardData();
-            //if(System.Windows.Clipboard.ContainsFileDropList()) {
-            //    var fileDropList = System.Windows.Clipboard.GetFileDropList();
-            //    _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
-            //} else if(System.Windows.Clipboard.ContainsImage()) {
+            try {
+                var clipboardData = new ClipboardData();
+                //if(System.Windows.Clipboard.ContainsFileDropList()) {
+                //    var fileDropList = System.Windows.Clipboard.GetFileDropList();
+                //    _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
+                //} else if(System.Windows.Clipboard.ContainsImage()) {
 
-            //} else if(System.Windows.Clipboard.ContainsAudio()) {
+                //} else if(System.Windows.Clipboard.ContainsAudio()) {
 
-            //} else {
-            var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
-            clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
+                //} else {
+                var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
+                clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
 
-            await dataClient!.SendData(clipboardData);
-            //}
+                await dataClient!.SendData(clipboardData);
+                //}
+            } catch(SocketException ex) {
+                dialogService?.ShowError(ex);
+            }
         }
 
         public void SetProgress(double percent) {
