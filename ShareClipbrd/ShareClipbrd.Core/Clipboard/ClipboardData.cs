@@ -122,23 +122,8 @@ namespace ShareClipbrd.Core.Clipboard {
             foreach(var format in formats) {
                 try {
                     if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
-
-                        var obj = await getDataFunc(format);
-                        if(obj is byte[] bytes) {
-                            obj = new MemoryStream(bytes);
-                        }
-                        if(obj is MemoryStream memoryStream) {
-                            convertFunc = new Convert(
-                            (c, f) => {
-                                c.Add(format, memoryStream); return Task.FromResult(true);
-                            },
-                            (stream) => stream
-                            );
-
-                        } else {
-                            Debug.WriteLine($"not supported format: {format}");
-                            continue;
-                        }
+                        Debug.WriteLine($"not supported format: {format}");
+                        continue;
                     }
 
                     if(!await convertFunc.From(this, getDataFunc)) {
