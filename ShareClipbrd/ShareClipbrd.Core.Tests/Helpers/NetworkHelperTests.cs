@@ -6,6 +6,30 @@ using ShareClipbrd.Core.Helpers;
 namespace ShareClipbrd.Core.Tests.Helpers {
     public class NetworkHelperTests {
         [Test]
+        public void ResolveHostName_Default_IP_Test() {
+            var adr = NetworkHelper.ResolveHostName(":55542");
+            Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork).Or.EqualTo(AddressFamily.InterNetworkV6));
+            Assert.That(adr.Address, Is.Not.EqualTo(IPAddress.Any).And.Not.EqualTo(IPAddress.IPv6Any));
+            Assert.That(adr.Port, Is.EqualTo(55542));
+        }
+
+        [Test]
+        public void ResolveHostName_IPv4_Any_Test() {
+            var adr = NetworkHelper.ResolveHostName("0.0.0.0:55542");
+            Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork));
+            Assert.That(adr.Address, Is.EqualTo(IPAddress.Any));
+            Assert.That(adr.Port, Is.EqualTo(55542));
+        }
+
+        [Test]
+        public void ResolveHostName_IPv6_Any_Test() {
+            var adr = NetworkHelper.ResolveHostName(":::55542");
+            Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetworkV6));
+            Assert.That(adr.Address, Is.EqualTo(IPAddress.IPv6Any));
+            Assert.That(adr.Port, Is.EqualTo(55542));
+        }
+
+        [Test]
         public void ResolveHostName_IPv4_Test() {
             var adr = NetworkHelper.ResolveHostName("127.0.0.1:55542");
             Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork));
@@ -37,17 +61,17 @@ namespace ShareClipbrd.Core.Tests.Helpers {
         [Test]
         public void ResolveHostName_No_Port_Throws_ArgumentException() {
             var exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName("localhost"));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: localhost"));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: localhost"));
             exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName("127.0.0.1"));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: 127.0.0.1"));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: 127.0.0.1"));
             exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName("127.0.0.1:"));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: 127.0.0.1:"));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: 127.0.0.1:"));
             exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName("[::1]"));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: [::1]"));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: [::1]"));
             exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName("[fe80::9656:d028:8652:66b6]"));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: [fe80::9656:d028:8652:66b6]"));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: [fe80::9656:d028:8652:66b6]"));
             exception = Assert.Throws<ArgumentException>(() => NetworkHelper.ResolveHostName(""));
-            Assert.That(exception.Message, Is.EqualTo("Port not valid, hostname: "));
+            Assert.That(exception?.Message, Is.EqualTo("Port not valid, hostname: "));
         }
 
         [Test]

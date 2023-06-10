@@ -9,9 +9,21 @@ namespace ShareClipbrd.Core.Helpers {
                 throw new ArgumentException($"Port not valid, hostname: {hostname}");
             }
             var ipString = hostname[..portStart];
+            if(ipString == IPAddress.Any.ToString()) {
+                return new IPEndPoint(IPAddress.Any, port);
+            }
+            if(ipString == IPAddress.IPv6Any.ToString()) {
+                return new IPEndPoint(IPAddress.IPv6Any, port);
+            }
 
             var addresses = Dns.GetHostAddresses(ipString);
-            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
+            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork
+                    && !IPAddress.IsLoopback(x));
+            if(adr != null) {
+                return new IPEndPoint(adr, port);
+            }
+
+            adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
             if(adr != null) {
                 return new IPEndPoint(adr, port);
             }
