@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Media;
 using Avalonia.Threading;
-using GuardNet;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Services {
