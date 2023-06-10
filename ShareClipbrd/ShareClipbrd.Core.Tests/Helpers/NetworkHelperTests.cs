@@ -76,7 +76,8 @@ namespace ShareClipbrd.Core.Tests.Helpers {
 
         [Test]
         public void ResolveHostName_Invalid_Hostname_Throws_SocketException() {
-            var exception = Assert.Throws<SocketException>(() => NetworkHelper.ResolveHostName("AD551E59-DA2A-47E9-BD6D-1FB8C09C0845:1"));
+            Assert.Throws<SocketException>(() => NetworkHelper.ResolveHostName("AD551E59-DA2A-47E9-BD6D-1FB8C09C0845:12345"));
+            Assert.Throws<SocketException>(() => NetworkHelper.ResolveHostName("::12345"));
         }
     }
 }
