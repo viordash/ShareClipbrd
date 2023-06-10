@@ -47,4 +47,12 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Projects\ShareClipbrd\ShareClipbrd\ShareClipbrdApp\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Projects\ShareClipbrd\ShareClipbrd\ShareClipbrdApp\.editorconfig" />
+  </ItemGroup>
 </Project>
