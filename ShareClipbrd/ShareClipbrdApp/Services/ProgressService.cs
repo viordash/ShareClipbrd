@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -20,20 +19,13 @@ namespace ShareClipbrdApp.Services {
                 public double progress;
             }
 
-            static readonly Dictionary<ProgressMode, IBrush> brushes = new(){
-                { ProgressMode.Send, Brushes.GreenYellow },
-                { ProgressMode.Receive, Brushes.LightYellow },
-            };
-
-            readonly IDialogService dialogService;
             readonly Stopwatch stopwatch;
             readonly ProgressMode mode;
             readonly Action onDispose;
             DiscontinuousProgress major = new();
             DiscontinuousProgress minor = new();
 
-            public ProgressSession(IDialogService dialogService, ProgressMode mode, Action onDispose) {
-                this.dialogService = dialogService;
+            public ProgressSession(ProgressMode mode, Action onDispose) {
                 this.mode = mode;
                 this.onDispose = onDispose;
                 stopwatch = Stopwatch.StartNew();
@@ -152,22 +144,15 @@ namespace ShareClipbrdApp.Services {
             }
         }
 
-        readonly IDialogService dialogService;
         readonly object lockObj = new();
         static ProgressSession? progressSession = null;
-
-
-        public ProgressService(IDialogService dialogService) {
-            Guard.NotNull(dialogService, nameof(dialogService));
-            this.dialogService = dialogService;
-        }
 
         public IAsyncDisposable Begin(ProgressMode mode) {
             lock(lockObj) {
                 if(progressSession != null) {
                     throw new InvalidOperationException("Progress does not support multithreading");
                 }
-                progressSession = new(dialogService, mode, () => {
+                progressSession = new(mode, () => {
                     lock(lockObj) {
                         progressSession = null;
                     }
