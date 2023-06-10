@@ -134,6 +134,8 @@ namespace ShareClipbrdApp {
                 await dialogService!.ShowError(ex);
             } catch(InvalidDataException ex) {
                 await dialogService!.ShowError(ex);
+            } catch(IOException ex) {
+                await dialogService!.ShowError(ex);
             }
         }
 
