@@ -138,26 +138,31 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
-                    var tcpServer = new TcpListener(adr.Address, adr.Port);
                     try {
-                        Debug.WriteLine($"start tcpServer: {adr}");
-                        tcpServer.Start();
+                        var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
+                        var tcpServer = new TcpListener(adr.Address, adr.Port);
+                        try {
+                            Debug.WriteLine($"start tcpServer: {adr}");
+                            tcpServer.Start();
 
-                        while(!cancellationToken.IsCancellationRequested) {
-                            using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
-                            Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
+                            while(!cancellationToken.IsCancellationRequested) {
+                                using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
+                                Debug.WriteLine($"tcpServer accept  {tcpClient.Client.RemoteEndPoint}");
 
-                            await HandleClient(tcpClient, cancellationToken);
+                                await HandleClient(tcpClient, cancellationToken);
+                            }
+                        } catch(OperationCanceledException ex) {
+                            Debug.WriteLine($"tcpServer canceled {ex}");
+                        } catch(Exception ex) {
+                            dialogService.ShowError(ex);
                         }
-                    } catch(OperationCanceledException ex) {
-                        Debug.WriteLine($"tcpServer canceled {ex}");
-                    } catch(Exception ex) {
+
+                        Debug.WriteLine($"tcpServer stop");
+                        tcpServer.Stop();
+
+                    } catch(SocketException ex) {
                         dialogService.ShowError(ex);
                     }
-
-                    Debug.WriteLine($"tcpServer stop");
-                    tcpServer.Stop();
                 }
 
                 Debug.WriteLine($"tcpServer stopped");
