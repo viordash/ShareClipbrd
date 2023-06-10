@@ -128,7 +128,7 @@ namespace ShareClipbrd.Core.Services {
                 } catch(OperationCanceledException ex) {
                     Debug.WriteLine($"tcpServer canceled {ex}");
                 } catch(Exception ex) {
-                    dialogService.ShowError(ex);
+                    await dialogService.ShowError(ex);
                 }
             }
         }
@@ -154,14 +154,16 @@ namespace ShareClipbrd.Core.Services {
                         } catch(OperationCanceledException ex) {
                             Debug.WriteLine($"tcpServer canceled {ex}");
                         } catch(Exception ex) {
-                            dialogService.ShowError(ex);
+                            await dialogService.ShowError(ex);
                         }
 
                         Debug.WriteLine($"tcpServer stop");
                         tcpServer.Stop();
 
                     } catch(SocketException ex) {
-                        dialogService.ShowError(ex);
+                        await dialogService.ShowError(ex);
+                    } catch(ArgumentException ex) {
+                        await dialogService.ShowError(ex);
                     }
                 }
 

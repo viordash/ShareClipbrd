@@ -131,9 +131,9 @@ namespace ShareClipbrdApp {
                     await dataClient!.SendData(clipboardData);
                 }
             } catch(SocketException ex) {
-                dialogService?.ShowError(ex);
+                await dialogService!.ShowError(ex);
             } catch(InvalidDataException ex) {
-                dialogService?.ShowError(ex);
+                await dialogService!.ShowError(ex);
             }
         }
 
