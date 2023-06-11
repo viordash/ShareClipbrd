@@ -15,61 +15,61 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         public void Teardown() {
         }
 
-        bool DataFormats_Test(string dataFormat, object data, Encoding encoding) {
-            testable.Serialize(new[] { dataFormat }, (f) => { if(f == dataFormat) return Task.FromResult(data); else return Task.FromResult(new object()); });
+        async Task<bool> DataFormats_Test(string dataFormat, object data, Encoding encoding) {
+            await testable.Serialize(new[] { dataFormat }, (f) => { if(f == dataFormat) return Task.FromResult(data); else return Task.FromResult(new object()); });
             Assert.That(testable.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { dataFormat }));
             Assert.That(testable.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(encoding.GetBytes($"{dataFormat} Кирилица")) }));
             return true;
         }
 
         [Test]
-        public void DataFormats_Text_Test() {
-            Assert.That(DataFormats_Test(ClipboardData.Format.Text, $"{ClipboardData.Format.Text} Кирилица", System.Text.Encoding.UTF8));
+        public async Task DataFormats_Text_Test() {
+            Assert.That(await DataFormats_Test(ClipboardData.Format.Text, $"{ClipboardData.Format.Text} Кирилица", System.Text.Encoding.UTF8));
         }
         [Test]
         public void DataFormats_Text_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Text }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.Text }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
-        public void DataFormats_UnicodeText_Test() {
-            Assert.That(DataFormats_Test(ClipboardData.Format.UnicodeText, $"{ClipboardData.Format.UnicodeText} Кирилица", System.Text.Encoding.Unicode));
+        public async Task DataFormats_UnicodeText_Test() {
+            Assert.That(await DataFormats_Test(ClipboardData.Format.UnicodeText, $"{ClipboardData.Format.UnicodeText} Кирилица", System.Text.Encoding.Unicode));
         }
         [Test]
         public void DataFormats_UnicodeText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.UnicodeText }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.UnicodeText }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
-        public void DataFormats_StringFormat_Test() {
-            Assert.That(DataFormats_Test(ClipboardData.Format.StringFormat, $"{ClipboardData.Format.StringFormat} Кирилица", System.Text.Encoding.UTF8));
+        public async Task DataFormats_StringFormat_Test() {
+            Assert.That(await DataFormats_Test(ClipboardData.Format.StringFormat, $"{ClipboardData.Format.StringFormat} Кирилица", System.Text.Encoding.UTF8));
         }
         [Test]
         public void DataFormats_StringFormat_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
-        public void DataFormats_OemText_Test() {
-            Assert.That(DataFormats_Test(ClipboardData.Format.OemText, $"{ClipboardData.Format.OemText} Кирилица", System.Text.Encoding.ASCII));
+        public async Task DataFormats_OemText_Test() {
+            Assert.That(await DataFormats_Test(ClipboardData.Format.OemText, $"{ClipboardData.Format.OemText} Кирилица", System.Text.Encoding.ASCII));
         }
         [Test]
         public void DataFormats_OemText_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
-        public void DataFormats_Rtf_Test() {
-            Assert.That(DataFormats_Test(ClipboardData.Format.Rtf, $"{ClipboardData.Format.Rtf} Кирилица", System.Text.Encoding.UTF8));
+        public async Task DataFormats_Rtf_Test() {
+            Assert.That(await DataFormats_Test(ClipboardData.Format.Rtf, $"{ClipboardData.Format.Rtf} Кирилица", System.Text.Encoding.UTF8));
         }
         [Test]
         public void DataFormats_Rtf_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Rtf }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.Rtf }, (f) => Task.FromResult(new object())));
         }
 
         [Test]
-        public void DataFormats_Locale_Test() {
-            testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => {
+        public async Task DataFormats_Locale_Test() {
+            await testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => {
                 if(f == ClipboardData.Format.Locale) return Task.FromResult(new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 }) as object); else return Task.FromResult(new object());
             });
 
@@ -78,7 +78,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
         [Test]
         public void DataFormats_Locale_When_NoStringData_Test() {
-            Assert.Throws<InvalidCastException>(() => testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => Task.FromResult(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.Locale }, (f) => Task.FromResult(new object())));
         }
     }
 }
