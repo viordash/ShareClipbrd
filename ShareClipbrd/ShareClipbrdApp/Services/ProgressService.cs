@@ -41,8 +41,7 @@ namespace ShareClipbrdApp.Services {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0);
-                    mainWindow.SetProgressMinor(0);
+                    mainWindow.SetProgress(0, 0);
                     mainWindow.SetProgressMode(mode);
                 }), DispatcherPriority.Send);
             }
@@ -60,7 +59,7 @@ namespace ShareClipbrdApp.Services {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0);
+                    mainWindow.SetProgress(0, 0);
                 }), DispatcherPriority.Send);
             }
 
@@ -74,7 +73,7 @@ namespace ShareClipbrdApp.Services {
                             return;
                         }
                         var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.SetProgress(major.progress * 100.0 / major.max);
+                        mainWindow.SetProgress(major.progress * 100.0 / major.max, 0);
                     }), DispatcherPriority.Send);
                     major.updateCounter = 0;
                 }
@@ -88,13 +87,13 @@ namespace ShareClipbrdApp.Services {
                 }
                 minor.progress = 0;
 
-                Dispatcher.UIThread.InvokeAsync(new Action(() => {
-                    if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
-                        return;
-                    }
-                    var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgressMinor(0);
-                }), DispatcherPriority.Send);
+                //Dispatcher.UIThread.InvokeAsync(new Action(() => {
+                //    if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
+                //        return;
+                //    }
+                //    var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                //    mainWindow.SetProgressMinor(0);
+                //}), DispatcherPriority.Send);
 
             }
 
@@ -108,7 +107,7 @@ namespace ShareClipbrdApp.Services {
                             return;
                         }
                         var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.SetProgressMinor(minor.progress * 100.0 / minor.max);
+                        mainWindow.SetProgress(major.progress * 100.0 / major.max, minor.progress * 100.0 / minor.max);
                     }), DispatcherPriority.Send);
                     minor.updateCounter = 0;
                 }
@@ -126,8 +125,7 @@ namespace ShareClipbrdApp.Services {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0);
-                    mainWindow.SetProgressMinor(0);
+                    mainWindow.SetProgress(0, 0);
 
                     if(major.progress < major.max) {
                         mainWindow.SetProgressMode(ProgressMode.Error);

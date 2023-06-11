@@ -40,10 +40,9 @@ namespace ShareClipbrdApp.Components {
         }
 
         public void SetProgressStepped(int step, RawBitmapDrawer progressbarDrawer) {
-            var reverse = false;
-            if(step < 0) {
+            var reverse = step < 0;
+            if(reverse) {
                 step *= -1;
-                reverse = true;
             }
             SetProgressReversable(step, progressbarDrawer, reverse);
         }
@@ -52,9 +51,9 @@ namespace ShareClipbrdApp.Components {
             var width = Width;
             var height = Height;
 
-            var fStep = (float)step;
-            var fWidth = (float)width;
-            var fHeight = (float)height;
+            var fStep = (double)step;
+            var fWidth = (double)width;
+            var fHeight = (double)height;
 
             progressbarDrawer.Fill(PIXEL_LIGHT);
 

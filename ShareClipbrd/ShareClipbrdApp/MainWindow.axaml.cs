@@ -2,14 +2,12 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Net.Sockets;
-using System.Timers;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
@@ -32,15 +30,22 @@ namespace ShareClipbrdApp {
 
         readonly TetrisProgressBar? progressBar;
 
-        // for tests
-        double progress = 0;
-        private void test(Object source, ElapsedEventArgs e) {
-            if(progress >= 100.0) {
-                progress *= -1.0;
-            }
-            progress += 0.2;
-            Dispatcher.UIThread.InvokeAsync(() => SetProgress(progress), DispatcherPriority.MaxValue);
-        }
+        //// for tests
+        //double majorProgress = 0;
+        //double minorProgress = 0;
+        //void test(Object source, ElapsedEventArgs e) {
+        //    if(majorProgress >= 100.0) {
+        //        majorProgress *= -1.0;
+        //    }
+
+        //    minorProgress += 5 * majorProgress >= 0 ? 1 : -1;
+        //    if(Math.Abs(minorProgress) >= 100.0) {
+        //        majorProgress += 3;
+        //        minorProgress = 0;
+        //    }
+
+        //    Dispatcher.UIThread.InvokeAsync(() => SetProgress(majorProgress, minorProgress), DispatcherPriority.Render);
+        //}
 
         public MainWindow(
             IDataClient dataClient,
@@ -53,7 +58,7 @@ namespace ShareClipbrdApp {
             progressBar = new TetrisProgressBar((int)Width - 6, (int)Height - 6, new Random().Next());
             progressBarBitmap = new WriteableBitmap(new PixelSize(progressBar.Width, progressBar.Height), new Vector(1.0, 1.0),
                             Avalonia.Platform.PixelFormat.Rgba8888, Avalonia.Platform.AlphaFormat.Opaque);
-            //SetProgress(progress);
+
 
             SuperImage.Source = progressBarBitmap;
 
@@ -61,11 +66,13 @@ namespace ShareClipbrdApp {
             this.dataServer = dataServer;
             this.dialogService = dialogService;
 
-            // for tests
-            var redrawTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(100));
-            redrawTimer.Elapsed += test;
-            redrawTimer.Enabled = true;
-            redrawTimer.AutoReset = true;
+            //// for tests
+            //var redrawTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(40));
+            //redrawTimer.Elapsed += test;
+            //redrawTimer.Enabled = true;
+            //redrawTimer.AutoReset = true;
+
+            SetProgress(0, 0);
         }
 
         public MainWindow() {
@@ -173,19 +180,16 @@ namespace ShareClipbrdApp {
             }
         }
 
-        public void SetProgress(double percent) {
-            //pbOperation.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
-            SetProgressMinor(percent);
+        public void SetProgress(double major, double minor) {
             using(var pixelsLock = progressBarBitmap!.Lock()) unsafe {
                     var rawBitmapDrawer = new RawBitmapDrawer(progressBar!.Width, progressBar!.Height, pixelsLock.Address);
+                    var percent = (major * 100.0 + minor) / 100.0;
+                    //Debug.WriteLine($"major:{major}, minor:{minor}, percent:{percent}");
                     progressBar.SetProgress(percent, rawBitmapDrawer);
                 }
             SuperImage.InvalidateVisual();
         }
 
-        public void SetProgressMinor(double percent) {
-            //pbOperationMinor.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
-        }
 
         public void SetProgressMode(ProgressMode mode) {
             switch(mode) {
