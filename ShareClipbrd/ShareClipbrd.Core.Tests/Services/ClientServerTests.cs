@@ -269,25 +269,25 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             otherFilename = fileDropList[4];
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("directory0\\директория0_Child1\\файл2.dat"));
+            Assert.That(otherFilename, Does.EndWith("directory0/директория0_Child1/файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             otherDirectory = fileDropList[5];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0\\directory0_Child0"));
+            Assert.That(otherDirectory, Does.EndWith("directory0/directory0_Child0"));
 
             otherDirectory = fileDropList[6];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("директория0_Child1/directory0_Child1_Child0_Empty"));
 
             otherFilename = fileDropList[7];
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("директория0_Child1\\файл2.dat"));
+            Assert.That(otherFilename, Does.EndWith("директория0_Child1/файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             otherDirectory = fileDropList[8];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("директория0_Child1\\directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("директория0_Child1/directory0_Child1_Child0_Empty"));
 
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);

@@ -42,6 +42,7 @@ namespace ShareClipbrd.Core.Clipboard {
                 }
             }
 
+            relative = relative.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var relativeBytes = Encoding.UTF8.GetBytes(relative);
             await networkStream.WriteAsync((Int32)relativeBytes.Length, cancellationToken);
             await networkStream.WriteAsync(relativeBytes, cancellationToken);
