@@ -24,15 +24,13 @@ namespace ShareClipbrdApp {
         readonly IDataServer? dataServer;
         readonly IDialogService? dialogService;
 
-        WriteableBitmap progressBarBitmap;
-        public WriteableBitmap ProgressBarBitmap {
+        WriteableBitmap? progressBarBitmap;
+        public WriteableBitmap? ProgressBarBitmap {
             get => progressBarBitmap;
             set => progressBarBitmap = value;
         }
 
-        readonly int WIDTH = 58;
-        readonly int HEIGHT = 30;
-        TetrisProgressBar progressBar;
+        readonly TetrisProgressBar? progressBar;
 
         // for tests
         double progress = 0;
@@ -52,10 +50,10 @@ namespace ShareClipbrdApp {
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(dialogService, nameof(dialogService));
 
-            progressBar = new TetrisProgressBar(WIDTH, HEIGHT, new Random().Next());
-
-            progressBarBitmap = new WriteableBitmap(new PixelSize(WIDTH, HEIGHT), new Vector(1.0, 1.0), Avalonia.Platform.PixelFormat.Rgba8888, Avalonia.Platform.AlphaFormat.Opaque);
-            SetProgress(progress);
+            progressBar = new TetrisProgressBar((int)Width - 6, (int)Height - 6, new Random().Next());
+            progressBarBitmap = new WriteableBitmap(new PixelSize(progressBar.Width, progressBar.Height), new Vector(1.0, 1.0),
+                            Avalonia.Platform.PixelFormat.Rgba8888, Avalonia.Platform.AlphaFormat.Opaque);
+            //SetProgress(progress);
 
             SuperImage.Source = progressBarBitmap;
 
@@ -178,15 +176,15 @@ namespace ShareClipbrdApp {
         public void SetProgress(double percent) {
             //pbOperation.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
             SetProgressMinor(percent);
-            using(var pixelsLock = progressBarBitmap.Lock()) unsafe {
-                    var rawBitmapDrawer = new RawBitmapDrawer(WIDTH, HEIGHT, pixelsLock.Address);
+            using(var pixelsLock = progressBarBitmap!.Lock()) unsafe {
+                    var rawBitmapDrawer = new RawBitmapDrawer(progressBar!.Width, progressBar!.Height, pixelsLock.Address);
                     progressBar.SetProgress(percent, rawBitmapDrawer);
                 }
             SuperImage.InvalidateVisual();
         }
 
         public void SetProgressMinor(double percent) {
-            pbOperationMinor.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
+            //pbOperationMinor.Width = Width * Math.Clamp(percent, 0.0, 100.0) / 100.0;
         }
 
         public void SetProgressMode(ProgressMode mode) {

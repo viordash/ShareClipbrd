@@ -2,27 +2,27 @@
 
 namespace ShareClipbrd.Core.Services {
     public class TetrisProgressBar : IProgressBarService {
-        private int ordersCount;
-        private int ordersSize;
+        public int Width { get; private set; }
+        public int Height { get; private set; }
         private Random random;
         private List<int>[] orders = null!;
 
-        private int maxStep { get => ordersCount * ordersSize + ordersCount - 1; }
+        private int maxStep { get => Width * Height + Width - 1; }
 
         private static readonly Color PIXEL_LIGHT = Color.FromRGB(0, 255, 0);
         private static readonly Color PIXEL_DARK = Color.FromRGB(0, 0, 0);
 
-        public TetrisProgressBar(int ordersCount, int ordersSize, int randomSeed) {
-            this.ordersCount = ordersCount;
-            this.ordersSize = ordersSize;
+        public TetrisProgressBar(int width, int height, int randomSeed) {
+            Width = width;
+            Height = height;
             this.random = new Random(randomSeed);
-            orders = new List<int>[ordersCount];
+            orders = new List<int>[width];
             RegenerateOrders();
         }
 
         public void RegenerateOrders() {
-            var genRandomArray = (int _) => RandomArrayHelper.GenerateRandomArray(ordersSize, random).ToList();
-            orders = Enumerable.Range(0, ordersCount).Select(genRandomArray).ToArray();
+            var genRandomArray = (int _) => RandomArrayHelper.GenerateRandomArray(Height, random).ToList();
+            orders = Enumerable.Range(0, Width).Select(genRandomArray).ToArray();
         }
 
         public void UpdateSeed(int newSeed) {
