@@ -38,7 +38,7 @@ namespace ShareClipbrdApp {
             if(progress >= 100.0) {
                 progress *= -1.0;
             }
-            progress += 0.5;
+            progress += 0.2;
             Dispatcher.UIThread.InvokeAsync(() => SetProgress(progress), DispatcherPriority.MaxValue);
         }
 

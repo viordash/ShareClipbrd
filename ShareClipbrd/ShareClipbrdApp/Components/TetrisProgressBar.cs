@@ -8,13 +8,13 @@ namespace ShareClipbrdApp.Components {
     public class TetrisProgressBar {
         public int Width { get; private set; }
         public int Height { get; private set; }
-        private Random random;
-        private List<int>[] orders = null!;
+        Random random;
+        List<int>[] orders = null!;
 
-        private int maxStep { get => Width * Height + Width - 1; }
+        int maxStep { get => Width * Height + Width - 1; }
 
-        private static readonly Color PIXEL_LIGHT = Color.FromRGB(0, 255, 0);
-        private static readonly Color PIXEL_DARK = Color.FromRGB(0, 0, 0);
+        static readonly Color PIXEL_LIGHT = Color.FromRGB(0, 255, 0);
+        static readonly Color PIXEL_DARK = Color.FromRGB(0, 0, 0);
 
         public TetrisProgressBar(int width, int height, int randomSeed) {
             Width = width;
@@ -49,8 +49,8 @@ namespace ShareClipbrdApp.Components {
         }
 
         private void SetProgressReversable(int step, RawBitmapDrawer progressbarDrawer, bool reverse) {
-            var width = progressbarDrawer.Width;
-            var height = progressbarDrawer.Height;
+            var width = Width;
+            var height = Height;
 
             var fStep = (float)step;
             var fWidth = (float)width;

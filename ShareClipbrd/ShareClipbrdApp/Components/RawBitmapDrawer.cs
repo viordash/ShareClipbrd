@@ -10,12 +10,9 @@ namespace ShareClipbrdApp.Components {
     }
 
     public class RawBitmapDrawer {
-        private int width;
-        private int height;
-        private IntPtr firstPixelAddr;
-
-        public int Width { get => width; }
-        public int Height { get => height; }
+        int width;
+        int height;
+        IntPtr firstPixelAddr;
 
         public RawBitmapDrawer(int width, int height, IntPtr firstPixelAddr) {
             this.width = width;
