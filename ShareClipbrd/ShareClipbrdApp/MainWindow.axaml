@@ -47,7 +47,8 @@
 
   <Border x:Name="Border" BorderThickness="2" BorderBrush="DarkGoldenrod" CornerRadius="3" Background="PowderBlue">
     <Canvas Margin="1" >
-      <Rectangle x:Name="pbOperation" Fill="#FF06B025" Height="30" Width="29" Opacity="0.5"/>
+      <Image Stretch="Uniform" Source ="{Binding ProgressBarBitmap}" x:Name="SuperImage"/>
+      <!--<Rectangle x:Name="pbOperation" Fill="#FF06B025" Height="30" Width="29" Opacity="0.5"/>-->
       <Rectangle x:Name="pbOperationMinor" Fill="#FF069025" Height="4" Width="58"  Opacity="0.5" Canvas.Top="30"/>
     </Canvas>
   </Border>
