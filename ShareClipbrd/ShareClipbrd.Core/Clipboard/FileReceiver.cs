@@ -122,15 +122,15 @@ namespace ShareClipbrd.Core.Clipboard {
             }
         }
 
-        void ValidateDirectoryDataLength(Int64 nameLength) {
-            if(nameLength != 0) {
-                throw new InvalidDataException(nameof(nameLength));
+        void ValidateDirectoryDataLength(Int64 directoryDataLength) {
+            if(directoryDataLength != 0) {
+                throw new InvalidDataException(nameof(directoryDataLength));
             }
         }
 
-        void ValidateFileDataLength(Int64 nameLength) {
-            if(nameLength < 0 || nameLength > 34_359_738_368) {
-                throw new InvalidDataException(nameof(nameLength));
+        void ValidateFileDataLength(Int64 fileDataLength) {
+            if(fileDataLength < 0 || fileDataLength > 34_359_738_368) {
+                throw new InvalidDataException(nameof(fileDataLength));
             }
         }
 
