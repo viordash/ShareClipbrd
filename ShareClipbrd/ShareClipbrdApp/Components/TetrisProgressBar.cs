@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrdApp.Components {
     public class TetrisProgressBar {
         public int Width { get; private set; }
         public int Height { get; private set; }
-        Random random;
-        List<int>[] orders = null!;
+        readonly int[,] orders;
 
         int maxStep { get => Width * Height + Width - 1; }
 
@@ -19,19 +15,23 @@ namespace ShareClipbrdApp.Components {
         public TetrisProgressBar(int width, int height, int randomSeed) {
             Width = width;
             Height = height;
-            this.random = new Random(randomSeed);
-            orders = new List<int>[width];
-            RegenerateOrders();
+            orders = new int[Width, Height];
+            RegenerateOrders(randomSeed);
         }
 
-        public void RegenerateOrders() {
-            var genRandomArray = (int _) => RandomArrayHelper.GenerateRandomArray(Height, random).ToList();
-            orders = Enumerable.Range(0, Width).Select(genRandomArray).ToArray();
+        public void RegenerateOrders(int randomSeed) {
+            var random = new Random(randomSeed);
+            for(int x = 0; x < Width; x++) {
+                for(int y = 0; y < Height; y++) {
+                    orders[x, y] = y;
+                    var rnd = random.Next(0, y);
+                    (orders[x, y], orders[x, rnd]) = (orders[x, rnd], orders[x, y]);
+                }
+            }
         }
 
         public void UpdateSeed(int newSeed) {
-            this.random = new Random(newSeed);
-            RegenerateOrders();
+            RegenerateOrders(newSeed);
         }
 
         public void SetProgress(double progress, RawBitmapDrawer progressbarDrawer) {
@@ -64,8 +64,7 @@ namespace ShareClipbrdApp.Components {
 
             Parallel.For(0, height, y => {
                 for(int x = width - 1; x >= col; x--) {
-                    var order = orders[x];
-                    int offset = step - (width - x - 1) * height - order[y];
+                    int offset = step - (width - x - 1) * height - orders[x, y];
                     if(offset > 0) {
                         progressbarDrawer.SetPixel(correctXCoord(x), y, PIXEL_DARK);
                         int xNew = x + offset;
