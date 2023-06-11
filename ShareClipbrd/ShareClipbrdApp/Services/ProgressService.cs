@@ -53,6 +53,7 @@ namespace ShareClipbrdApp.Services {
                 if(major.updatePeriod == 0) {
                     major.updatePeriod = 1;
                 }
+                major.progress = 0;
 
                 Dispatcher.UIThread.InvokeAsync(new Action(() => {
                     if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
@@ -85,13 +86,14 @@ namespace ShareClipbrdApp.Services {
                 if(minor.updatePeriod == 0) {
                     minor.updatePeriod = 1;
                 }
+                minor.progress = 0;
 
                 Dispatcher.UIThread.InvokeAsync(new Action(() => {
                     if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgressMinor(minor.progress * 100.0 / minor.max);
+                    mainWindow.SetProgressMinor(0);
                 }), DispatcherPriority.Send);
 
             }
@@ -106,7 +108,7 @@ namespace ShareClipbrdApp.Services {
                             return;
                         }
                         var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.SetProgress(major.progress);
+                        mainWindow.SetProgressMinor(minor.progress * 100.0 / minor.max);
                     }), DispatcherPriority.Send);
                     minor.updateCounter = 0;
                 }
