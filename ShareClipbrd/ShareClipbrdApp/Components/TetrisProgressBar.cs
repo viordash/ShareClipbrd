@@ -1,7 +1,11 @@
-﻿using ShareClipbrd.Core.Helpers;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ShareClipbrd.Core.Helpers;
 
-namespace ShareClipbrd.Core.Services {
-    public class TetrisProgressBar : IProgressBarService {
+namespace ShareClipbrdApp.Components {
+    public class TetrisProgressBar {
         public int Width { get; private set; }
         public int Height { get; private set; }
         private Random random;

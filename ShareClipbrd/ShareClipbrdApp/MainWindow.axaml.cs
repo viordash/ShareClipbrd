@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using System.Timers;
 using Avalonia;
 using Avalonia.Controls;
@@ -14,6 +13,7 @@ using Avalonia.Threading;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
+using ShareClipbrdApp.Components;
 using ShareClipbrdApp.Helpers;
 using ShareClipbrdApp.Properties;
 
@@ -62,7 +62,7 @@ namespace ShareClipbrdApp {
             this.dialogService = dialogService;
 
             // for tests
-            var redrawTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(10));
+            var redrawTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(100));
             redrawTimer.Elapsed += test;
             redrawTimer.Enabled = true;
             redrawTimer.AutoReset = true;

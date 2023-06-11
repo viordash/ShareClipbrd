@@ -1,4 +1,6 @@
-﻿namespace ShareClipbrd.Core.Services {
+﻿using System;
+
+namespace ShareClipbrdApp.Components {
     public struct Color {
         public byte r, g, b, a;
 
@@ -7,12 +9,7 @@
         }
     }
 
-    public interface IRawBitmapDrawer {
-        void SetPixel(int x, int y, Color color);
-        void Fill(Color color);
-    }
-
-    public class RawBitmapDrawer : IRawBitmapDrawer {
+    public class RawBitmapDrawer {
         private int width;
         private int height;
         private IntPtr firstPixelAddr;
