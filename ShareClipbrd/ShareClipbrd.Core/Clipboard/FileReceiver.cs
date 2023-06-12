@@ -48,17 +48,12 @@ namespace ShareClipbrd.Core.Clipboard {
                     var dataLength = await networkStream.ReadInt64Async(cancellationToken);
                     ValidateDirectoryDataLength(dataLength);
 
-                    await networkStream.WriteAsync(CommunProtocol.SuccessParams, cancellationToken);
-
                     var tempDirectory = Path.Combine(sessionDir, name);
                     Directory.CreateDirectory(tempDirectory);
                     fileDropList.Add(tempDirectory);
                 } else {
                     var dataLength = await networkStream.ReadInt64Async(cancellationToken);
                     ValidateFileDataLength(dataLength);
-
-                    await networkStream.WriteAsync(CommunProtocol.SuccessParams, cancellationToken);
-
 
                     var tempFilename = Path.Combine(sessionDir, name);
                     var directory = Path.GetDirectoryName(tempFilename);
@@ -95,13 +90,12 @@ namespace ShareClipbrd.Core.Clipboard {
             for(int i = 0; i < total; i++) {
                 progressService.Tick(1);
                 await ReceiveFile();
+                await networkStream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
             }
 
             if(networkStream.DataAvailable) {
                 throw new InvalidOperationException("Receive buffer is not empty");
             }
-
-            await networkStream.WriteAsync(CommunProtocol.SuccessData, cancellationToken);
         }
 
 
