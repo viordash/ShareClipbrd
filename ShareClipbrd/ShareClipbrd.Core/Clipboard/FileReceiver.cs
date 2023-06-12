@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Collections.Specialized;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using ShareClipbrd.Core.Extensions;
@@ -40,11 +41,14 @@ namespace ShareClipbrd.Core.Clipboard {
             try {
                 var receivedBytes = await networkStream.ReadAsync(nameBuffer, 0, nameLength, cancellationToken);
                 var name = Encoding.UTF8.GetString(nameBuffer, 0, receivedBytes);
+                ValidateName(name);
 
 
                 if(attributes.HasFlag(FileAttributes.Directory)) {
                     var dataLength = await networkStream.ReadInt64Async(cancellationToken);
                     ValidateDirectoryDataLength(dataLength);
+
+                    await networkStream.WriteAsync(CommunProtocol.SuccessParams, cancellationToken);
 
                     var tempDirectory = Path.Combine(sessionDir, name);
                     Directory.CreateDirectory(tempDirectory);
@@ -52,6 +56,9 @@ namespace ShareClipbrd.Core.Clipboard {
                 } else {
                     var dataLength = await networkStream.ReadInt64Async(cancellationToken);
                     ValidateFileDataLength(dataLength);
+
+                    await networkStream.WriteAsync(CommunProtocol.SuccessParams, cancellationToken);
+
 
                     var tempFilename = Path.Combine(sessionDir, name);
                     var directory = Path.GetDirectoryName(tempFilename);
@@ -120,6 +127,13 @@ namespace ShareClipbrd.Core.Clipboard {
             if(nameLength < 0 || nameLength > 65536) {
                 throw new InvalidDataException(nameof(nameLength));
             }
+        }
+
+        void ValidateName(string name) {
+            if(string.IsNullOrEmpty(name) || name.IndexOfAny(Path.GetInvalidPathChars()) >= 0) {
+                throw new InvalidDataException(nameof(name));
+           }
+
         }
 
         void ValidateDirectoryDataLength(Int64 directoryDataLength) {

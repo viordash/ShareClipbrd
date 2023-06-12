@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using ShareClipbrd.Core.Extensions;
@@ -49,11 +50,22 @@ namespace ShareClipbrd.Core.Clipboard {
 
             if(attributes.HasFlag(FileAttributes.Directory)) {
                 await networkStream.WriteAsync((Int64)0, cancellationToken);
+
+                if(await networkStream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessParams) {
+                    await networkStream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException($"Directory params error");
+                }
             } else {
 
                 using(var fileStream = new FileStream(name, FileMode.Open, FileAccess.Read)) {
                     progressService.SetMaxMinorTick(fileStream.Length);
                     await networkStream.WriteAsync((Int64)fileStream.Length, cancellationToken);
+
+                    if(await networkStream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessParams) {
+                        await networkStream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                        throw new NotSupportedException($"File params error");
+                    }
+
                     byte[] buffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
                     try {
                         Int64 dataLength = 0;
