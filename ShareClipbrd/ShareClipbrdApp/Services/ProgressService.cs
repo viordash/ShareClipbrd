@@ -9,107 +9,72 @@ namespace ShareClipbrdApp.Services {
     public class ProgressService : IProgressService {
 
         class ProgressSession : IAsyncDisposable {
-            struct DiscontinuousProgress {
-                public double max;
-                public Int64 updatePeriod;
-                public Int64 updateCounter;
-                public double progress;
-            }
-
             readonly Stopwatch stopwatch;
             readonly ProgressMode mode;
             readonly Action onDispose;
-            DiscontinuousProgress major = new();
-            DiscontinuousProgress minor = new();
+
+            double majorMax;
+            double majorProgress;
+            double minorMax;
+            double minorProgress;
+            double prevPercent;
 
             public ProgressSession(ProgressMode mode, Action onDispose) {
                 this.mode = mode;
                 this.onDispose = onDispose;
                 stopwatch = Stopwatch.StartNew();
-                major.progress = 0;
-                major.max = 100.0;
-                major.updatePeriod = 1;
-                major.updateCounter = 0;
-                minor.progress = 0;
-                minor.max = 100.0;
-                minor.updatePeriod = 1;
-                minor.updateCounter = 0;
-
+                majorProgress = 0;
+                majorMax = 100.0;
+                minorProgress = 0;
+                minorMax = 100.0;
+                prevPercent = 0;
 
                 Dispatcher.UIThread.InvokeAsync(new Action(() => {
                     if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0, 0);
+                    mainWindow.SetProgress(0);
                     mainWindow.SetProgressMode(mode);
                 }), DispatcherPriority.Send);
             }
 
             public void SetMaxTick(Int64 max) {
-                major.max = max;
-                major.updatePeriod = max / 100;
-                if(major.updatePeriod == 0) {
-                    major.updatePeriod = 1;
-                }
-                major.progress = 0;
-
-                Dispatcher.UIThread.InvokeAsync(new Action(() => {
-                    if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
-                        return;
-                    }
-                    var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0, 0);
-                }), DispatcherPriority.Send);
+                majorMax = max;
+                majorProgress = 0;
+                Tick();
             }
 
             public void Tick(Int64 steps) {
-                major.updateCounter += steps;
-                major.progress += steps;
-
-                if(major.updateCounter > major.updatePeriod) {
-                    Dispatcher.UIThread.InvokeAsync(new Action(() => {
-                        if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
-                            return;
-                        }
-                        var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.SetProgress(major.progress * 100.0 / major.max, 0);
-                    }), DispatcherPriority.Send);
-                    major.updateCounter = 0;
-                }
+                majorProgress += steps;
+                Tick();
             }
 
             public void SetMaxMinorTick(long max) {
-                minor.max = max;
-                minor.updatePeriod = max / 100;
-                if(minor.updatePeriod == 0) {
-                    minor.updatePeriod = 1;
-                }
-                minor.progress = 0;
-
-                //Dispatcher.UIThread.InvokeAsync(new Action(() => {
-                //    if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
-                //        return;
-                //    }
-                //    var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                //    mainWindow.SetProgressMinor(0);
-                //}), DispatcherPriority.Send);
-
+                minorMax = max;
+                minorProgress = 0;
             }
 
             public void MinorTick(long steps) {
-                minor.updateCounter += steps;
-                minor.progress += steps;
+                minorProgress += steps;
+                Tick();
+            }
 
-                if(minor.updateCounter > minor.updatePeriod) {
+            void Tick() {
+                var percMajor = majorProgress * 100.0 / majorMax;
+                var percMinor = minorProgress * (100.0 / majorMax) / minorMax;
+                var percent = percMajor + percMinor;
+
+                if(Math.Abs(prevPercent - percent) > Double.Epsilon) {
                     Dispatcher.UIThread.InvokeAsync(new Action(() => {
                         if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
                             return;
                         }
                         var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                        mainWindow.SetProgress(major.progress * 100.0 / major.max, minor.progress * 100.0 / minor.max);
+
+                        mainWindow.SetProgress(percent);
                     }), DispatcherPriority.Send);
-                    minor.updateCounter = 0;
+                    prevPercent = percent;
                 }
             }
 
@@ -125,9 +90,9 @@ namespace ShareClipbrdApp.Services {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0, 0);
+                    mainWindow.SetProgress(0);
 
-                    if(major.progress < major.max) {
+                    if(majorProgress < majorMax) {
                         mainWindow.SetProgressMode(ProgressMode.Error);
                         await Task.Delay(500);
                         Debug.WriteLine(mode == ProgressMode.Send
