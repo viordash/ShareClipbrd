@@ -50,7 +50,8 @@ namespace ShareClipbrdApp {
             this.dataServer = dataServer;
             this.dialogService = dialogService;
 
-            SetProgress(0);
+            SetProgressMode(ProgressMode.None);
+            SetProgress(100.0);
         }
 
         public MainWindow() {
@@ -82,7 +83,7 @@ namespace ShareClipbrdApp {
 
         void OnDeactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
-            Border.Opacity = 0.7;
+            Border.Opacity = 0.6;
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
@@ -159,6 +160,7 @@ namespace ShareClipbrdApp {
         }
 
         public void SetProgress(double percent) {
+            Debug.WriteLine($"{percent:0.#####}");
             using(var pixelsLock = progressBarBitmap!.Lock()) unsafe {
                     var rawBitmapDrawer = new RawBitmapDrawer(progressBar!.Width, progressBar!.Height, pixelsLock.Address);
                     progressBar.SetProgress(percent, rawBitmapDrawer);
@@ -171,17 +173,20 @@ namespace ShareClipbrdApp {
             switch(mode) {
                 case ProgressMode.Send:
                     Border.Background = new SolidColorBrush(Colors.GreenYellow);
+                    SuperImage.IsVisible = true;
                     break;
                 case ProgressMode.Receive:
                     Border.Background = new SolidColorBrush(Colors.LightYellow);
+                    SuperImage.IsVisible = true;
                     break;
                 case ProgressMode.Error:
                     Border.Background = new SolidColorBrush(Colors.IndianRed);
+                    SuperImage.IsVisible = false;
                     break;
                 default:
                     Border.Background = new SolidColorBrush(Colors.PowderBlue);
+                    SuperImage.IsVisible = false;
                     break;
-
             }
         }
     }

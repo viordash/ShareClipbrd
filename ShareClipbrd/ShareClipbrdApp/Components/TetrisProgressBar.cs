@@ -9,8 +9,8 @@ namespace ShareClipbrdApp.Components {
 
         int maxStep { get => Width * Height + Width - 1; }
 
-        static readonly Color PIXEL_LIGHT = Color.FromRGB(0, 255, 0);
-        static readonly Color PIXEL_DARK = Color.FromRGB(0, 0, 0);
+        static readonly Color PIXEL_LIGHT = Color.FromRGB(250, 15, 205, 160);
+        static readonly Color PIXEL_DARK = Color.FromRGB(200, 0, 0, 0);
 
         public TetrisProgressBar(int width, int height, int randomSeed) {
             Width = width;

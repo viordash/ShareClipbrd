@@ -65,7 +65,7 @@ namespace ShareClipbrdApp.Services {
                 var percMinor = minorProgress * (100.0 / majorMax) / minorMax;
                 var percent = percMajor + percMinor;
 
-                if(Math.Abs(prevPercent - percent) > Double.Epsilon) {
+                if(Math.Abs(prevPercent - percent) > 0.05) {
                     Dispatcher.UIThread.InvokeAsync(new Action(() => {
                         if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
                             return;
@@ -90,7 +90,7 @@ namespace ShareClipbrdApp.Services {
                         return;
                     }
                     var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
-                    mainWindow.SetProgress(0);
+                    mainWindow.SetProgress(100.0);
 
                     if(majorProgress < majorMax) {
                         mainWindow.SetProgressMode(ProgressMode.Error);

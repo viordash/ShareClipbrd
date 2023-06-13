@@ -15,7 +15,8 @@
         SystemDecorations="BorderOnly"
         CanResize="False"
         TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="Black"        
+        TransparencyBackgroundFallback="Black"     
+        Opacity="0.5"
         
         Opened="OnOpened"
         Closing="OnClosing"

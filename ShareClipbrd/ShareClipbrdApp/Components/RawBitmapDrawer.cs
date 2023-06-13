@@ -4,8 +4,8 @@ namespace ShareClipbrdApp.Components {
     public struct Color {
         public byte r, g, b, a;
 
-        public static Color FromRGB(byte r, byte g, byte b) {
-            return new Color { r = r, g = g, b = b, a = 255 };
+        public static Color FromRGB(byte a, byte r, byte g, byte b) {
+            return new Color { r = r, g = g, b = b, a = a };
         }
     }
 
