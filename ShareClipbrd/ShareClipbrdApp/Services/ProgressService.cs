@@ -124,9 +124,6 @@ namespace ShareClipbrdApp.Services {
 
         public IAsyncDisposable Begin(ProgressMode mode) {
             lock(lockObj) {
-                if(progressSession != null) {
-                    throw new InvalidOperationException("Progress does not support multithreading");
-                }
                 progressSession = new(mode, () => {
                     lock(lockObj) {
                         progressSession = null;
@@ -139,7 +136,7 @@ namespace ShareClipbrdApp.Services {
         public void SetMaxTick(Int64 max) {
             lock(lockObj) {
                 if(progressSession == null) {
-                    throw new InvalidOperationException("Progress is out of scope");
+                    return;
                 }
                 progressSession.SetMaxTick(max);
             }
@@ -148,7 +145,7 @@ namespace ShareClipbrdApp.Services {
         public void Tick(Int64 steps) {
             lock(lockObj) {
                 if(progressSession == null) {
-                    throw new InvalidOperationException("Progress is out of scope");
+                    return;
                 }
                 progressSession.Tick(steps);
             }
@@ -157,7 +154,7 @@ namespace ShareClipbrdApp.Services {
         public void SetMaxMinorTick(long max) {
             lock(lockObj) {
                 if(progressSession == null) {
-                    throw new InvalidOperationException("Progress is out of scope");
+                    return;
                 }
                 progressSession.SetMaxMinorTick(max);
             }
@@ -166,7 +163,7 @@ namespace ShareClipbrdApp.Services {
         public void MinorTick(long steps) {
             lock(lockObj) {
                 if(progressSession == null) {
-                    throw new InvalidOperationException("Progress is out of scope");
+                    return;
                 }
                 progressSession.MinorTick(steps);
             }

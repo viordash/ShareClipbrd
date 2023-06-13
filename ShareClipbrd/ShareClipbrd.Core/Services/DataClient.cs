@@ -15,9 +15,9 @@ namespace ShareClipbrd.Core.Services {
 
     public class DataClient : IDataClient {
         readonly ISystemConfiguration systemConfiguration;
-        readonly CancellationTokenSource cts;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
+        CancellationTokenSource cts;
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
@@ -49,6 +49,10 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            cts.Cancel(true);
+            cts.Dispose();
+            cts = new CancellationTokenSource();
+
             using TcpClient tcpClient = new();
 
             var cancellationToken = cts.Token;
@@ -74,6 +78,9 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            cts.Cancel(true);
+            cts.Dispose();
+            cts = new CancellationTokenSource();
             await using(progressService.Begin(ProgressMode.Send)) {
                 var totalLenght = clipboardData.GetTotalLenght();
                 progressService.SetMaxTick(totalLenght);
