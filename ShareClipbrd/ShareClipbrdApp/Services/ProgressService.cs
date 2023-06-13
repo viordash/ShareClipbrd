@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media;
 using Avalonia.Threading;
 using ShareClipbrd.Core.Services;
 
@@ -61,7 +63,7 @@ namespace ShareClipbrdApp.Services {
             }
 
             void Tick() {
-                var percMajor = majorProgress * 100.0 / majorMax;
+                var percMajor = (majorProgress - 1) * 100.0 / majorMax;
                 var percMinor = minorProgress * (100.0 / majorMax) / minorMax;
                 var percent = percMajor + percMinor;
 
@@ -72,7 +74,16 @@ namespace ShareClipbrdApp.Services {
                         }
                         var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
 
-                        mainWindow.SetProgress(percent);
+                        switch(mode) {
+                            case ProgressMode.Receive:
+                                mainWindow.SetProgress(percent - 100);
+                                break;
+
+                            default:
+                                mainWindow.SetProgress(percent);
+                                break;
+                        }
+
                     }), DispatcherPriority.Send);
                     prevPercent = percent;
                 }
@@ -99,6 +110,8 @@ namespace ShareClipbrdApp.Services {
                             ? "Data transmit error"
                             : "Data receive error");
                     }
+
+                    await Task.Delay(100);
                     mainWindow.SetProgressMode(ProgressMode.None);
                 }), DispatcherPriority.Send);
 
