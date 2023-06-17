@@ -18,7 +18,10 @@ namespace ShareClipbrd.Core.Tests.Helpers {
                 Assert.True(PathHelper.IsAbsolute("//"));
             }
             Assert.True(PathHelper.IsAbsolute("/home/Documents.zip"));
+            Assert.False(PathHelper.IsAbsolute("//tsclient/Documents.zip"));
 
+            Assert.False(PathHelper.IsAbsolute("//file/1"));
+            Assert.False(PathHelper.IsAbsolute("//file"));
             Assert.False(PathHelper.IsAbsolute("ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs"));
             Assert.False(PathHelper.IsAbsolute("ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs"));
             Assert.False(PathHelper.IsAbsolute("Documents"));
