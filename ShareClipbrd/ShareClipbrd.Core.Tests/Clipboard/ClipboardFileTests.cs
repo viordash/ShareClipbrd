@@ -10,14 +10,26 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             );
         }
 
-        List<string> files = new() {
+        static List<string> files = new() {
                 "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
                 "/Users/user/Documents/New Bitmap Image.bmp",
                 "/tsclient/Documents.zip",
                 "   /file with spaces around   ",
+                "copy",
+                "file:///home/user/Downloads/main",
+                "file:///home/user/Downloads/code_1_amd64.deb"
             };
 
-        List<string> incorrectItems = new() {
+        static List<string> outFiles = new() {
+                "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
+                "/Users/user/Documents/New Bitmap Image.bmp",
+                "/tsclient/Documents.zip",
+                "/file with spaces around",
+                "/home/user/Downloads/main",
+                "/home/user/Downloads/code_1_amd64.deb"
+            };
+
+        static List<string> incorrectItems = new() {
                 "   no file path   ",
                 "     ",
             };
@@ -25,29 +37,29 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         async Task GetFileDropList_Data_As_List_Test(string format) {
             var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, files.Concat(incorrectItems).ToList()));
-            Assert.That(fileDropList, Is.EquivalentTo(files.Select(x => x.Trim())));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         async Task GetFileDropList_Data_As_StringLines_Test(string format) {
             var lines = string.Join("\r\n", files.Concat(incorrectItems));
             var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, lines));
-            Assert.That(fileDropList, Is.EquivalentTo(files.Select(x => x.Trim())));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
 
             lines = string.Join("\n", files.Concat(incorrectItems));
             fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, lines));
-            Assert.That(fileDropList, Is.EquivalentTo(files.Select(x => x.Trim())));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         async Task GetFileDropList_Data_As_ByteArray_Test(string format) {
             var lines = string.Join("\r\n", files.Concat(incorrectItems));
             var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
             var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, bytes));
-            Assert.That(fileDropList, Is.EquivalentTo(files.Select(x => x.Trim())));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
 
             lines = string.Join("\n", files.Concat(incorrectItems));
             bytes = System.Text.Encoding.UTF8.GetBytes(lines);
             fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, bytes));
-            Assert.That(fileDropList, Is.EquivalentTo(files.Select(x => x.Trim())));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         [Test]

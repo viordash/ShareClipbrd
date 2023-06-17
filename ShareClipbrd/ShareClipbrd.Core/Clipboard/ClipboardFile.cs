@@ -22,6 +22,7 @@ namespace ShareClipbrd.Core.Clipboard {
         static string[] ParseLines(string text) {
             var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var files = lines
+                .Select(x => x.Replace("file://", ""))
                 .Where(x => PathHelper.IsAbsolute(x))
                 .ToArray();
             return files;
@@ -31,7 +32,7 @@ namespace ShareClipbrd.Core.Clipboard {
             files = new string[] { };
             files = data switch {
                 IList<string> list => list
-                                        .Select(x => x.Trim())
+                                        .Select(x => x.Trim().Replace("file://", ""))
                                         .Where(x => PathHelper.IsAbsolute(x))
                                         .ToArray(),
                 string lines => ParseLines(lines),
