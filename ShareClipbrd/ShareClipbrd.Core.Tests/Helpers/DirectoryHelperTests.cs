@@ -48,10 +48,12 @@ namespace ShareClipbrd.Core.Tests.Helpers {
 
             var files = DirectoryHelper.RecursiveGetFiles(testsPath);
             Assert.That(files, Has.Count.EqualTo(12));
-            var relativeFiles = files.Select(x => Path.GetRelativePath(testsPath, x));
-            Assert.That(relativeFiles, Is.EquivalentTo(new[] {      "directory0\\directory0_Child0\\filename0", "directory0\\directory0_Child1\\directory0_Child1_Child0\\filename1",
-                        "directory2\\0", "directory2\\1", "directory2\\2", "directory2\\3", "directory2\\4", "directory2\\5", "directory2\\6", "directory2\\7", "directory2\\8",
-                        "directory2\\9"  }));
+            var relativeFiles = files
+                .Select(x => Path.GetRelativePath(testsPath, x).Replace('\\', Path.AltDirectorySeparatorChar))
+                .Order();
+            Assert.That(relativeFiles, Is.EquivalentTo(new[] { "directory0/directory0_Child0/filename0", "directory0/directory0_Child1/directory0_Child1_Child0/filename1",
+                        "directory2/0", "directory2/1", "directory2/2", "directory2/3", "directory2/4", "directory2/5", "directory2/6", "directory2/7", "directory2/8",
+                        "directory2/9"}));
 
 
         }
@@ -88,10 +90,13 @@ namespace ShareClipbrd.Core.Tests.Helpers {
 
             var emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(testsPath);
             Assert.That(emptyFolders, Has.Count.EqualTo(11));
-            var relativeEmptyFolders = emptyFolders.Select(x => Path.GetRelativePath(testsPath, x));
-            Assert.That(relativeEmptyFolders, Is.EquivalentTo(new[] { "directory0\\directory0_Child0", "directory1", "directory2\\directory2_Child0", "directory2\\directory2_Child1",
-                    "directory2\\directory2_Child2", "directory2\\directory2_Child4", "directory2\\directory2_Child5", "directory2\\directory2_Child6", "directory2\\directory2_Child7",
-                    "directory2\\directory2_Child8", "directory2\\directory2_Child9" }));
+            var relativeEmptyFolders = emptyFolders
+                .Select(x => Path.GetRelativePath(testsPath, x).Replace('\\', Path.AltDirectorySeparatorChar))
+                .Order();
+
+            Assert.That(relativeEmptyFolders, Is.EquivalentTo(new[] { "directory0/directory0_Child0", "directory1", "directory2/directory2_Child0", "directory2/directory2_Child1",
+                    "directory2/directory2_Child2", "directory2/directory2_Child4", "directory2/directory2_Child5", "directory2/directory2_Child6", "directory2/directory2_Child7",
+                    "directory2/directory2_Child8", "directory2/directory2_Child9" }));
 
 
             emptyFolders = DirectoryHelper.RecursiveGetEmptyFolders(directory0_Child1);

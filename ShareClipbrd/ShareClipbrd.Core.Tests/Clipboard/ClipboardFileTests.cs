@@ -11,10 +11,10 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         List<string> files = new() {
-                "C:\\ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs",
-                "C:\\Users\\user\\Documents\\New Bitmap Image.bmp",
-                "\\tsclient\\Documents.zip",
-                "   C:\\file with spaces around   ",
+                "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
+                "/Users/user/Documents/New Bitmap Image.bmp",
+                "//tsclient/Documents.zip",
+                "   //file with spaces around   ",
             };
 
         List<string> incorrectItems = new() {

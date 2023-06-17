@@ -43,7 +43,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             var clipboardData = new ClipboardData();
-            clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")));
+            clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")));
 
             await Task.Delay(100);
             await client.SendData(clipboardData);
@@ -52,7 +52,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(receivedClipboard);
             Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText" }));
-            Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText Кирилица")) }));
+            Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")) }));
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             var buffer = new byte[3_333_333 / 100];
             testdata.Position = 0;
             for(int i = 0; i < 100; i++) {
-                var filename = Path.Combine(testsPath, "кирилица_" + Path.GetFileName(Path.GetTempFileName()));
+                var filename = Path.Combine(testsPath, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ_" + Path.GetFileName(Path.GetTempFileName()));
                 testdata.Read(buffer, 0, buffer.Length);
 
                 File.WriteAllBytes(filename, buffer);
@@ -225,7 +225,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             var directory0_Child0 = Path.Combine(directory0, "directory0_Child0");
             Directory.CreateDirectory(directory0_Child0);
 
-            var directory0_Child1 = Path.Combine(directory0, "директория0_Child1");
+            var directory0_Child1 = Path.Combine(directory0, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ0_Child1");
             Directory.CreateDirectory(directory0_Child1);
             files.Add(directory0_Child1);
 
@@ -233,7 +233,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             Directory.CreateDirectory(directory0_Child1_Child0_Empty);
             files.Add(directory0_Child1_Child0_Empty);
 
-            var filename2 = Path.Combine(directory0_Child1, "файл2.dat");
+            var filename2 = Path.Combine(directory0_Child1, "пїЅпїЅпїЅпїЅ2.dat");
             File.WriteAllBytes(filename2, bytes1);
 
             try {
@@ -248,46 +248,48 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.IsNotNull(fileDropList);
             Assert.That(fileDropList.Count, Is.EqualTo(9));
 
-            var otherFilename = fileDropList[0];
+            var sortedFileDropList = fileDropList.OfType<string>().Order().ToArray();
+            var otherDirectory = sortedFileDropList[0];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+
+            otherDirectory = sortedFileDropList[1];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0/directory0_Child0"));
+            
+            var otherFilename = sortedFileDropList[2];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherDirectory = sortedFileDropList[3];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ0_Child1/directory0_Child1_Child0_Empty"));
+
+            otherFilename = sortedFileDropList[4];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(otherFilename, Does.EndWith("directory0/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ0_Child1/пїЅпїЅпїЅпїЅ2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherFilename = sortedFileDropList[5];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            otherFilename = fileDropList[1];
+            otherFilename = sortedFileDropList[6];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            var otherDirectory = fileDropList[2];
+            otherDirectory = sortedFileDropList[7];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ0_Child1/directory0_Child1_Child0_Empty"));
 
-            otherFilename = fileDropList[3];
+            otherFilename = sortedFileDropList[8];
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
+            Assert.That(otherFilename, Does.EndWith("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ0_Child1/пїЅпїЅпїЅпїЅ2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            otherFilename = fileDropList[4];
-            Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("directory0/директория0_Child1/файл2.dat"));
-            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
-
-            otherDirectory = fileDropList[5];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0/directory0_Child0"));
-
-            otherDirectory = fileDropList[6];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("директория0_Child1/directory0_Child1_Child0_Empty"));
-
-            otherFilename = fileDropList[7];
-            Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("директория0_Child1/файл2.dat"));
-            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
-
-            otherDirectory = fileDropList[8];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("директория0_Child1/directory0_Child1_Child0_Empty"));
 
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
