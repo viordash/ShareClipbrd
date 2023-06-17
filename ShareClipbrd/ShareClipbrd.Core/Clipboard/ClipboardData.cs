@@ -1,7 +1,5 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
-using static ShareClipbrd.Core.Clipboard.ClipboardData;
 
 namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
@@ -13,16 +11,23 @@ namespace ShareClipbrd.Core.Clipboard {
         }
     }
     public class ClipboardData {
-        public class Convert {
+        public class ConvertData {
             public Func<ClipboardData, Func<string, Task<object>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
-            public Convert(Func<ClipboardData, Func<string, Task<object>>, Task<bool>> from, Func<Stream, object> to) {
+            public ConvertData(Func<ClipboardData, Func<string, Task<object>>, Task<bool>> from, Func<Stream, object> to) {
                 From = from;
                 To = to;
             }
         }
 
-        public static class Format {
+        public class ConvertFilename {
+            public Func<StringCollection, Func<string, Task<object>>, Task<bool>> From { get; set; }
+            public ConvertFilename(Func<StringCollection, Func<string, Task<object>>, Task<bool>> from) {
+                From = from;
+            }
+        }
+
+        public static class DataFormat {
             public const string Text = "Text";
             public const string UnicodeText = "UnicodeText";
             public const string StringFormat = "System.String";
@@ -32,82 +37,116 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string Html = "HTML Format";
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
-
-            public const string FileDrop = "FileDrop";
-            public const string FileNames = "FileNames";
         }
 
-        public static readonly Dictionary<string, Convert> Converters = new(){
-            { Format.Text, new Convert(
+        public static class FilesFormat {
+            public const string FileDrop = "FileDrop";
+            public const string FileNames = "FileNames";
+            public const string XMateFileNames = "x-special/mate-copied-files";
+            public const string XKdeFileNames = "x-special/KDE-copied-files";
+            public const string XGnomeFileNames = "x-special/gnome-copied-files";
+        }
+
+        public static readonly Dictionary<string, ConvertData> DataConverters = new(){
+            { DataFormat.Text, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Text);
-                    if (data is string castedValue) {c.Add(Format.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.Text);
+                    if (data is string castedValue) {c.Add(DataFormat.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.Text, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
                 },
-            { Format.UnicodeText, new Convert(
+            { DataFormat.UnicodeText, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.UnicodeText);
-                    if (data is string castedValue) {c.Add(Format.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.UnicodeText);
+                    if (data is string castedValue) {c.Add(DataFormat.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.UnicodeText, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray())
                 )
             },
-            { Format.StringFormat, new Convert(
+            { DataFormat.StringFormat, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.StringFormat);
-                    if (data is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.StringFormat);
+                    if (data is string castedValue) {c.Add(DataFormat.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.StringFormat, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
             },
-            { Format.OemText, new Convert(
+            { DataFormat.OemText, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.OemText);
-                    if (data is string castedValue) {c.Add(Format.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.OemText);
+                    if (data is string castedValue) {c.Add(DataFormat.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.OemText, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
             },
-            { Format.Rtf, new Convert(
+            { DataFormat.Rtf, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Rtf);
-                    if (data is string castedValue) {c.Add(Format.Rtf, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Rtf, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.Rtf);
+                    if (data is string castedValue) {c.Add(DataFormat.Rtf, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.Rtf, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
             },
-            { Format.Locale, new Convert(
+            { DataFormat.Locale, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Locale);
-                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Locale, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.Locale);
+                    if (data is MemoryStream castedValue) {c.Add(DataFormat.Locale, castedValue); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.Locale, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => stream
                 )
             },
-            { Format.Html, new Convert(
+            { DataFormat.Html, new ConvertData(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Html);
-                    if (data is string castedValue) {c.Add(Format.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(DataFormat.Html);
+                    if (data is string castedValue) {c.Add(DataFormat.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    else if (data is byte[] bytes) {c.Add(DataFormat.Html, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
             },
+        };
+
+        public static readonly Dictionary<string, ConvertFilename> FilesConverters = new(){
+            { FilesFormat.XMateFileNames, new ConvertFilename(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(FilesFormat.XMateFileNames);
+                    if (data is string castedValue) {c.Add(castedValue); return true; }
+                    else if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    else {return false;}
+                })
+                },
+
+            { FilesFormat.XKdeFileNames, new ConvertFilename(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(FilesFormat.XMateFileNames);
+                    if (data is string castedValue) {c.Add(castedValue); return true; }
+                    else if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    else {return false;}
+                })
+                },
+
+            { FilesFormat.XGnomeFileNames, new ConvertFilename(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(FilesFormat.XMateFileNames);
+                    if (data is string castedValue) {c.Add(castedValue); return true; }
+                    else if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    else {return false;}
+                })
+                },
         };
 
         public List<ClipboardItem> Formats { get; } = new();
@@ -121,8 +160,12 @@ namespace ShareClipbrd.Core.Clipboard {
 
             foreach(var format in formats) {
                 try {
-                    if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
+                    if(!DataConverters.TryGetValue(format, out ConvertData? convertFunc)) {
                         Debug.WriteLine($"not supported format: {format}");
+                        // var data = await getDataFunc(format);
+                        // if(data is string castedValue) {
+                        //     Debug.WriteLine($"      val: {castedValue}");
+                        // }
                         continue;
                     }
 
@@ -141,8 +184,8 @@ namespace ShareClipbrd.Core.Clipboard {
             }
 
             foreach(var format in Formats) {
-                if(!Converters.TryGetValue(format.Format, out Convert? convertFunc)) {
-                    convertFunc = new Convert((c, o) => Task.FromResult(false), (stream) => {
+                if(!DataConverters.TryGetValue(format.Format, out ConvertData? convertFunc)) {
+                    convertFunc = new ConvertData((c, o) => Task.FromResult(false), (stream) => {
                         if(stream is MemoryStream ms) {
                             var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
                             Debug.WriteLine($"--- {format} {str}");
@@ -158,17 +201,42 @@ namespace ShareClipbrd.Core.Clipboard {
             return Formats.Sum(x => x.Stream.Length);
         }
 
-        public bool ContainsFileDropList(string[] formats) {
-            return formats.Any(x => x == Format.FileNames);
+        public static bool ContainsFileDropList(string[] formats) {
+            return formats.Any(x => x == FilesFormat.FileNames);
         }
 
-        public async Task<StringCollection> GetFileDropList(Func<string, Task<object>> getDataFunc) {
-            var obj = await getDataFunc(Format.FileNames);
+        public static async Task<StringCollection> GetFileDropList(Func<string, Task<object>> getDataFunc) {
+            var obj = await getDataFunc(FilesFormat.FileNames);
             if(!(obj is IList<string> files)) {
-                throw new InvalidDataException(Format.FileNames);
+                throw new InvalidDataException(FilesFormat.FileNames);
             }
             var fileDropList = new StringCollection();
             fileDropList.AddRange(files.ToArray());
+            return fileDropList;
+        }
+
+        public async Task<StringCollection> GetFileDropList(string[] formats, Func<string, Task<object>> getDataFunc) {
+            Debug.WriteLine(string.Join(", ", formats));
+
+            var fileDropList = new StringCollection();
+            foreach(var format in formats) {
+                try {
+                    if(!FilesConverters.TryGetValue(format, out ConvertFilename? convertFunc)) {
+                        Debug.WriteLine($"not supported format: {format}");
+                        // var data = await getDataFunc(format);
+                        // if(data is string castedValue) {
+                        //     Debug.WriteLine($"      val: {castedValue}");
+                        // }
+                        continue;
+                    }
+
+                    if(!await convertFunc.From(fileDropList, getDataFunc)) {
+                        throw new InvalidDataException(format);
+                    }
+                } catch(System.Runtime.InteropServices.COMException e) {
+                    Debug.WriteLine(e);
+                }
+            }
             return fileDropList;
         }
     }
