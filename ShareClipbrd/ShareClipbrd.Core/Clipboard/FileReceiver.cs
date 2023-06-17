@@ -99,13 +99,13 @@ namespace ShareClipbrd.Core.Clipboard {
         }
 
 
-        void ValidateTotal(Int64 total) {
+        static void ValidateTotal(Int64 total) {
             if(total < 0 || total > 1_000_000_000) {
                 throw new InvalidDataException(nameof(total));
             }
         }
 
-        void ValidateAttributes(FileAttributes attributes) {
+        static void ValidateAttributes(FileAttributes attributes) {
             var mask = FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System | FileAttributes.Directory
                 | FileAttributes.Archive | FileAttributes.Device | FileAttributes.Normal | FileAttributes.Temporary
                 | FileAttributes.SparseFile | FileAttributes.ReparsePoint | FileAttributes.Compressed | FileAttributes.Offline
@@ -117,32 +117,32 @@ namespace ShareClipbrd.Core.Clipboard {
             }
         }
 
-        void ValidateNameLength(Int32 nameLength) {
+        static void ValidateNameLength(Int32 nameLength) {
             if(nameLength < 0 || nameLength > 65536) {
                 throw new InvalidDataException(nameof(nameLength));
             }
         }
 
-        void ValidateName(string name) {
+        static void ValidateName(string name) {
             if(string.IsNullOrEmpty(name) || name.IndexOfAny(Path.GetInvalidPathChars()) >= 0) {
                 throw new InvalidDataException(nameof(name));
-           }
+            }
 
         }
 
-        void ValidateDirectoryDataLength(Int64 directoryDataLength) {
+        static void ValidateDirectoryDataLength(Int64 directoryDataLength) {
             if(directoryDataLength != 0) {
                 throw new InvalidDataException(nameof(directoryDataLength));
             }
         }
 
-        void ValidateFileDataLength(Int64 fileDataLength) {
+        static void ValidateFileDataLength(Int64 fileDataLength) {
             if(fileDataLength < 0 || fileDataLength > 34_359_738_368) {
                 throw new InvalidDataException(nameof(fileDataLength));
             }
         }
 
-        void ValidateFile(FileStream fileStream, Int64 expectedSize) {
+        static void ValidateFile(FileStream fileStream, Int64 expectedSize) {
             if(fileStream.Length != expectedSize) {
                 throw new InvalidDataException(nameof(fileStream));
             }

@@ -105,7 +105,7 @@ namespace ShareClipbrd.Core.Clipboard {
             }
         }
 
-        Dictionary<string, List<string>> FlatFilesList(StringCollection fileDropList) {
+        static Dictionary<string, List<string>> FlatFilesList(StringCollection fileDropList) {
             var files = new Dictionary<string, List<string>>();
 
             var filesWithAttributes = fileDropList
