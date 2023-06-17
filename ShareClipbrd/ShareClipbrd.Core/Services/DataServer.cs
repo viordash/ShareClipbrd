@@ -102,7 +102,7 @@ namespace ShareClipbrd.Core.Services {
                     var total = await ReceiveSize(stream, cancellationToken);
                     var format = await ReceiveFormat(stream, cancellationToken);
 
-                    if(format == ClipboardData.Format.FileDrop) {
+                    if(format == ClipboardFile.Format.FileDrop) {
                         var fileDropList = new StringCollection();
                         var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, fileDropList, cancellationToken);
                         await fileReceiver.Receive();

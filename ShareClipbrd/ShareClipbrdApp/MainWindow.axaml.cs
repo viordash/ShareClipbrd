@@ -138,18 +138,18 @@ namespace ShareClipbrdApp {
         async void TransmitClipboard() {
             try {
                 var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
+
+                var fileDropList = await ClipboardFile.GetFileDropList(formats, Application.Current.Clipboard.GetDataAsync);
+
                 var clipboardData = new ClipboardData();
-                if(clipboardData.ContainsFileDropList(formats)) {
-                    var fileDropList = await clipboardData.GetFileDropList(Application.Current.Clipboard.GetDataAsync);
-                    await dataClient!.SendFileDropList(fileDropList);
-                    //} else if(System.Windows.Clipboard.ContainsImage()) {
-
-                    //} else if(System.Windows.Clipboard.ContainsAudio()) {
-
-                } else {
-                    await clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
-                    await dataClient!.SendData(clipboardData);
+                if(fileDropList.Count > 0) {
+                    await dataClient!.SendFileDropList(fileDropList);                    
+                    return;
                 }
+
+                await clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
+                await dataClient!.SendData(clipboardData);
+
             } catch(SocketException ex) {
                 await dialogService!.ShowError(ex);
             } catch(InvalidDataException ex) {

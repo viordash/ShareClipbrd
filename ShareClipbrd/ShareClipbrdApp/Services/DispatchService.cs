@@ -7,7 +7,6 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
-using static ShareClipbrd.Core.Clipboard.ClipboardData;
 
 namespace ShareClipbrdApp.Services {
     public class DispatchService : IDispatchService {
@@ -26,7 +25,7 @@ namespace ShareClipbrdApp.Services {
         public async void ReceiveFiles(StringCollection files) {
             await Dispatcher.UIThread.InvokeAsync(new Action(() => {
                 var dataObject = new DataObject();
-                dataObject.Set(Format.FileNames, files.OfType<string>().ToList());
+                dataObject.Set(ClipboardFile.Format.FileNames, files.OfType<string>().ToList());
                 Application.Current?.Clipboard?.ClearAsync();
                 Application.Current?.Clipboard?.SetDataObjectAsync(dataObject);
             }));
