@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
     public class ClipboardFile {
@@ -18,13 +19,36 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
         }
 
+        static string[] ParseLines(string text) {
+            var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var files = lines
+                .Where(x => PathHelper.IsAbsolute(x))
+                .ToArray();
+            return files;
+        }
+
+        static bool TryParse(object data, out string[] files) {
+            files = new string[] { };
+            files = data switch {
+                IList<string> list => list
+                                        .Select(x => x.Trim())
+                                        .Where(x => PathHelper.IsAbsolute(x))
+                                        .ToArray(),
+                string lines => ParseLines(lines),
+                byte[] bytes => ParseLines(System.Text.Encoding.UTF8.GetString(bytes)),
+                _ => new string[] { }
+            };
+
+            return files.Any();
+        }
+
         public static readonly Dictionary<string, Convert> Converters = new(){
             { Format.FileNames, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.FileNames);
-                    if(data is IList<string> files) {c.AddRange(files.ToArray()); return true; }
-                    if (data is string castedValue) {c.Add(castedValue); return true; }
-                    if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    if (TryParse(data, out string[] files)) {
+                        c.AddRange(files); return true;
+                    }
                     return false;
                 })
                 },
@@ -32,26 +56,29 @@ namespace ShareClipbrd.Core.Clipboard {
             { Format.XMateFileNames, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.XMateFileNames);
-                    if (data is string castedValue) {c.Add(castedValue); return true; }
-                    if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    if (TryParse(data, out string[] files)) {
+                        c.AddRange(files); return true;
+                    }
                     return false;
                 })
                 },
 
             { Format.XKdeFileNames, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.XMateFileNames);
-                    if (data is string castedValue) {c.Add(castedValue); return true; }
-                    if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    var data = await getDataFunc(Format.XKdeFileNames);
+                    if (TryParse(data, out string[] files)) {
+                        c.AddRange(files); return true;
+                    }
                     return false;
                 })
                 },
 
             { Format.XGnomeFileNames, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.XMateFileNames);
-                    if (data is string castedValue) {c.Add(castedValue); return true; }
-                    if (data is byte[] bytes) {System.Text.Encoding.UTF8.GetString(bytes); return true; }
+                    var data = await getDataFunc(Format.XGnomeFileNames);
+                    if (TryParse(data, out string[] files)) {
+                        c.AddRange(files); return true;
+                    }
                     return false;
                 })
                 },
