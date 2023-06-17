@@ -140,13 +140,12 @@ namespace ShareClipbrdApp {
                 var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
 
                 var fileDropList = await ClipboardFile.GetFileDropList(formats, Application.Current.Clipboard.GetDataAsync);
-
-                var clipboardData = new ClipboardData();
                 if(fileDropList.Count > 0) {
-                    await dataClient!.SendFileDropList(fileDropList);                    
+                    await dataClient!.SendFileDropList(fileDropList);
                     return;
                 }
 
+                var clipboardData = new ClipboardData();
                 await clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
                 await dataClient!.SendData(clipboardData);
 
