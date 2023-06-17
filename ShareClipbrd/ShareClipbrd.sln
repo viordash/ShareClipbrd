@@ -3,11 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrdApp.Win", "ShareClipbrdApp.Win\ShareClipbrdApp.Win.csproj", "{0C6E777D-2F5C-4339-9D5D-5C68705FFC26}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrd.Core", "ShareClipbrd.Core\ShareClipbrd.Core.csproj", "{8FE09C5B-45CA-4234-927B-FDE9893FC628}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrdApp.Win.Tests", "ShareClipbrdApp.Win.Tests\ShareClipbrdApp.Win.Tests.csproj", "{825BE8AA-7FE9-4296-8C7A-3D806A109052}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrd.Core.Tests", "ShareClipbrd.Core.Tests\ShareClipbrd.Core.Tests.csproj", "{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}"
 EndProject
@@ -21,18 +17,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0C6E777D-2F5C-4339-9D5D-5C68705FFC26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C6E777D-2F5C-4339-9D5D-5C68705FFC26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C6E777D-2F5C-4339-9D5D-5C68705FFC26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C6E777D-2F5C-4339-9D5D-5C68705FFC26}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8FE09C5B-45CA-4234-927B-FDE9893FC628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8FE09C5B-45CA-4234-927B-FDE9893FC628}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FE09C5B-45CA-4234-927B-FDE9893FC628}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FE09C5B-45CA-4234-927B-FDE9893FC628}.Release|Any CPU.Build.0 = Release|Any CPU
-		{825BE8AA-7FE9-4296-8C7A-3D806A109052}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{825BE8AA-7FE9-4296-8C7A-3D806A109052}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{825BE8AA-7FE9-4296-8C7A-3D806A109052}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{825BE8AA-7FE9-4296-8C7A-3D806A109052}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8C61EE9-7C7E-4ED1-B2B8-ACCB064E633B}.Release|Any CPU.ActiveCfg = Release|Any CPU
