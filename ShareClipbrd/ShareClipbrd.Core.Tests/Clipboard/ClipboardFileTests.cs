@@ -45,7 +45,8 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
                 "/home/пользователь/Downloads/main",
                 "/home/пользователь/Downloads/code 1 amd64.deb",
                 "/home/user/Downloads/main",
-                "/home/user/Downloads/code 1 amd64.deb"
+                "/home/user/Downloads/code 1 amd64.deb",
+                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core"
             };
 
         static List<string> incorrectItems = new() {
