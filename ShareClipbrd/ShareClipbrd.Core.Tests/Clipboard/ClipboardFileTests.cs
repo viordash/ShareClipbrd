@@ -1,4 +1,4 @@
-using ShareClipbrd.Core.Clipboard;
+п»їusing ShareClipbrd.Core.Clipboard;
 
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ClipboardFileTests {
@@ -11,39 +11,39 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         static List<string> filesWindows = new() {
-                "c:/Share папка Clipbrd/Clipboard файл File.cs",
-                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
-                "    c:/Share папка Clipbrd/Clipboard файл File.cs        ",
-                "       C:\\Share папка Clipbrd\\Share файл Clipbrd.Core           ",
+                "c:/Share РїР°РїРєР° Clipbrd/Clipboard С„Р°Р№Р» File.cs",
+                "C:\\Share РїР°РїРєР° Clipbrd\\Share С„Р°Р№Р» Clipbrd.Core",
+                "    c:/Share РїР°РїРєР° Clipbrd/Clipboard С„Р°Р№Р» File.cs        ",
+                "       C:\\Share РїР°РїРєР° Clipbrd\\Share С„Р°Р№Р» Clipbrd.Core           ",
                 "file://c:/Share%20Clipbrd/Clipboard%20File.cs",
                 "file://C:\\Share%20Clipbrd\\Share%20Clipbrd.Core",
                 "/tsclient/Documents.zip"
             };
 
         static List<string> outFilesWindows = new() {
-                "c:\\Share папка Clipbrd\\Clipboard файл File.cs",
-                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
-                "c:\\Share папка Clipbrd\\Clipboard файл File.cs",
-                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
+                "c:\\Share РїР°РїРєР° Clipbrd\\Clipboard С„Р°Р№Р» File.cs",
+                "C:\\Share РїР°РїРєР° Clipbrd\\Share С„Р°Р№Р» Clipbrd.Core",
+                "c:\\Share РїР°РїРєР° Clipbrd\\Clipboard С„Р°Р№Р» File.cs",
+                "C:\\Share РїР°РїРєР° Clipbrd\\Share С„Р°Р№Р» Clipbrd.Core",
                 "c:\\Share Clipbrd\\Clipboard File.cs",
                 "C:\\Share Clipbrd\\Share Clipbrd.Core",
             };
 
         static List<string> filesLinux = new() {
-                "/home/пользователь/Downloads/main",
-                "/home/пользователь/Downloads/code 1 amd64.deb",
-                "    /home/пользователь/Downloads/main   ",
-                "           /home/пользователь/Downloads/code 1 amd64.deb       ",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/main",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/code 1 amd64.deb",
+                "    /home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/main   ",
+                "           /home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/code 1 amd64.deb       ",
                 "file:///home/user/Downloads/main",
                 "file:///home/user/Downloads/code%201%20amd64.deb",
-                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
+                "C:\\Share РїР°РїРєР° Clipbrd\\Share С„Р°Р№Р» Clipbrd.Core",
             };
 
         static List<string> outFilesLinux = new() {
-                "/home/пользователь/Downloads/main",
-                "/home/пользователь/Downloads/code 1 amd64.deb",
-                "/home/пользователь/Downloads/main",
-                "/home/пользователь/Downloads/code 1 amd64.deb",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/main",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/code 1 amd64.deb",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/main",
+                "/home/РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ/Downloads/code 1 amd64.deb",
                 "/home/user/Downloads/main",
                 "/home/user/Downloads/code 1 amd64.deb"
             };
