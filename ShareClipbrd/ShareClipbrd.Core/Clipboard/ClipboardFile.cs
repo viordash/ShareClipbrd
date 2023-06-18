@@ -92,7 +92,7 @@ namespace ShareClipbrd.Core.Clipboard {
                 },
         };
 
-        public static async Task<StringCollection> GetFileDropList(string[] formats, Func<string, Task<object>> getDataFunc) {
+        public static async Task<StringCollection> GetList(string[] formats, Func<string, Task<object>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             var fileDropList = new StringCollection();

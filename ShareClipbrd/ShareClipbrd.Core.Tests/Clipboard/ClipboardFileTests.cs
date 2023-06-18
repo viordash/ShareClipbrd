@@ -42,29 +42,29 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
 
         async Task GetFileDropList_Files_As_List_Test(string format) {
-            var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, files.Concat(incorrectItems).Concat(urls).ToList()));
+            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, files.Concat(incorrectItems).Concat(urls).ToList()));
             Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         async Task GetFileDropList_FilesAndUrls_As_StringLines_Test(string format) {
             var lines = string.Join("\r\n", files.Concat(incorrectItems).Concat(urls));
-            var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, lines));
+            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, lines));
             Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
 
             lines = string.Join("\n", files.Concat(incorrectItems).Concat(urls));
-            fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, lines));
+            fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, lines));
             Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
         }
 
         async Task GetFileDropList_FilesAndUrls_As_ByteArray_Test(string format) {
             var lines = string.Join("\r\n", files.Concat(incorrectItems).Concat(urls));
             var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
-            var fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, bytes));
+            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, bytes));
             Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
 
             lines = string.Join("\n", files.Concat(incorrectItems).Concat(urls));
             bytes = System.Text.Encoding.UTF8.GetBytes(lines);
-            fileDropList = await ClipboardFile.GetFileDropList(new[] { format }, getDataFunc(format, bytes));
+            fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, bytes));
             Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
         }
 
@@ -130,7 +130,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         [Test]
         public async Task GetFileDropList_UnknownFormat_Test() {
-            var fileDropList = await ClipboardFile.GetFileDropList(new[] { "UnknownFormat0", "UnknownFormat1" }, getDataFunc("UnknownFormat0", files.Concat(incorrectItems)));
+            var fileDropList = await ClipboardFile.GetList(new[] { "UnknownFormat0", "UnknownFormat1" }, getDataFunc("UnknownFormat0", files.Concat(incorrectItems)));
             Assert.That(fileDropList, Is.Empty);
         }
 
