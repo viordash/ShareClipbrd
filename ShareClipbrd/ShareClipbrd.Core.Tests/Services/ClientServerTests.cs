@@ -6,8 +6,10 @@ using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
 using ShareClipbrd.Core.Tests.Helpers;
 
-namespace ShareClipbrd.Core.Tests.Services {
-    public class Tests {
+namespace ShareClipbrd.Core.Tests.Services
+{
+    public class Tests
+    {
         Mock<ISystemConfiguration> systemConfigurationMock;
         Mock<IDialogService> dialogServiceMock;
         Mock<IDispatchService> dispatchServiceMock;
@@ -16,7 +18,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         DataClient client;
 
         [SetUp]
-        public void Setup() {
+        public void Setup()
+        {
             systemConfigurationMock = new();
             dialogServiceMock = new();
             dispatchServiceMock = new();
@@ -32,12 +35,14 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [TearDown]
-        public void Teardown() {
+        public void Teardown()
+        {
             server.Stop();
         }
 
         [Test]
-        public async Task Send_CommonData_Test() {
+        public async Task Send_CommonData_Test()
+        {
             ClipboardData? receivedClipboard = null;
 
             dispatchServiceMock
@@ -58,7 +63,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [Test]
-        public async Task Send_Common_Big_Data_Test() {
+        public async Task Send_Common_Big_Data_Test()
+        {
             ClipboardData? receivedClipboard = null;
 
             dispatchServiceMock
@@ -85,7 +91,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [Test]
-        public async Task Send_Files_Test() {
+        public async Task Send_Files_Test()
+        {
             IList<string>? fileDropList = null;
 
             dispatchServiceMock
@@ -106,7 +113,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             var buffer = new byte[3_333_333 / 100];
             testdata.Position = 0;
-            for(int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 var filename = Path.Combine(testsPath, $"Unicode юникод ® _{i}");
                 testdata.Read(buffer, 0, buffer.Length);
 
@@ -114,9 +122,12 @@ namespace ShareClipbrd.Core.Tests.Services {
                 files.Add(filename);
             }
 
-            try {
+            try
+            {
                 await client.SendFileDropList(files);
-            } finally {
+            }
+            finally
+            {
                 Directory.Delete(testsPath, true);
             }
             await Task.Delay(1000);
@@ -127,7 +138,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
 
             testdata.Position = 0;
-            for(int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 var otherFilename = fileDropList.First(x => x.EndsWith($"Unicode юникод ® _{i}"));
 
                 Assert.That(otherFilename, Does.Exist);
@@ -142,7 +154,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [Test]
-        public async Task Send_Big_File_Test() {
+        public async Task Send_Big_File_Test()
+        {
             IList<string>? fileDropList = null;
 
             dispatchServiceMock
@@ -159,7 +172,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             var files = new StringCollection();
             var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
 
-            using(var fs = new FileStream(filename, FileMode.CreateNew)) {
+            using (var fs = new FileStream(filename, FileMode.CreateNew))
+            {
                 fs.Write(bytes);
                 fs.Seek(4096L * 1024 * 1024, SeekOrigin.Begin);
                 fs.WriteByte(0);
@@ -167,9 +181,12 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             files.Add(filename);
 
-            try {
+            try
+            {
                 await client.SendFileDropList(files);
-            } finally {
+            }
+            finally
+            {
                 Directory.Delete(testsPath, true);
             }
             await Task.Delay(1000);
@@ -181,7 +198,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(otherFilename, Does.Exist);
 
 
-            using(var fs = new FileStream(otherFilename, FileMode.Open, FileAccess.Read)) {
+            using (var fs = new FileStream(otherFilename, FileMode.Open, FileAccess.Read))
+            {
                 Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
 
                 var otherBytes = new byte[1_000_003];
@@ -193,7 +211,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [Test]
-        public async Task Send_Files_And_Folders_Test() {
+        public async Task Send_Files_And_Folders_Test()
+        {
             IList<string>? fileDropList = null;
 
             dispatchServiceMock
@@ -237,9 +256,12 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1);
             files.Add(directory0_child1_empty0);
 
-            try {
+            try
+            {
                 await client.SendFileDropList(files);
-            } finally {
+            }
+            finally
+            {
                 Directory.Delete(testsPath, true);
 
             }
@@ -263,13 +285,13 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Select(x => x.Replace('\\', Path.AltDirectorySeparatorChar));
             Assert.That(storedFiles.Count, Is.EqualTo(9));
 
-            var otherFilename = storedFiles.First(x => x.EndsWith(Path.Combine(pathShareClipbrd, "filename0.bin")));
+            var otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename0.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            otherFilename = storedFiles.First(x => x.EndsWith(Path.Combine(pathShareClipbrd, "filename1.bin")));
+            otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            var otherDirectory = storedFiles.First(x => x.EndsWith(Path.Combine(pathShareClipbrd, "Empty0")));
+            var otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Empty0"));
             Assert.That(otherDirectory, Does.Exist);
 
             otherDirectory = storedFiles.First(x => x.EndsWith("directory0/Child0"));
@@ -284,10 +306,10 @@ namespace ShareClipbrd.Core.Tests.Services {
             otherFilename = storedFiles.First(x => x.EndsWith("directory0/filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            otherDirectory = storedFiles.First(x => x.EndsWith(Path.Combine(pathShareClipbrd, "Дочерний1™/Empty0")));
+            otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Empty0"));
             Assert.That(otherDirectory, Does.Exist);
 
-            otherFilename = storedFiles.First(x => x.EndsWith(Path.Combine(pathShareClipbrd, "Дочерний1™/Файл2.dat")));
+            otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Файл2.dat"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
@@ -297,7 +319,8 @@ namespace ShareClipbrd.Core.Tests.Services {
         }
 
         [Test]
-        public async Task Send_identical_Files__Test() {
+        public async Task Send_identical_Files__Test()
+        {
             IList<string>? fileDropList = null;
 
             dispatchServiceMock
@@ -320,9 +343,12 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename0);
             files.Add(filename0);
 
-            try {
+            try
+            {
                 await client.SendFileDropList(files);
-            } finally {
+            }
+            finally
+            {
                 Directory.Delete(testsPath, true);
 
             }
