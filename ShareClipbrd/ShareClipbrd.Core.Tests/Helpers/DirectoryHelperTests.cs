@@ -54,8 +54,6 @@ namespace ShareClipbrd.Core.Tests.Helpers {
             Assert.That(relativeFiles, Is.EquivalentTo(new[] { "directory0/directory0_Child0/filename0", "directory0/directory0_Child1/directory0_Child1_Child0/filename1",
                         "directory2/0", "directory2/1", "directory2/2", "directory2/3", "directory2/4", "directory2/5", "directory2/6", "directory2/7", "directory2/8",
                         "directory2/9"}));
-
-
         }
 
         [Test]
@@ -106,6 +104,43 @@ namespace ShareClipbrd.Core.Tests.Helpers {
             Assert.That(emptyFolders, Is.Empty);
         }
 
+
+        [Test]
+        public void GetDirectoriesAndFiles_Test() {
+            var directory0 = Path.Combine(testsPath, "directory0");
+            Directory.CreateDirectory(directory0);
+
+            var directory0_Child0 = Path.Combine(directory0, "directory0_Child0");
+            Directory.CreateDirectory(directory0_Child0);
+            var filename = Path.Combine(directory0_Child0, "filename0");
+            File.WriteAllText(filename, "0");
+
+            var directory0_Child1 = Path.Combine(directory0, "directory0_Child1");
+            Directory.CreateDirectory(directory0_Child1);
+
+            var directory0_Child1_Child0 = Path.Combine(directory0_Child1, "directory0_Child1_Child0");
+            Directory.CreateDirectory(directory0_Child1_Child0);
+
+            filename = Path.Combine(testsPath, "filename1");
+            File.WriteAllText(filename, "1");
+
+            var directory1 = Path.Combine(testsPath, "directory1");
+            Directory.CreateDirectory(directory1);
+
+            var directory2 = Path.Combine(testsPath, "directory2");
+            Directory.CreateDirectory(directory2);
+            for(int i = 0; i < 10; i++) {
+                filename = Path.Combine(directory2, i.ToString());
+                File.WriteAllText(filename, $"3 {i}");
+            }
+
+            var files = DirectoryHelper.GetDirectoriesAndFiles(testsPath);
+            Assert.That(files, Has.Count.EqualTo(4));
+            var relativeFiles = files
+                .Select(x => Path.GetRelativePath(testsPath, x).Replace('\\', Path.AltDirectorySeparatorChar))
+                .Order();
+            Assert.That(relativeFiles, Is.EquivalentTo(new[] { "directory0", "directory1", "directory2", "filename1" }));
+        }
 
     }
 }
