@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -25,20 +26,30 @@ namespace ShareClipbrd.Core.Clipboard {
 
         static string[] ParseUriLines(string text) {
             var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            var files = new List<string>();
             foreach(var item in lines) {
-                if (!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
                     continue;
                 }
-                Debug.WriteLine(uri);
-                Debug.WriteLine(uri.LocalPath);
+                files.Add(uri.LocalPath.Trim());
             }
+            return files.ToArray();
 
-            var files = lines
-                .Select(x => x.Replace(uriPrefix, ""))
-                .Select(x => System.Web.HttpUtility.UrlDecode(x))
-                .Where(x => PathHelper.IsAbsolute(x))
-                .ToArray();
-            return files;
+            //foreach(var item in lines) {
+            //    if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+            //        continue;
+            //    }
+            //    Debug.WriteLine(uri);
+            //    Debug.WriteLine(uri.LocalPath);
+            //}
+
+            //var files = lines
+            //    .Select(x => x.Replace(uriPrefix, ""))
+            //    .Select(x => System.Web.HttpUtility.UrlDecode(x))
+            //    .Where(x => PathHelper.IsAbsolute(x))
+            //    .ToArray();
+            //return files;
         }
 
         static bool TryUriParse(object data, [MaybeNullWhen(false)] out string[] files) {
@@ -59,10 +70,14 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.FileNames);
                     if (data is IList<string> list) {
-                        var files = list.Select(x => x.Trim())
-                                        .Where(x => PathHelper.IsAbsolute(x))
-                                        .ToArray();
-                        c.AddRange(files);
+                        var files = new List<string>();
+                        foreach(var item in list) {
+                            if (!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                                continue;
+                            }
+                            files.Add(uri.LocalPath.Trim());
+                        }
+                        c.AddRange(files.ToArray());
                         return true;
                     }
                     return false;

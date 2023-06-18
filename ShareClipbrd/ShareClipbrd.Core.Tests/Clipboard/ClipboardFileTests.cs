@@ -1,5 +1,4 @@
 using ShareClipbrd.Core.Clipboard;
-using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ClipboardFileTests {
@@ -11,27 +10,40 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             );
         }
 
-        static List<string> files = new() {
-                "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
-                "/Users/user/Documents/New Bitmap Image.bmp",
-                "/tsclient/Documents.zip",
-                "   /file with spaces around   ",
-                "copy"
+        static List<string> filesWindows = new() {
+                "c:/Share папка Clipbrd/Clipboard файл File.cs",
+                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
+                "    c:/Share папка Clipbrd/Clipboard файл File.cs        ",
+                "       C:\\Share папка Clipbrd\\Share файл Clipbrd.Core           ",
+                "file://c:/Share%20Clipbrd/Clipboard%20File.cs",
+                "file://C:\\Share%20Clipbrd\\Share%20Clipbrd.Core",
+                "/tsclient/Documents.zip"
             };
 
-        static List<string> urls = new() {
+        static List<string> outFilesWindows = new() {
+                "c:\\Share папка Clipbrd\\Clipboard файл File.cs",
+                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
+                "c:\\Share папка Clipbrd\\Clipboard файл File.cs",
+                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
+                "c:\\Share Clipbrd\\Clipboard File.cs",
+                "C:\\Share Clipbrd\\Share Clipbrd.Core",
+            };
+
+        static List<string> filesLinux = new() {
+                "/home/пользователь/Downloads/main",
+                "/home/пользователь/Downloads/code 1 amd64.deb",
+                "    /home/пользователь/Downloads/main   ",
+                "           /home/пользователь/Downloads/code 1 amd64.deb       ",
                 "file:///home/user/Downloads/main",
-                "file:///home/user/Downloads/code%201%20amd64.deb"
+                "file:///home/user/Downloads/code%201%20amd64.deb",
+                "C:\\Share папка Clipbrd\\Share файл Clipbrd.Core",
             };
 
-        static List<string> outFiles = new() {
-                "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
-                "/Users/user/Documents/New Bitmap Image.bmp",
-                "/tsclient/Documents.zip",
-                "/file with spaces around"
-            };
-
-        static List<string> outUrls = new() {
+        static List<string> outFilesLinux = new() {
+                "/home/пользователь/Downloads/main",
+                "/home/пользователь/Downloads/code 1 amd64.deb",
+                "/home/пользователь/Downloads/main",
+                "/home/пользователь/Downloads/code 1 amd64.deb",
                 "/home/user/Downloads/main",
                 "/home/user/Downloads/code 1 amd64.deb"
             };
@@ -43,30 +55,65 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
 
         async Task GetFileDropList_Files_As_List_Test(string format) {
-            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, files.Concat(incorrectItems).Concat(urls).ToList()));
-            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
+            if(OperatingSystem.IsWindows()) {
+                var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, filesWindows.Concat(incorrectItems).ToList()));
+                Assert.That(fileDropList, Is.EquivalentTo(outFilesWindows));
+                return;
+            }
+            if(OperatingSystem.IsLinux()) {
+                var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, filesLinux.Concat(incorrectItems).ToList()));
+                Assert.That(fileDropList, Is.EquivalentTo(outFilesLinux));
+                return;
+            }
+            throw new NotSupportedException($"OS: {Environment.OSVersion}");
         }
 
         async Task GetFileDropList_FilesAndUrls_As_StringLines_Test(string format) {
-            var lines = string.Join("\r\n", files.Concat(incorrectItems).Concat(urls));
-            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, lines));
-            Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
+            List<string> files;
+            List<string> outFiles;
 
-            lines = string.Join("\n", files.Concat(incorrectItems).Concat(urls));
+            if(OperatingSystem.IsWindows()) {
+                files = filesWindows;
+                outFiles = outFilesWindows;
+            } else if(OperatingSystem.IsLinux()) {
+                files = filesLinux;
+                outFiles = outFilesLinux;
+            } else {
+                throw new NotSupportedException($"OS: {Environment.OSVersion}");
+            }
+
+            var lines = string.Join("\r\n", files.Concat(incorrectItems));
+            var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, lines));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
+
+            lines = string.Join("\n", files.Concat(incorrectItems));
             fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, lines));
-            Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         async Task GetFileDropList_FilesAndUrls_As_ByteArray_Test(string format) {
-            var lines = string.Join("\r\n", files.Concat(incorrectItems).Concat(urls));
+            List<string> files;
+            List<string> outFiles;
+
+            if(OperatingSystem.IsWindows()) {
+                files = filesWindows;
+                outFiles = outFilesWindows;
+            } else if(OperatingSystem.IsLinux()) {
+                files = filesLinux;
+                outFiles = outFilesLinux;
+            } else {
+                throw new NotSupportedException($"OS: {Environment.OSVersion}");
+            }
+
+            var lines = string.Join("\r\n", files.Concat(incorrectItems));
             var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
             var fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, bytes));
-            Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
 
-            lines = string.Join("\n", files.Concat(incorrectItems).Concat(urls));
+            lines = string.Join("\n", files.Concat(incorrectItems));
             bytes = System.Text.Encoding.UTF8.GetBytes(lines);
             fileDropList = await ClipboardFile.GetList(new[] { format }, getDataFunc(format, bytes));
-            Assert.That(fileDropList, Is.EquivalentTo(outFiles.Concat(outUrls)));
+            Assert.That(fileDropList, Is.EquivalentTo(outFiles));
         }
 
         [Test]
@@ -131,8 +178,18 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         [Test]
         public async Task GetFileDropList_UnknownFormat_Test() {
-            var fileDropList = await ClipboardFile.GetList(new[] { "UnknownFormat0", "UnknownFormat1" }, getDataFunc("UnknownFormat0", files.Concat(incorrectItems)));
-            Assert.That(fileDropList, Is.Empty);
+            if(OperatingSystem.IsWindows()) {
+                var fileDropList = await ClipboardFile.GetList(new[] { "UnknownFormat0", "UnknownFormat1" }, getDataFunc("UnknownFormat0", filesWindows.Concat(incorrectItems)));
+                Assert.That(fileDropList, Is.Empty);
+                return;
+            }
+            if(OperatingSystem.IsLinux()) {
+                var fileDropList = await ClipboardFile.GetList(new[] { "UnknownFormat0", "UnknownFormat1" }, getDataFunc("UnknownFormat0", filesLinux.Concat(incorrectItems)));
+                Assert.That(fileDropList, Is.Empty);
+                return;
+            }
+            throw new NotSupportedException($"OS: {Environment.OSVersion}");
+
         }
 
         [Test]
@@ -141,19 +198,19 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             object? outObject = null;
 
             if(OperatingSystem.IsWindows()) {
-                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outFiles);
+                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outFilesWindows);
                 Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
                 Assert.That(outObject, Is.InstanceOf<IList<string>>());
-                Assert.That((IList<string>)outObject!, Is.EquivalentTo(outFiles));
+                Assert.That((IList<string>)outObject!, Is.EquivalentTo(outFilesWindows));
                 return;
             }
 
             if(OperatingSystem.IsLinux()) {
-                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outUrls);
+                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outFilesLinux);
                 Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.XMateFileNames));
                 Assert.That(outObject, Is.InstanceOf<byte[]>());
 
-                var urlsBytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", urls));
+                var urlsBytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", outFilesLinux));
                 Assert.That((byte[])outObject!, Is.EquivalentTo(urlsBytes));
                 return;
             }
