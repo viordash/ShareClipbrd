@@ -21,7 +21,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         static List<string> urls = new() {
                 "file:///home/user/Downloads/main",
-                "file:///home/user/Downloads/code_1_amd64.deb"
+                "file:///home/user/Downloads/code%201%20amd64.deb"
             };
 
         static List<string> outFiles = new() {
@@ -33,7 +33,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         static List<string> outUrls = new() {
                 "/home/user/Downloads/main",
-                "/home/user/Downloads/code_1_amd64.deb"
+                "/home/user/Downloads/code 1 amd64.deb"
             };
 
         static List<string> incorrectItems = new() {
@@ -150,7 +150,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
             if(OperatingSystem.IsLinux()) {
                 ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outUrls);
-                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
+                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.XMateFileNames));
                 Assert.That(outObject, Is.InstanceOf<byte[]>());
 
                 var urlsBytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", urls));
