@@ -25,8 +25,9 @@ namespace ShareClipbrd.Core.Clipboard {
 
         static string[] ParseUriLines(string text) {
             var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
             foreach(var item in lines) {
-                if (!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
                     continue;
                 }
                 Debug.WriteLine(uri);
@@ -59,10 +60,18 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.FileNames);
                     if (data is IList<string> list) {
-                        var files = list.Select(x => x.Trim())
-                                        .Where(x => PathHelper.IsAbsolute(x))
-                                        .ToArray();
-                        c.AddRange(files);
+
+                        var files = new List<string>();
+                        foreach(var item in list) {
+                            if (!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                                continue;
+                            }
+                            files.Add(uri.LocalPath);
+                        }
+                        //var files = list.Select(x => x.Trim())
+                        //                .Where(x => PathHelper.IsAbsolute(x))
+                        //                .ToArray();
+                        c.AddRange(files.ToArray());
                         return true;
                     }
                     return false;

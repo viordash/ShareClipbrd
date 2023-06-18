@@ -12,10 +12,10 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         static List<string> files = new() {
-                "/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
-                "/Users/user/Documents/New Bitmap Image.bmp",
+                "ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs",
+                "c:/Users/user/Documents/New Bitmap Image.bmp",
                 "/tsclient/Documents.zip",
-                "   /file with spaces around   ",
+                "   bin/file with spaces around   ",
                 "copy"
             };
 
