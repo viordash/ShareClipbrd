@@ -113,5 +113,18 @@ namespace ShareClipbrd.Core.Clipboard {
             }
             return fileDropList;
         }
+
+        public static void SetFileDropList(Action<string, object> setDataFunc, IList<string> files) {
+
+            if(OperatingSystem.IsWindows()) {
+
+            }
+
+            if(OperatingSystem.IsLinux()) {
+
+            }
+
+            throw new NotSupportedException($"OS: {Environment.OSVersion}");
+        }
     }
 }

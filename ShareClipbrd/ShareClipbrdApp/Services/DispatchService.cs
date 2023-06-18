@@ -26,7 +26,8 @@ namespace ShareClipbrdApp.Services {
         public async void ReceiveFiles(IList<string> files) {
             await Dispatcher.UIThread.InvokeAsync(new Action(() => {
                 var dataObject = new DataObject();
-                dataObject.Set(ClipboardFile.Format.FileNames, files);
+                ClipboardFile.SetFileDropList((f, o) => dataObject.Set(f, o), files);
+                //dataObject.Set(ClipboardFile.Format.FileNames, files);
                 Application.Current?.Clipboard?.ClearAsync();
                 Application.Current?.Clipboard?.SetDataObjectAsync(dataObject);
             }));

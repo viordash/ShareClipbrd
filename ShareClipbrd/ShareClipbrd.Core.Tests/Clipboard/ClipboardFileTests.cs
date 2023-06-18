@@ -1,4 +1,5 @@
 using ShareClipbrd.Core.Clipboard;
+using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ClipboardFileTests {
@@ -134,6 +135,21 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             Assert.That(fileDropList, Is.Empty);
         }
 
+        [Test]
+        public void SetFileDropList_Test() {
+            string? outFormat = null;
+            object? outObject = null;
 
+            ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, files);
+
+            if(OperatingSystem.IsWindows()) {
+                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
+            }
+            if(OperatingSystem.IsLinux()) {
+                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
+            }
+
+            throw new NotSupportedException($"OS: {Environment.OSVersion}");
+        }
     }
 }
