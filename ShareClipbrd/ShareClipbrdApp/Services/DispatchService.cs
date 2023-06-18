@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
@@ -22,10 +23,10 @@ namespace ShareClipbrdApp.Services {
             }));
         }
 
-        public async void ReceiveFiles(StringCollection files) {
+        public async void ReceiveFiles(IList<string> files) {
             await Dispatcher.UIThread.InvokeAsync(new Action(() => {
                 var dataObject = new DataObject();
-                dataObject.Set(ClipboardFile.Format.FileNames, files.OfType<string>().ToList());
+                dataObject.Set(ClipboardFile.Format.FileNames, files);
                 Application.Current?.Clipboard?.ClearAsync();
                 Application.Current?.Clipboard?.SetDataObjectAsync(dataObject);
             }));

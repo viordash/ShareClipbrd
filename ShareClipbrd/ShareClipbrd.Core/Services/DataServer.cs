@@ -103,10 +103,10 @@ namespace ShareClipbrd.Core.Services {
                     var format = await ReceiveFormat(stream, cancellationToken);
 
                     if(format == ClipboardFile.Format.FileDrop) {
-                        var fileDropList = new StringCollection();
-                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, fileDropList, cancellationToken);
+                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, cancellationToken);
                         await fileReceiver.Receive();
-                        dispatchService.ReceiveFiles(fileDropList);
+                        var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
+                        dispatchService.ReceiveFiles(receivedFiles);
 
                     } else if(format == ClipboardData.Format.Bitmap) {
 

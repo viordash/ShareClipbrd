@@ -12,7 +12,6 @@ namespace ShareClipbrd.Core.Clipboard {
         readonly NetworkStream networkStream;
         readonly string sessionDir;
         readonly Int64 total;
-        readonly StringCollection fileDropList;
         readonly CancellationToken cancellationToken;
 
         public FileReceiver(
@@ -20,13 +19,11 @@ namespace ShareClipbrd.Core.Clipboard {
             NetworkStream networkStream,
             string sessionDir,
             Int64 total,
-            StringCollection fileDropList,
             CancellationToken cancellationToken) {
             this.progressService = progressService;
             this.networkStream = networkStream;
             this.sessionDir = sessionDir;
             this.total = total;
-            this.fileDropList = fileDropList;
             this.cancellationToken = cancellationToken;
         }
 
@@ -50,7 +47,6 @@ namespace ShareClipbrd.Core.Clipboard {
 
                     var tempDirectory = Path.Combine(sessionDir, name);
                     Directory.CreateDirectory(tempDirectory);
-                    fileDropList.Add(tempDirectory);
                 } else {
                     var dataLength = await networkStream.ReadInt64Async(cancellationToken);
                     ValidateFileDataLength(dataLength);
@@ -76,7 +72,6 @@ namespace ShareClipbrd.Core.Clipboard {
                     } finally {
                         ArrayPool<byte>.Shared.Return(buffer);
                     }
-                    fileDropList.Add(tempFilename);
                 }
             } finally {
                 ArrayPool<byte>.Shared.Return(nameBuffer);

@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using Moq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
+using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrd.Core.Tests.Services {
@@ -84,11 +85,11 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_Files_Test() {
-            StringCollection? fileDropList = null;
+            IList<string>? fileDropList = null;
 
             dispatchServiceMock
-                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
-                .Callback<StringCollection>(x => fileDropList = x);
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
             var clipboardData = new ClipboardData();
 
@@ -141,11 +142,11 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_Big_File_Test() {
-            StringCollection? fileDropList = null;
+            IList<string>? fileDropList = null;
 
             dispatchServiceMock
-                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
-                .Callback<StringCollection>(x => fileDropList = x);
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
             var rnd = new Random();
             var bytes = new byte[1_000_003];
@@ -192,11 +193,11 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_Files_And_Folders_Test() {
-            StringCollection? fileDropList = null;
+            IList<string>? fileDropList = null;
 
             dispatchServiceMock
-                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
-                .Callback<StringCollection>(x => fileDropList = x);
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
 
             var testsPath = Path.Combine(Path.GetTempPath(), "tests");
@@ -246,51 +247,83 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
-            Assert.That(fileDropList.Count, Is.EqualTo(9));
+
+            Assert.That(fileDropList.Count, Is.EqualTo(5));
 
             var sortedFileDropList = fileDropList.OfType<string>().Order().ToArray();
+
             var otherDirectory = sortedFileDropList[0];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("directory0"));
 
             otherDirectory = sortedFileDropList[1];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("directory0/directory0_Child0"));
-            
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+
             var otherFilename = sortedFileDropList[2];
-            Assert.That(otherFilename, Does.Exist);
-            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
-            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
-
-            otherDirectory = sortedFileDropList[3];
-            Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("����������0_Child1/directory0_Child1_Child0_Empty"));
-
-            otherFilename = sortedFileDropList[4];
-            Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("directory0/����������0_Child1/����2.dat"));
-            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
-
-            otherFilename = sortedFileDropList[5];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-            otherFilename = sortedFileDropList[6];
+            otherFilename = sortedFileDropList[3];
             Assert.That(otherFilename, Does.Exist);
             Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-            otherDirectory = sortedFileDropList[7];
+            otherDirectory = sortedFileDropList[4];
             Assert.That(otherDirectory, Does.Exist);
-            Assert.That(otherDirectory, Does.EndWith("����������0_Child1/directory0_Child1_Child0_Empty"));
+            Assert.That(otherDirectory, Does.EndWith("����������0_Child1"));
 
-            otherFilename = sortedFileDropList[8];
+            const string path = "ShareClipbrd_60D54950";
+            var tempDir = Path.Combine(Path.GetTempPath(), path);
+            var storedFiles = DirectoryHelper.RecursiveGetFiles(tempDir).Concat(DirectoryHelper.RecursiveGetEmptyFolders(tempDir));
+            Assert.That(storedFiles.Count, Is.EqualTo(9));
+
+            var sortedStoredFiles = storedFiles.OfType<string>().Order().ToArray();
+
+            otherDirectory = sortedStoredFiles[0];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+
+            otherDirectory = sortedStoredFiles[1];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child0"));
+
+            otherFilename = sortedStoredFiles[2];
             Assert.That(otherFilename, Does.Exist);
-            Assert.That(otherFilename, Does.EndWith("����������0_Child1/����2.dat"));
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
             Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
+            otherDirectory = sortedStoredFiles[3];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
 
+            otherFilename = sortedStoredFiles[4];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetDirectoryName(otherFilename), Does.EndWith("����������0_Child1"));
+            Assert.That(Path.GetFileName(otherFilename), Does.EndWith("����2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherFilename = sortedStoredFiles[5];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
+
+            otherFilename = sortedStoredFiles[6];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename1.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+
+            otherDirectory = sortedStoredFiles[7];
+            Assert.That(otherDirectory, Does.Exist);
+            Assert.That(Path.GetDirectoryName(otherDirectory), Does.EndWith("����������0_Child1"));
+            Assert.That(otherDirectory, Does.EndWith("directory0_Child1_Child0_Empty"));
+
+            otherFilename = sortedStoredFiles[8];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetDirectoryName(otherFilename), Does.EndWith("����������0_Child1"));
+            Assert.That(otherFilename, Does.EndWith("����2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
@@ -300,12 +333,11 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_identical_Files__Test() {
-
-            StringCollection? fileDropList = null;
+            IList<string>? fileDropList = null;
 
             dispatchServiceMock
-                .Setup(x => x.ReceiveFiles(It.IsAny<StringCollection>()))
-                .Callback<StringCollection>(x => fileDropList = x);
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
 
             var testsPath = Path.Combine(Path.GetTempPath(), "tests");
