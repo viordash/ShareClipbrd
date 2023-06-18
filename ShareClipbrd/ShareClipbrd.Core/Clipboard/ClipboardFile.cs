@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
@@ -29,15 +30,17 @@ namespace ShareClipbrd.Core.Clipboard {
             return files;
         }
 
-        static bool TryUriParse(object data, out string[] files) {
-            files = new string[] { };
-            files = data switch {
-                string lines => ParseUriLines(lines),
-                byte[] bytes => ParseUriLines(System.Text.Encoding.UTF8.GetString(bytes)),
-                _ => new string[] { }
-            };
-
-            return files.Any();
+        static bool TryUriParse(object data, [MaybeNullWhen(false)] out string[] files) {
+            if(data is string lines) {
+                files = ParseUriLines(lines);
+                return true;
+            }
+            if(data is byte[] bytes) {
+                files = ParseUriLines(System.Text.Encoding.UTF8.GetString(bytes));
+                return true;
+            }
+            files = null;
+            return false;
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -45,10 +48,9 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.FileNames);
                     if (data is IList<string> list) {
-                        var files = list
-                                    .Select(x => x.Trim())
-                                    .Where(x => PathHelper.IsAbsolute(x))
-                                    .ToArray();
+                        var files = list.Select(x => x.Trim())
+                                        .Where(x => PathHelper.IsAbsolute(x))
+                                        .ToArray();
                         c.AddRange(files);
                         return true;
                     }
@@ -59,8 +61,9 @@ namespace ShareClipbrd.Core.Clipboard {
             { Format.XMateFileNames, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.XMateFileNames);
-                    if (TryUriParse(data, out string[] files)) {
-                        c.AddRange(files); return true;
+                    if (TryUriParse(data, out string[]? files)) {
+                        c.AddRange(files);
+                        return true;
                     }
                     return false;
                 })
@@ -69,8 +72,9 @@ namespace ShareClipbrd.Core.Clipboard {
             { Format.XKdeFileNames, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.XKdeFileNames);
-                    if (TryUriParse(data, out string[] files)) {
-                        c.AddRange(files); return true;
+                    if (TryUriParse(data, out string[]? files)) {
+                        c.AddRange(files);
+                        return true;
                     }
                     return false;
                 })
@@ -79,8 +83,9 @@ namespace ShareClipbrd.Core.Clipboard {
             { Format.XGnomeFileNames, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.XGnomeFileNames);
-                    if (TryUriParse(data, out string[] files)) {
-                        c.AddRange(files); return true;
+                    if (TryUriParse(data, out string[]? files)) {
+                        c.AddRange(files);
+                        return true;
                     }
                     return false;
                 })
