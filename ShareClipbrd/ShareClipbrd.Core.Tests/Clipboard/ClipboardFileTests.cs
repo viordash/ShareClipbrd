@@ -69,7 +69,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         [Test]
         public async Task GetFileDropList_FileNames_As_StringLines_Test() {
-            await GetFileDropList_Data_As_StringLines_Test(ClipboardFile.Format.FileNames);
+            Assert.ThrowsAsync await GetFileDropList_Data_As_StringLines_Test(ClipboardFile.Format.FileNames);
         }
 
         [Test]
