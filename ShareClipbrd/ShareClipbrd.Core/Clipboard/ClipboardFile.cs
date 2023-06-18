@@ -1,6 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
@@ -20,10 +21,12 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
         }
 
+        static string uriPrefix = "file://";
+
         static string[] ParseUriLines(string text) {
             var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var files = lines
-                .Select(x => x.Replace("file://", ""))
+                .Select(x => x.Replace(uriPrefix, ""))
                 .Select(x => System.Web.HttpUtility.UrlDecode(x))
                 .Where(x => PathHelper.IsAbsolute(x))
                 .ToArray();
@@ -117,11 +120,27 @@ namespace ShareClipbrd.Core.Clipboard {
         public static void SetFileDropList(Action<string, object> setDataFunc, IList<string> files) {
 
             if(OperatingSystem.IsWindows()) {
-
+                setDataFunc(ClipboardFile.Format.FileNames, files);
+                return;
             }
 
             if(OperatingSystem.IsLinux()) {
+                var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP");
+                var format = desktop?.ToLower() switch {
+                    "kde" => ClipboardFile.Format.XKdeFileNames,
+                    "mate" or "xfce" => ClipboardFile.Format.XMateFileNames,
+                    "gnome" => ClipboardFile.Format.XGnomeFileNames,
+                    _ => throw new NotSupportedException($"X desktop: {desktop}")
+                };
 
+                var urls = files
+                    .Select(x => string.Concat(uriPrefix, x))
+                    .Select(x => System.Web.HttpUtility.UrlEncode(x));
+
+                var lines = string.Join("\n", urls);
+                var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
+
+                setDataFunc(format, bytes);
             }
 
             throw new NotSupportedException($"OS: {Environment.OSVersion}");

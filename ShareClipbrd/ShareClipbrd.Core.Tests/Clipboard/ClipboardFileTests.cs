@@ -140,13 +140,22 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             string? outFormat = null;
             object? outObject = null;
 
-            ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, files);
-
             if(OperatingSystem.IsWindows()) {
+                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outFiles);
                 Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
+                Assert.That(outObject, Is.InstanceOf<IList<string>>());
+                Assert.That((IList<string>)outObject!, Is.EquivalentTo(outFiles));
+                return;
             }
+
             if(OperatingSystem.IsLinux()) {
+                ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outUrls);
                 Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.FileNames));
+                Assert.That(outObject, Is.InstanceOf<byte[]>());
+
+                var urlsBytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", urls));
+                Assert.That((byte[])outObject!, Is.EquivalentTo(urlsBytes));
+                return;
             }
 
             throw new NotSupportedException($"OS: {Environment.OSVersion}");
