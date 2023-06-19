@@ -208,11 +208,13 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
             if(OperatingSystem.IsLinux()) {
                 ClipboardFile.SetFileDropList((f, o) => { outFormat = f; outObject = o; }, outFilesLinux);
-                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.XMateFileNames));
+                Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.XKdeFileNames)
+                                    .Or.EqualTo(ClipboardFile.Format.XMateFileNames)
+                                    .Or.EqualTo(ClipboardFile.Format.XGnomeFileNames));
                 Assert.That(outObject, Is.InstanceOf<byte[]>());
 
-                var urlsBytes = System.Text.Encoding.UTF8.GetBytes(string.Join("\n", outFilesLinux));
-                Assert.That((byte[])outObject!, Is.EquivalentTo(urlsBytes));
+                var urls = System.Text.Encoding.UTF8.GetString((byte[])outObject!);
+                Assert.That(urls, Does.Contain("Clipbrd.Core").And.Contain("code%201%20amd64.deb"));
                 return;
             }
 

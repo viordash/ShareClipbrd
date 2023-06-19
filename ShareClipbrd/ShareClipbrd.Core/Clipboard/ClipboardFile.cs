@@ -35,21 +35,6 @@ namespace ShareClipbrd.Core.Clipboard {
                 files.Add(uri.LocalPath.Trim());
             }
             return files.ToArray();
-
-            //foreach(var item in lines) {
-            //    if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
-            //        continue;
-            //    }
-            //    Debug.WriteLine(uri);
-            //    Debug.WriteLine(uri.LocalPath);
-            //}
-
-            //var files = lines
-            //    .Select(x => x.Replace(uriPrefix, ""))
-            //    .Select(x => System.Web.HttpUtility.UrlDecode(x))
-            //    .Where(x => PathHelper.IsAbsolute(x))
-            //    .ToArray();
-            //return files;
         }
 
         static bool TryUriParse(object data, [MaybeNullWhen(false)] out string[] files) {
@@ -156,9 +141,13 @@ namespace ShareClipbrd.Core.Clipboard {
                     _ => throw new NotSupportedException($"X desktop: {desktop}")
                 };
 
-                var urls = files
-                    .Select(x => System.Uri.EscapeDataString(x))
-                    .Select(x => string.Concat(uriPrefix, x));
+                var urls = new List<string>();
+                foreach(var item in files) {
+                    if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                        continue;
+                    }
+                    urls.Add(uri.AbsoluteUri);
+                }
 
                 var lines = string.Join("\n", urls);
                 var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
