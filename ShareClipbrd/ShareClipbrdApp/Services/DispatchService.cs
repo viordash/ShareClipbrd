@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Threading;
 using ShareClipbrd.Core.Clipboard;
@@ -17,8 +18,13 @@ namespace ShareClipbrdApp.Services {
                 clipboardData.Deserialize((f, o) => dataObject.Set(f, o));
                 if(dataObject.GetDataFormats().Any()) {
                     Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetDataFormats())}");
-                    Application.Current?.Clipboard?.ClearAsync();
-                    Application.Current?.Clipboard?.SetDataObjectAsync(dataObject);
+
+                    if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                        var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
+                        clipboard.ClearAsync();
+                        clipboard.SetDataObjectAsync(dataObject);
+                    }
+
                 }
             }));
         }
@@ -27,9 +33,12 @@ namespace ShareClipbrdApp.Services {
             await Dispatcher.UIThread.InvokeAsync(new Action(() => {
                 var dataObject = new DataObject();
                 ClipboardFile.SetFileDropList((f, o) => dataObject.Set(f, o), files);
-                
-                Application.Current?.Clipboard?.ClearAsync();
-                Application.Current?.Clipboard?.SetDataObjectAsync(dataObject);
+
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                    var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
+                    clipboard.ClearAsync();
+                    clipboard.SetDataObjectAsync(dataObject);
+                }
             }));
         }
     }

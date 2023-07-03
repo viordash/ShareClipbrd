@@ -11,9 +11,9 @@ namespace ShareClipbrd.Core.Clipboard {
     }
     public class ClipboardData {
         public class Convert {
-            public Func<ClipboardData, Func<string, Task<object>>, Task<bool>> From { get; set; }
+            public Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
-            public Convert(Func<ClipboardData, Func<string, Task<object>>, Task<bool>> from, Func<Stream, object> to) {
+            public Convert(Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> from, Func<Stream, object> to) {
                 From = from;
                 To = to;
             }
@@ -110,7 +110,7 @@ namespace ShareClipbrd.Core.Clipboard {
             Formats.Add(new ClipboardItem(format, stream));
         }
 
-        public async Task Serialize(string[] formats, Func<string, Task<object>> getDataFunc) {
+        public async Task Serialize(string[] formats, Func<string, Task<object?>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             foreach(var format in formats) {

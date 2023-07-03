@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
     public class ClipboardFile {
         public class Convert {
-            public Func<StringCollection, Func<string, Task<object>>, Task<bool>> From { get; set; }
-            public Convert(Func<StringCollection, Func<string, Task<object>>, Task<bool>> from) {
+            public Func<StringCollection, Func<string, Task<object?>>, Task<bool>> From { get; set; }
+            public Convert(Func<StringCollection, Func<string, Task<object?>>, Task<bool>> from) {
                 From = from;
             }
         }
@@ -21,8 +18,6 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string XKdeFileNames = "x-special/KDE-copied-files";
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
         }
-
-        static string uriPrefix = "file://";
 
         static string[] ParseUriLines(string text) {
             var lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -37,7 +32,7 @@ namespace ShareClipbrd.Core.Clipboard {
             return files.ToArray();
         }
 
-        static bool TryUriParse(object data, [MaybeNullWhen(false)] out string[] files) {
+        static bool TryUriParse(object? data, [MaybeNullWhen(false)] out string[] files) {
             if(data is string lines) {
                 files = ParseUriLines(lines);
                 return true;
@@ -103,7 +98,7 @@ namespace ShareClipbrd.Core.Clipboard {
                 },
         };
 
-        public static async Task<StringCollection> GetList(string[] formats, Func<string, Task<object>> getDataFunc) {
+        public static async Task<StringCollection> GetList(string[] formats, Func<string, Task<object?>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             var fileDropList = new StringCollection();

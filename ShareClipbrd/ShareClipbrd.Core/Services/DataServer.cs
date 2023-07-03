@@ -70,7 +70,7 @@ namespace ShareClipbrd.Core.Services {
             return tempDir;
         }
 
-        async ValueTask<string?> ReceiveFormat(NetworkStream stream, CancellationToken cancellationToken) {
+        static async ValueTask<string?> ReceiveFormat(NetworkStream stream, CancellationToken cancellationToken) {
             var format = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(format)) {
                 return null;
@@ -79,7 +79,7 @@ namespace ShareClipbrd.Core.Services {
             return format;
         }
 
-        async ValueTask<Int64> ReceiveSize(NetworkStream stream, CancellationToken cancellationToken) {
+        static async ValueTask<Int64> ReceiveSize(NetworkStream stream, CancellationToken cancellationToken) {
             var size = await stream.ReadInt64Async(cancellationToken);
             await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
             return size;
