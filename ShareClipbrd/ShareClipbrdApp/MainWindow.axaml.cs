@@ -56,10 +56,6 @@ namespace ShareClipbrdApp {
 
         public MainWindow() {
             InitializeComponent();
-
-#if DEBUG
-            this.AttachDevTools();
-#endif
         }
 
         void OnOpened(object sender, System.EventArgs e) {
@@ -70,7 +66,7 @@ namespace ShareClipbrdApp {
             edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
-        void OnClosing(object sender, CancelEventArgs e) {
+        void OnClosing(object sender, WindowClosingEventArgs e) {
             dataServer?.Stop();
             Settings.Default.MainFormLocation = new System.Drawing.Point(Position.X, Position.Y);
             Settings.Default.Save();
@@ -100,13 +96,13 @@ namespace ShareClipbrdApp {
             if(!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
                 return;
             }
-            if(originalPoint == null) {
+            if(!originalPoint.HasValue) {
                 return;
             }
 
             PointerPoint currentPoint = e.GetCurrentPoint(this);
-            Position = new PixelPoint(Position.X + (int)(currentPoint.Position.X - originalPoint.Position.X),
-                Position.Y + (int)(currentPoint.Position.Y - originalPoint.Position.Y));
+            Position = new PixelPoint(Position.X + (int)(currentPoint.Position.X - originalPoint.Value.Position.X),
+                Position.Y + (int)(currentPoint.Position.Y - originalPoint.Value.Position.Y));
         }
 
         void MenuItemPaste_Click(object sender, RoutedEventArgs e) {
@@ -137,19 +133,19 @@ namespace ShareClipbrdApp {
 
         async void TransmitClipboard() {
             try {
-                var formats = await Application.Current!.Clipboard!.GetFormatsAsync();
-                var clipboardData = new ClipboardData();
-                if(clipboardData.ContainsFileDropList(formats)) {
-                    var fileDropList = await clipboardData.GetFileDropList(Application.Current.Clipboard.GetDataAsync);
+                var clipboard = GetTopLevel(this)!.Clipboard!;
+                var formats = await clipboard.GetFormatsAsync();
+
+                var fileDropList = await ClipboardFile.GetList(formats, clipboard.GetDataAsync);
+                if(fileDropList.Count > 0) {
                     await dataClient!.SendFileDropList(fileDropList);
-                    //} else if(System.Windows.Clipboard.ContainsImage()) {
-
-                    //} else if(System.Windows.Clipboard.ContainsAudio()) {
-
-                } else {
-                    await clipboardData.Serialize(formats, Application.Current.Clipboard.GetDataAsync);
-                    await dataClient!.SendData(clipboardData);
+                    return;
                 }
+
+                var clipboardData = new ClipboardData();
+                await clipboardData.Serialize(formats, clipboard.GetDataAsync);
+                await dataClient!.SendData(clipboardData);
+
             } catch(SocketException ex) {
                 await dialogService!.ShowError(ex);
             } catch(InvalidDataException ex) {

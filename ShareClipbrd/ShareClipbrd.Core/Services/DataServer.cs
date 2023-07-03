@@ -70,7 +70,7 @@ namespace ShareClipbrd.Core.Services {
             return tempDir;
         }
 
-        async ValueTask<string?> ReceiveFormat(NetworkStream stream, CancellationToken cancellationToken) {
+        static async ValueTask<string?> ReceiveFormat(NetworkStream stream, CancellationToken cancellationToken) {
             var format = await stream.ReadUTF8StringAsync(cancellationToken);
             if(string.IsNullOrEmpty(format)) {
                 return null;
@@ -79,7 +79,7 @@ namespace ShareClipbrd.Core.Services {
             return format;
         }
 
-        async ValueTask<Int64> ReceiveSize(NetworkStream stream, CancellationToken cancellationToken) {
+        static async ValueTask<Int64> ReceiveSize(NetworkStream stream, CancellationToken cancellationToken) {
             var size = await stream.ReadInt64Async(cancellationToken);
             await stream.WriteAsync(CommunProtocol.SuccessSize, cancellationToken);
             return size;
@@ -102,11 +102,11 @@ namespace ShareClipbrd.Core.Services {
                     var total = await ReceiveSize(stream, cancellationToken);
                     var format = await ReceiveFormat(stream, cancellationToken);
 
-                    if(format == ClipboardData.Format.FileDrop) {
-                        var fileDropList = new StringCollection();
-                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, fileDropList, cancellationToken);
+                    if(format == ClipboardFile.Format.FileDrop) {
+                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, cancellationToken);
                         await fileReceiver.Receive();
-                        dispatchService.ReceiveFiles(fileDropList);
+                        var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
+                        dispatchService.ReceiveFiles(receivedFiles);
 
                     } else if(format == ClipboardData.Format.Bitmap) {
 

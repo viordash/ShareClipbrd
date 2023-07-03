@@ -1,8 +1,7 @@
-using System.Net;
-using ShareClipbrdApp.Win.Configuration;
-using ShareClipbrdApp.Win.Properties;
+﻿using ShareClipbrdApp.Configuration;
+using ShareClipbrdApp.Properties;
 
-namespace ShareClipbrdApp.Win.Tests.Services {
+namespace ShareClipbrdApp.Tests.Configuration {
     public class SystemConfigurationTests {
 
         SystemConfiguration testable;

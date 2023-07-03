@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Avalonia.Input;
 using Avalonia.Threading;
 using MessageBox.Avalonia.Enums;
 using ShareClipbrd.Core.Services;
-using static ShareClipbrd.Core.Clipboard.ClipboardData;
 
 namespace ShareClipbrdApp.Services {
 

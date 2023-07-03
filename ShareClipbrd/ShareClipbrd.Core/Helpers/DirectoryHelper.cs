@@ -1,10 +1,8 @@
 ﻿namespace ShareClipbrd.Core.Helpers {
     public class DirectoryHelper {
-        static void GetFiles(string targetDirectory, IList<string> files) {
+        static void GetFiles(string targetDirectory, List<string> files) {
             var fileEntries = Directory.GetFiles(targetDirectory);
-            foreach(string fileName in fileEntries) {
-                files.Add(fileName);
-            }
+            files.AddRange(fileEntries);
 
             var subdirectories = Directory.GetDirectories(targetDirectory);
             foreach(string subdirectory in subdirectories) {
@@ -41,6 +39,17 @@
             var folders = new List<string>();
             GeFolders(targetDirectory, folders);
             return folders;
+        }
+
+        public static List<string> GetDirectoriesAndFiles(string targetDirectory) {
+            var entries = new List<string>();
+
+            var files = Directory.GetFiles(targetDirectory);
+            entries.AddRange(files);
+
+            var directories = Directory.GetDirectories(targetDirectory);
+            entries.AddRange(directories);
+            return entries;
         }
     }
 }

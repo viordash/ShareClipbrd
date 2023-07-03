@@ -1,7 +1,4 @@
-﻿using System.Collections.Specialized;
-using System.Diagnostics;
-using System.IO;
-using static ShareClipbrd.Core.Clipboard.ClipboardData;
+﻿using System.Diagnostics;
 
 namespace ShareClipbrd.Core.Clipboard {
     public record ClipboardItem {
@@ -14,9 +11,9 @@ namespace ShareClipbrd.Core.Clipboard {
     }
     public class ClipboardData {
         public class Convert {
-            public Func<ClipboardData, Func<string, Task<object>>, Task<bool>> From { get; set; }
+            public Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
-            public Convert(Func<ClipboardData, Func<string, Task<object>>, Task<bool>> from, Func<Stream, object> to) {
+            public Convert(Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> from, Func<Stream, object> to) {
                 From = from;
                 To = to;
             }
@@ -32,9 +29,6 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string Html = "HTML Format";
             public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
-
-            public const string FileDrop = "FileDrop";
-            public const string FileNames = "FileNames";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -42,8 +36,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Text);
                     if (data is string castedValue) {c.Add(Format.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
@@ -52,8 +46,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.UnicodeText);
                     if (data is string castedValue) {c.Add(Format.UnicodeText, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray())
                 )
@@ -62,8 +56,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.StringFormat);
                     if (data is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
                 )
@@ -72,8 +66,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.OemText);
                     if (data is string castedValue) {c.Add(Format.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
                 )
@@ -92,8 +86,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Locale);
                     if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Locale, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.Locale, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => stream
                 )
@@ -102,8 +96,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Html);
                     if (data is string castedValue) {c.Add(Format.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    else if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
-                    else {return false;}
+                    if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
+                    return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
                 )
@@ -116,13 +110,17 @@ namespace ShareClipbrd.Core.Clipboard {
             Formats.Add(new ClipboardItem(format, stream));
         }
 
-        public async Task Serialize(string[] formats, Func<string, Task<object>> getDataFunc) {
+        public async Task Serialize(string[] formats, Func<string, Task<object?>> getDataFunc) {
             Debug.WriteLine(string.Join(", ", formats));
 
             foreach(var format in formats) {
                 try {
                     if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
                         Debug.WriteLine($"not supported format: {format}");
+                        // var data = await getDataFunc(format);
+                        // if(data is string castedValue) {
+                        //     Debug.WriteLine($"      val: {castedValue}");
+                        // }
                         continue;
                     }
 
@@ -156,20 +154,6 @@ namespace ShareClipbrd.Core.Clipboard {
 
         public Int64 GetTotalLenght() {
             return Formats.Sum(x => x.Stream.Length);
-        }
-
-        public bool ContainsFileDropList(string[] formats) {
-            return formats.Any(x => x == Format.FileNames);
-        }
-
-        public async Task<StringCollection> GetFileDropList(Func<string, Task<object>> getDataFunc) {
-            var obj = await getDataFunc(Format.FileNames);
-            if(!(obj is IList<string> files)) {
-                throw new InvalidDataException(Format.FileNames);
-            }
-            var fileDropList = new StringCollection();
-            fileDropList.AddRange(files.ToArray());
-            return fileDropList;
         }
     }
 }
