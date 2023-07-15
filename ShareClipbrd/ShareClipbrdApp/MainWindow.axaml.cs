@@ -24,6 +24,7 @@ namespace ShareClipbrdApp {
         readonly IDataClient? dataClient;
         readonly IDataServer? dataServer;
         readonly IDialogService? dialogService;
+        readonly IProgressService? progressService;
 
         WriteableBitmap? progressBarBitmap;
         public WriteableBitmap? ProgressBarBitmap {
@@ -36,10 +37,12 @@ namespace ShareClipbrdApp {
         public MainWindow(
             IDataClient dataClient,
             IDataServer dataServer,
-            IDialogService dialogService) : this() {
+            IDialogService dialogService,
+            IProgressService progressService) : this() {
             Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(dialogService, nameof(dialogService));
+            Guard.NotNull(progressService, nameof(progressService));
 
             progressBar = new TetrisProgressBar((int)Width - 6, (int)Height - 6, new Random().Next());
             progressBarBitmap = new WriteableBitmap(new PixelSize(progressBar.Width, progressBar.Height), new Vector(1.0, 1.0),
@@ -51,6 +54,7 @@ namespace ShareClipbrdApp {
             this.dataClient = dataClient;
             this.dataServer = dataServer;
             this.dialogService = dialogService;
+            this.progressService = progressService;
 
             SetProgressMode(ProgressMode.None);
             SetProgress(100.0);
@@ -157,8 +161,14 @@ namespace ShareClipbrdApp {
 
                 var clipboardData = new ClipboardData();
                 await clipboardData.Serialize(formats, clipboard.GetDataAsync);
-                await dataClient!.SendData(clipboardData);
+                if(clipboardData.Formats.Any()) {
+                    await dataClient!.SendData(clipboardData);
+                    return;
+                }
 
+                await using(progressService!.Begin(ProgressMode.Error)) {
+                    Debug.WriteLine("Data empty error");
+                }
             } catch(SocketException ex) {
                 await dialogService!.ShowError(ex);
             } catch(InvalidDataException ex) {
