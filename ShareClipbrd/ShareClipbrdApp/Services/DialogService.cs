@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
-using MessageBox.Avalonia.Enums;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Services {
@@ -9,41 +12,51 @@ namespace ShareClipbrdApp.Services {
     public class DialogService : IDialogService {
         public Task ShowMessage(string message) {
             return Dispatcher.UIThread.InvokeAsync(new Func<Task<ButtonResult>>(async () => {
-                return await MessageBox.Avalonia.MessageBoxManager
-                        .GetMessageBoxStandardWindow(string.Empty, message, MessageBox.Avalonia.Enums.ButtonEnum.Ok, MessageBox.Avalonia.Enums.Icon.Info)
-                        .Show();
+                var msgbox = MessageBoxManager
+                            .GetMessageBoxStandard(string.Empty, message, ButtonEnum.Ok, Icon.Info);
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                    return await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
+                }
+                return await msgbox.ShowWindowAsync();
             }));
         }
 
         public Task ShowError(Exception exception) {
             return Dispatcher.UIThread.InvokeAsync(new Func<Task<ButtonResult>>(async () => {
-                return await MessageBox.Avalonia.MessageBoxManager
-                            .GetMessageBoxStandardWindow(string.Empty, exception.GetBaseException().Message, MessageBox.Avalonia.Enums.ButtonEnum.Ok,
-                                    MessageBox.Avalonia.Enums.Icon.Error)
-                            .Show();
+                var msgbox = MessageBoxManager
+                            .GetMessageBoxStandard(string.Empty, exception.GetBaseException().Message, ButtonEnum.Ok, Icon.Error);
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                    return await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
+                }
+                return await msgbox.ShowWindowAsync();
             }));
         }
 
 
         public Task<ShareClipbrd.Core.MessageBoxResult> Confirmation(string messageBoxText, string caption, ShareClipbrd.Core.MessageBoxButton button) {
             var _button = button switch {
-                ShareClipbrd.Core.MessageBoxButton.OKCancel => MessageBox.Avalonia.Enums.ButtonEnum.OkCancel,
-                ShareClipbrd.Core.MessageBoxButton.YesNoCancel => MessageBox.Avalonia.Enums.ButtonEnum.YesNoCancel,
-                ShareClipbrd.Core.MessageBoxButton.YesNo => MessageBox.Avalonia.Enums.ButtonEnum.YesNo,
-                _ => MessageBox.Avalonia.Enums.ButtonEnum.Ok,
+                ShareClipbrd.Core.MessageBoxButton.OKCancel => ButtonEnum.OkCancel,
+                ShareClipbrd.Core.MessageBoxButton.YesNoCancel => ButtonEnum.YesNoCancel,
+                ShareClipbrd.Core.MessageBoxButton.YesNo => ButtonEnum.YesNo,
+                _ => ButtonEnum.Ok,
             };
 
             return Dispatcher.UIThread.InvokeAsync(new Func<Task<ShareClipbrd.Core.MessageBoxResult>>(async () => {
-                return await MessageBox.Avalonia.MessageBoxManager
-                        .GetMessageBoxStandardWindow(caption, messageBoxText, _button,
-                                MessageBox.Avalonia.Enums.Icon.Question)
-                        .Show() switch {
-                            MessageBox.Avalonia.Enums.ButtonResult.Yes => ShareClipbrd.Core.MessageBoxResult.Yes,
-                            MessageBox.Avalonia.Enums.ButtonResult.No => ShareClipbrd.Core.MessageBoxResult.No,
-                            MessageBox.Avalonia.Enums.ButtonResult.Ok => ShareClipbrd.Core.MessageBoxResult.OK,
-                            MessageBox.Avalonia.Enums.ButtonResult.Cancel => ShareClipbrd.Core.MessageBoxResult.Cancel,
-                            _ => ShareClipbrd.Core.MessageBoxResult.None,
-                        };
+                ButtonResult buttonResult;
+                var msgbox = MessageBoxManager
+                        .GetMessageBoxStandard(string.Empty, messageBoxText, ButtonEnum.Ok, Icon.Error);
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                    buttonResult = await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
+                } else {
+                    buttonResult = await msgbox.ShowWindowAsync();
+                }
+                return buttonResult switch {
+                    ButtonResult.Yes => ShareClipbrd.Core.MessageBoxResult.Yes,
+                    ButtonResult.No => ShareClipbrd.Core.MessageBoxResult.No,
+                    ButtonResult.Ok => ShareClipbrd.Core.MessageBoxResult.OK,
+                    ButtonResult.Cancel => ShareClipbrd.Core.MessageBoxResult.Cancel,
+                    _ => ShareClipbrd.Core.MessageBoxResult.None,
+                };
             }));
         }
     }
