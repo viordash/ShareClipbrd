@@ -74,12 +74,12 @@ namespace ShareClipbrdApp {
 
         void OnActivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.Aqua;
-            Border.Opacity = 1;
+            Opacity = 1;
         }
 
         void OnDeactivated(object sender, System.EventArgs e) {
             Border.BorderBrush = Brushes.DarkGoldenrod;
-            Border.Opacity = 0.6;
+            Opacity = 0.6;
         }
 
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
