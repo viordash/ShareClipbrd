@@ -14,6 +14,7 @@ namespace ShareClipbrd.Core.Clipboard {
         public static class Format {
             public const string FileDrop = "FileDrop";
             public const string FileNames = "FileNames";
+            public const string AvaloniaFiles = "Files";
             public const string XMateFileNames = "x-special/mate-copied-files";
             public const string XKdeFileNames = "x-special/KDE-copied-files";
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
@@ -62,7 +63,24 @@ namespace ShareClipbrd.Core.Clipboard {
                     }
                     return false;
                 })
-                },
+            },
+            { Format.AvaloniaFiles, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.AvaloniaFiles);
+                    if (data is IList<string> list) {
+                        var files = new List<string>();
+                        foreach(var item in list) {
+                            if (!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
+                                continue;
+                            }
+                            files.Add(uri.LocalPath.Trim());
+                        }
+                        c.AddRange(files.ToArray());
+                        return true;
+                    }
+                    return false;
+                })
+            },
 
             { Format.XMateFileNames, new Convert(
                 async (c, getDataFunc) => {

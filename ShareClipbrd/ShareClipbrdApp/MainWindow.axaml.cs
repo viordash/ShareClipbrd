@@ -1,7 +1,8 @@
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using Avalonia;
 using Avalonia.Controls;
@@ -9,6 +10,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Services;
@@ -136,7 +138,18 @@ namespace ShareClipbrdApp {
                 var clipboard = GetTopLevel(this)!.Clipboard!;
                 var formats = await clipboard.GetFormatsAsync();
 
-                var fileDropList = await ClipboardFile.GetList(formats, clipboard.GetDataAsync);
+                var fileDropList = await ClipboardFile.GetList(formats, async (format) => {
+                    var filesData = await clipboard.GetDataAsync(format);
+
+                    if(filesData is IEnumerable<IStorageItem> bclStorageItems) {
+                        return bclStorageItems
+                            .Select(x => x.Path.AbsolutePath)
+                            .ToList();
+                    }
+
+                    return filesData;
+                });
+
                 if(fileDropList.Count > 0) {
                     await dataClient!.SendFileDropList(fileDropList);
                     return;
