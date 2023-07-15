@@ -136,7 +136,7 @@ namespace ShareClipbrd.Core.Clipboard {
                     _ => throw new NotSupportedException($"X desktop: {desktop}")
                 };
 
-                var urls = new List<string>();
+                var urls = new List<string>() { "copy" };
                 foreach(var item in files) {
                     if(!Uri.TryCreate(item, UriKind.Absolute, out Uri? uri)) {
                         continue;
@@ -145,9 +145,8 @@ namespace ShareClipbrd.Core.Clipboard {
                 }
 
                 var lines = string.Join("\n", urls);
-                var bytes = System.Text.Encoding.UTF8.GetBytes(lines);
 
-                setDataFunc(format, bytes);
+                setDataFunc(format, lines);
                 return;
             }
 

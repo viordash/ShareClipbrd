@@ -30,14 +30,14 @@ namespace ShareClipbrdApp.Services {
         }
 
         public async void ReceiveFiles(IList<string> files) {
-            await Dispatcher.UIThread.InvokeAsync(new Action(() => {
+            await Dispatcher.UIThread.InvokeAsync(new Action(async () => {
                 var dataObject = new DataObject();
                 ClipboardFile.SetFileDropList((f, o) => dataObject.Set(f, o), files);
 
                 if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
                     var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
-                    clipboard.ClearAsync();
-                    clipboard.SetDataObjectAsync(dataObject);
+                    await clipboard.ClearAsync();
+                    await clipboard.SetDataObjectAsync(dataObject);
                 }
             }));
         }
