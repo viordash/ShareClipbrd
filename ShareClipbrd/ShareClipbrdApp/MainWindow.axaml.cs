@@ -147,7 +147,7 @@ namespace ShareClipbrdApp {
 
                     if(filesData is IEnumerable<IStorageItem> bclStorageItems) {
                         return bclStorageItems
-                            .Select(x => x.Path.AbsolutePath)
+                            .Select(x => x.Path.LocalPath)
                             .ToList();
                     }
 

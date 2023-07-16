@@ -141,7 +141,7 @@ namespace ShareClipbrd.Core.Clipboard {
         public static void SetFileDropList(Action<string, object> setDataFunc, IList<string> files) {
 
             if(OperatingSystem.IsWindows()) {
-                setDataFunc(ClipboardFile.Format.FileNames, files);
+                setDataFunc(ClipboardFile.Format.AvaloniaFiles, files);
                 return;
             }
 

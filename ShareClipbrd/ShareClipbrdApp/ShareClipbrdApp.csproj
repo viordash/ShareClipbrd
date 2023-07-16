@@ -20,12 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.999-cibuild0037757-beta" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.999-cibuild0037757-beta" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.999-cibuild0037757-beta" />
-    <PackageReference Include="Avalonia.Themes.Simple" Version="11.0.999-cibuild0037757-beta" />
+    <PackageReference Include="Avalonia" Version="11.0.999-cibuild0037806-beta" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.999-cibuild0037806-beta" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.999-cibuild0037806-beta" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="11.0.999-cibuild0037806-beta" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.999-cibuild0037757-beta" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.999-cibuild0037806-beta" />
     <PackageReference Include="MessageBox.Avalonia" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
