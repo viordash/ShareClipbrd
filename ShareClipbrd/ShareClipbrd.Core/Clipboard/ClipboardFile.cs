@@ -14,6 +14,7 @@ namespace ShareClipbrd.Core.Clipboard {
         public static class Format {
             public const string FileDrop = "FileDrop";
             public const string FileNames = "FileNames";
+            public const string Files = "Files";
             public const string XMateFileNames = "x-special/mate-copied-files";
             public const string XKdeFileNames = "x-special/KDE-copied-files";
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
@@ -58,6 +59,17 @@ namespace ShareClipbrd.Core.Clipboard {
                             files.Add(uri.LocalPath.Trim());
                         }
                         c.AddRange(files.ToArray());
+                        return true;
+                    }
+                    return false;
+                })
+            },
+
+            { Format.Files, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Files);
+                    if (data is IList<string> list) {
+                        c.AddRange(list.ToArray());
                         return true;
                     }
                     return false;
