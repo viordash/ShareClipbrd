@@ -3,7 +3,7 @@
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ClipboardFileTests {
 
-        static Func<string, Task<object>> getDataFunc(string format, object obj) {
+        static Func<string, Task<object?>> getDataFunc(string format, object? obj) {
             return (f) => Task.FromResult(f == format
                 ? obj
                 : new()
