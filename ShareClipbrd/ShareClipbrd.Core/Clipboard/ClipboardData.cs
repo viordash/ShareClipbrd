@@ -1,15 +1,16 @@
 ﻿using System.Diagnostics;
 
 namespace ShareClipbrd.Core.Clipboard {
-    public record ClipboardItem {
-        public string Format { get; set; }
-        public MemoryStream Stream { get; set; }
-        public ClipboardItem(string format, MemoryStream stream) {
-            Format = format;
-            Stream = stream;
-        }
-    }
     public class ClipboardData {
+        public record Item {
+            public string Format { get; set; }
+            public MemoryStream Stream { get; set; }
+            public Item(string format, MemoryStream stream) {
+                Format = format;
+                Stream = stream;
+            }
+        }
+
         public class Convert {
             public Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
@@ -104,10 +105,10 @@ namespace ShareClipbrd.Core.Clipboard {
             },
         };
 
-        public List<ClipboardItem> Formats { get; } = new();
+        public List<ClipboardData.Item> Formats { get; } = new();
 
         public void Add(string format, MemoryStream stream) {
-            Formats.Add(new ClipboardItem(format, stream));
+            Formats.Add(new ClipboardData.Item(format, stream));
         }
 
         public async Task Serialize(string[] formats, Func<string, Task<object?>> getDataFunc) {
