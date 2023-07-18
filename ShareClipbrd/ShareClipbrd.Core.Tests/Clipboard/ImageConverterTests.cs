@@ -1,3 +1,4 @@
+using System.IO;
 using ShareClipbrd.Core.Clipboard;
 
 namespace ShareClipbrd.Core.Tests.Clipboard {
@@ -6,7 +7,6 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         [Test]
         public void FromDib_MemoryStream_Test() {
             var stream = new MemoryStream(new byte[] { 0x00, 0x01, 0x02, 0x03 });
-
             Assert.That(ImageConverter.FromDib(stream), Is.EquivalentTo(new byte[] { 0x00, 0x01, 0x02, 0x03 }));
         }
 
@@ -17,8 +17,33 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
 
         [Test]
         public void FromDib_FileStream_Throws_ArgumentException() {
-            using(var fs = new FileStream(Path.GetTempFileName(), FileMode.OpenOrCreate))
+            using(var fs = new FileStream(Path.GetTempFileName(), FileMode.OpenOrCreate)) {
                 Assert.Throws<ArgumentException>(() => ImageConverter.FromDib(fs));
+            }
         }
+
+        [Test]
+        public void FromDibToBmpFileData_Test() {
+            var streamDib = new MemoryStream(TestData.Dib_32x32);
+            Assert.That(ImageConverter.FromDibToBmpFileData(streamDib), Is.Not.Null);
+        }
+
+        [Test]
+        public void FromDibToBmpFileData_For_Incorrect_Data_Length_Throws_ArgumentException() {
+            var streamDib = new MemoryStream(TestData.Dib_32x32.Skip(1).ToArray());
+            var ex = Assert.Throws<ArgumentException>(() => ImageConverter.FromDibToBmpFileData(streamDib));
+            Assert.That(ex.Message, Is.EqualTo("Deserialize BITMAPINFO. data invalid"));
+        }
+
+        [Test]
+        public void FromDibToBmpFileData_For_Incorrect_Header_Throws_ArgumentException() {
+            var data = TestData.Dib_32x32;
+            data[0]--;
+            var streamDib = new MemoryStream(data);
+            var ex = Assert.Throws<ArgumentException>(() => ImageConverter.FromDibToBmpFileData(streamDib));
+            Assert.That(ex.Message, Is.EqualTo("Deserialize BITMAPINFO. header invalid"));
+        }
+
+
     }
 }
