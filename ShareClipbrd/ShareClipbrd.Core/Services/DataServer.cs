@@ -108,8 +108,15 @@ namespace ShareClipbrd.Core.Services {
                         var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
                         dispatchService.ReceiveFiles(receivedFiles);
 
-                    } else if(format == ClipboardData.Format.Bitmap) {
-
+                    } else if(format == ClipboardData.Format.Bitmap || format == ClipboardData.Format.Dib) {
+                        progressService.SetMaxTick(total);
+                        while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
+                            var size = await ReceiveSize(stream, cancellationToken);
+                            progressService.Tick(size);
+                            clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
+                            format = await ReceiveFormat(stream, cancellationToken);
+                        }
+                        dispatchService.ReceiveImage(clipboardData);
                     } else if(format == ClipboardData.Format.WaveAudio) {
 
                     } else {

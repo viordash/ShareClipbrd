@@ -28,8 +28,10 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
             public const string Html = "HTML Format";
-            public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
+
+            public const string Bitmap = "Bitmap";
+            public const string Dib = "Dib";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -101,6 +103,17 @@ namespace ShareClipbrd.Core.Clipboard {
                     return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
+                )
+            },
+
+            { Format.Dib, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Dib);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Dib, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => stream
                 )
             },
         };
