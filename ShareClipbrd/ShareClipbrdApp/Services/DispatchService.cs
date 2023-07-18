@@ -75,22 +75,5 @@ namespace ShareClipbrdApp.Services {
             }));
         }
 
-
-        public async void ReceiveImage(ClipboardData clipboardData) {
-            await Dispatcher.UIThread.InvokeAsync(new Action(() => {
-                var dataObject = new DataObject();
-                clipboardData.Deserialize((f, o) => dataObject.Set(f, o));
-                if(dataObject.GetDataFormats().Any()) {
-                    Debug.WriteLine($"   *** formats: {string.Join(", ", dataObject.GetDataFormats())}");
-
-                    if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-                        var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
-                        clipboard.ClearAsync();
-                        clipboard.SetDataObjectAsync(dataObject);
-                    }
-
-                }
-            }));
-        }
     }
 }

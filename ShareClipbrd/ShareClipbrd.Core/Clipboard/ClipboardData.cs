@@ -113,7 +113,7 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.Dib, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => stream
+                ImageConverter.FromDib
                 )
             },
         };
