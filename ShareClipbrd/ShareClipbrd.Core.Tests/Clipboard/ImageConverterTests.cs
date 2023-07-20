@@ -4,7 +4,6 @@ using ShareClipbrd.Core.Helpers;
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ImageConverterTests {
 
-
         [Test]
         public void FromDibToBmpFileData_Test() {
             var streamDib = new MemoryStream(TestData.Dib_32x32);
@@ -12,7 +11,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             Assert.That(data, Has.Length.GreaterThan(StructHelper.Size<BitmapFile.BITMAPFILEHEADER>()));
             var bmpHeader = StructHelper.FromBytes<BitmapFile.BITMAPFILEHEADER>(data);
             Assert.That(bmpHeader.bfType, Is.EqualTo(0x4D42));
-            Assert.That(bmpHeader.bfSize, Is.LessThan(data.Length).And.GreaterThan(StructHelper.Size<BitmapFile.BITMAPFILEHEADER>()));
+            Assert.That(data, Has.Length.EqualTo(bmpHeader.bfSize));
         }
 
         [Test]
@@ -29,6 +28,16 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             var streamDib = new MemoryStream(data);
             var ex = Assert.Throws<ArgumentException>(() => ImageConverter.FromDibToBmpFileData(streamDib));
             Assert.That(ex.Message, Is.EqualTo("Deserialize BITMAPINFO. data invalid"));
+        }
+
+        [Test]
+        public void FromDibToDib_Test() {
+            var streamDib = new MemoryStream(TestData.Dib_32x32);
+            var data = ImageConverter.FromDibToDib(streamDib);
+            Assert.That(data, Has.Length.GreaterThan(StructHelper.Size<BITMAPINFO>()));
+            var bitmapInfo = StructHelper.FromBytes<BITMAPINFO>(data);
+            Assert.That(data, Has.Length.EqualTo(bitmapInfo.bmiHeader.biSize + bitmapInfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>()
+                     + bitmapInfo.bmiHeader.biSizeImage));
         }
     }
 }

@@ -20,10 +20,11 @@ namespace ShareClipbrd.Core.Clipboard {
             var bitmapFileHeader = new BITMAPFILEHEADER();
 
             using var memorystream = new MemoryStream();
+            var sizeDib = bitmapinfo.bmiHeader.biSize + bitmapinfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>()
+                + bitmapinfo.bmiHeader.biSizeImage;
 
             bitmapFileHeader.bfType = 0x4D42;
-            bitmapFileHeader.bfSize = StructHelper.Size<BITMAPFILEHEADER>() + bitmapinfo.bmiHeader.biSize
-                + bitmapinfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>() + bitmapinfo.bmiHeader.biSizeImage;
+            bitmapFileHeader.bfSize = StructHelper.Size<BITMAPFILEHEADER>() + sizeDib;
             bitmapFileHeader.bfReserved1 = 0;
             bitmapFileHeader.bfReserved2 = 0;
             bitmapFileHeader.bfOffBits = StructHelper.Size<BITMAPFILEHEADER>() + bitmapinfo.bmiHeader.biSize
@@ -31,7 +32,7 @@ namespace ShareClipbrd.Core.Clipboard {
 
             memorystream.Write(StructHelper.ToBytes(bitmapFileHeader));
 
-            memorystream.Write(bytes);
+            memorystream.Write(bytes, 0, (int)sizeDib);
             return memorystream.ToArray();
         }
 

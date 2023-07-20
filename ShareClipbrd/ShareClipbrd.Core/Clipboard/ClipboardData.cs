@@ -119,7 +119,10 @@ namespace ShareClipbrd.Core.Clipboard {
                 },
                 (stream) => {
                     if(OperatingSystem.IsWindows()) {
-                        return stream;
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromDibToDib(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
                     }
 
                     if(OperatingSystem.IsLinux()) {
