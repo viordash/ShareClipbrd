@@ -1,28 +1,12 @@
 ﻿namespace ShareClipbrd.Core.Clipboard {
     public class ImageConverter {
 
-        public static object FromDib(Stream stream) {
-            if(OperatingSystem.IsWindows()) {
-                return stream switch {
-                    MemoryStream memoryStream => memoryStream,
-                    _ => throw new ArgumentException(nameof(stream))
-                };
-            }
-
-            if(OperatingSystem.IsLinux()) {
-                return stream switch {
-                    MemoryStream memoryStream => FromDibToBmpFileData(memoryStream),
-                    _ => throw new ArgumentException(nameof(stream))
-                };
-            }
-
-            throw new NotSupportedException($"OS: {Environment.OSVersion}");
-        }
-
         public static byte[] FromDibToBmpFileData(MemoryStream memoryStream) {
             var bytes = memoryStream.ToArray();
             if(BITMAPINFO.TryParse(bytes, out BITMAPINFO bitmapInfo)) {
-                return BitmapFile.Create(bytes, bitmapInfo);
+                var bytesBmp = BitmapFile.Create(bytes, bitmapInfo);
+                // File.WriteAllBytes("/home/viordash/Downloads/test.bmp", bytesBmp);
+                return bytesBmp;
             }
 
             if(BITMAPV5INFO.TryParse(bytes, out BITMAPV5INFO bitmapV5Info)) {
