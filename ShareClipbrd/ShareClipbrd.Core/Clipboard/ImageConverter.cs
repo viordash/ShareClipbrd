@@ -4,6 +4,13 @@
         public static object FromDib(Stream stream) {
             if(OperatingSystem.IsWindows()) {
                 return stream switch {
+                    MemoryStream memoryStream => memoryStream,
+                    _ => throw new ArgumentException(nameof(stream))
+                };
+            }
+
+            if(OperatingSystem.IsLinux()) {
+                return stream switch {
                     MemoryStream memoryStream => FromDibToBmpFileData(memoryStream),
                     _ => throw new ArgumentException(nameof(stream))
                 };
