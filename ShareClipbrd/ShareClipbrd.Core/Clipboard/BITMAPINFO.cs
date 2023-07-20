@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
@@ -44,8 +39,8 @@ namespace ShareClipbrd.Core.Clipboard {
         public uint biClrUsed;
         public uint biClrImportant;
 
-        public void Init() {
-            biSize = (uint)Marshal.SizeOf(this);
+        public BITMAPINFOHEADER() {
+            biSize = StructHelper.Size(this);
         }
     }
 
@@ -77,8 +72,8 @@ namespace ShareClipbrd.Core.Clipboard {
         public uint bV5ProfileSize;
         public uint bV5Reserved;
 
-        public void Init() {
-            bV5Size = (uint)Marshal.SizeOf(this);
+        public BITMAPV5HEADER() {
+            bV5Size = StructHelper.Size(this);
         }
     }
 
@@ -97,13 +92,14 @@ namespace ShareClipbrd.Core.Clipboard {
         [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 1, ArraySubType = UnmanagedType.Struct)]
         public RGBQUAD[] bmiColors;
 
-        public static bool TryParse(byte[] data, out BITMAPINFO bitmapinfo) {
-            if(data.Length < Marshal.SizeOf<RGBQUAD>()) {
-                throw new ArgumentException("Deserialize BITMAPINFO. data size invalid");
+        public static bool TryParse(byte[] bytes, out BITMAPINFO bitmapinfo) {
+            if(bytes.Length < StructHelper.Size<BITMAPINFOHEADER>()) {
+                bitmapinfo = new BITMAPINFO();
+                return false;
             }
 
-            bitmapinfo = StructHelper.PtrToStructure<BITMAPINFO>(data);
-            if(bitmapinfo.bmiHeader.biSize != Marshal.SizeOf<BITMAPINFOHEADER>()) {
+            bitmapinfo = StructHelper.FromBytes<BITMAPINFO>(bytes);
+            if(bitmapinfo.bmiHeader.biSize != StructHelper.Size<BITMAPINFOHEADER>()) {
                 return false;
             }
             return true;
@@ -117,13 +113,14 @@ namespace ShareClipbrd.Core.Clipboard {
         [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 1, ArraySubType = UnmanagedType.Struct)]
         public RGBQUAD[] bmiColors;
 
-        public static bool TryParse(byte[] data, out BITMAPV5INFO bitmapinfo) {
-            if(data.Length < Marshal.SizeOf<RGBQUAD>()) {
-                throw new ArgumentException("Deserialize BITMAPV5INFO. data size invalid");
+        public static bool TryParse(byte[] bytes, out BITMAPV5INFO bitmapinfo) {
+            if(bytes.Length < StructHelper.Size<BITMAPV5HEADER>()) {
+                bitmapinfo = new BITMAPV5INFO();
+                return false;
             }
 
-            bitmapinfo = StructHelper.PtrToStructure<BITMAPV5INFO>(data);
-            if(bitmapinfo.bmiHeader.bV5Size != Marshal.SizeOf<BITMAPV5HEADER>()) {
+            bitmapinfo = StructHelper.FromBytes<BITMAPV5INFO>(bytes);
+            if(bitmapinfo.bmiHeader.bV5Size != StructHelper.Size<BITMAPV5HEADER>()) {
                 return false;
             }
             return true;

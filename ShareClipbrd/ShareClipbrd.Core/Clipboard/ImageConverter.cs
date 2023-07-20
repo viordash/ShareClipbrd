@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace ShareClipbrd.Core.Clipboard {
+﻿namespace ShareClipbrd.Core.Clipboard {
     public class ImageConverter {
 
         public static object FromDib(Stream stream) {
@@ -15,13 +13,16 @@ namespace ShareClipbrd.Core.Clipboard {
         }
 
         public static byte[] FromDibToBmpFileData(MemoryStream memoryStream) {
-            if(BITMAPINFO.TryParse(memoryStream.ToArray(), out BITMAPINFO bitmapInfo)) {
+            var bytes = memoryStream.ToArray();
+            if(BITMAPINFO.TryParse(bytes, out BITMAPINFO bitmapInfo)) {
+                return BitmapFile.Create(bytes, bitmapInfo);
             }
 
-            if(BITMAPV5INFO.TryParse(memoryStream.ToArray(), out BITMAPV5INFO bitmapV5Info)) {
+            if(BITMAPV5INFO.TryParse(bytes, out BITMAPV5INFO bitmapV5Info)) {
+                return BitmapFile.Create(bytes, bitmapV5Info);
             }
 
-            return memoryStream.ToArray();
+            throw new ArgumentException("Deserialize BITMAPINFO. data invalid");
         }
     }
 }

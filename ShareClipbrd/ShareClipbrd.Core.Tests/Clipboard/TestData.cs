@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ShareClipbrd.Core.Tests.Clipboard {
+﻿namespace ShareClipbrd.Core.Tests.Clipboard {
     internal class TestData {
         public static byte[] Dib_32x32 = {
             0x28, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00,
