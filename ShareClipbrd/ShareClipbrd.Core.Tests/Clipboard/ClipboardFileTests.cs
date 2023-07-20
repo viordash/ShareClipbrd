@@ -211,9 +211,8 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
                 Assert.That(outFormat, Is.EqualTo(ClipboardFile.Format.XKdeFileNames)
                                     .Or.EqualTo(ClipboardFile.Format.XMateFileNames)
                                     .Or.EqualTo(ClipboardFile.Format.XGnomeFileNames));
-                Assert.That(outObject, Is.InstanceOf<byte[]>());
-
-                var urls = System.Text.Encoding.UTF8.GetString((byte[])outObject!);
+                Assert.That(outObject, Is.InstanceOf<string>());
+                var urls = (string)outObject;
                 Assert.That(urls, Does.Contain("Clipbrd.Core").And.Contain("code%201%20amd64.deb"));
                 return;
             }
