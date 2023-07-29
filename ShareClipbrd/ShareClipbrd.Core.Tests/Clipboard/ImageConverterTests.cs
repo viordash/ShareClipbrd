@@ -39,5 +39,15 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
             Assert.That(data, Has.Length.EqualTo(bitmapInfo.bmiHeader.biSize + bitmapInfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>()
                      + bitmapInfo.bmiHeader.biSizeImage));
         }
+
+        [Test]
+        public void FromBmpFileToDibData_Test() {
+            var streamDib = new MemoryStream(TestData.Dib_32x32);
+            var bytesDib = ImageConverter.FromDibToDib(streamDib);
+            var bytesBmp = ImageConverter.FromDibToBmpFileData(streamDib);
+            var streamBmp = new MemoryStream(bytesBmp);
+            var bytesDibConverted = ImageConverter.FromBmpFileToDibData(streamBmp);
+            Assert.That(bytesDibConverted, Is.EquivalentTo(bytesDib));
+        }
     }
 }

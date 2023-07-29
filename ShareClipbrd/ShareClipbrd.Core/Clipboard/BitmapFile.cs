@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Linq;
+using System.Runtime.InteropServices;
 using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
@@ -35,6 +36,11 @@ namespace ShareClipbrd.Core.Clipboard {
             memorystream.Write(bytes, 0, (int)sizeDib);
             return memorystream.ToArray();
         }
+
+        public static byte[] ExtractDib(byte[] bytesBmp) {
+            return bytesBmp.Skip((int)StructHelper.Size<BITMAPFILEHEADER>()).ToArray();
+        }
+
 
         public static byte[] Create(byte[] bytes, BITMAPV5INFO bitmapinfo) {
             throw new NotImplementedException();

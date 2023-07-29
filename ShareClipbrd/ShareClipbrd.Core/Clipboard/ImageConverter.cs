@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using ShareClipbrd.Core.Helpers;
+﻿using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
     public class ImageConverter {
@@ -17,6 +16,11 @@ namespace ShareClipbrd.Core.Clipboard {
             }
 
             throw new ArgumentException("Deserialize BITMAPINFO. data invalid");
+        }
+
+        public static byte[] FromBmpFileToDibData(MemoryStream memoryStream) {
+            var bytesBmp = memoryStream.ToArray();
+            return BitmapFile.ExtractDib(bytesBmp);
         }
 
         public static byte[] FromDibToDib(MemoryStream memoryStream) {
