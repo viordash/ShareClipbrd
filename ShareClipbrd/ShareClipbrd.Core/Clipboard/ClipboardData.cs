@@ -144,6 +144,41 @@ namespace ShareClipbrd.Core.Clipboard {
                     throw new NotSupportedException($"OS: {Environment.OSVersion}");
                 }
             )},
+
+            { Format.ImageBmp, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.ImageBmp);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.ImageBmp, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromDibToDib(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromDibToBmpFileData(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Dib;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.ImageBmp;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
         };
 
         public List<ClipboardData.Item> Formats { get; } = new();
