@@ -27,6 +27,7 @@ namespace ShareClipbrdApp.Services {
                     if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
                         var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
                         await clipboard.ClearAsync();
+                        await Task.Delay(100);
                         await clipboard.SetDataObjectAsync(dataObject);
                     }
 
@@ -70,6 +71,7 @@ namespace ShareClipbrdApp.Services {
 
                     var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
                     await clipboard.ClearAsync();
+                    await Task.Delay(100);
                     await clipboard.SetDataObjectAsync(dataObject);
                 }
             }));
