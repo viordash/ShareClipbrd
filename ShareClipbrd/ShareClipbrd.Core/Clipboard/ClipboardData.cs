@@ -155,14 +155,14 @@ namespace ShareClipbrd.Core.Clipboard {
                 (stream) => {
                     if(OperatingSystem.IsWindows()) {
                         return stream switch {
-                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            MemoryStream memoryStream => ImageConverter.FromBmpFileToDibData(memoryStream),
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
 
                     if(OperatingSystem.IsLinux()) {
                         return stream switch {
-                            MemoryStream memoryStream => ImageConverter.FromDibToBmpFileData(memoryStream),
+                            MemoryStream memoryStream => memoryStream.ToArray(),
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
