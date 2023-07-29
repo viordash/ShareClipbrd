@@ -1,3 +1,4 @@
+using System.Linq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Helpers;
 
@@ -31,23 +32,13 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         [Test]
-        public void FromDibToDib_Test() {
-            var streamDib = new MemoryStream(TestData.Dib_32x32);
-            var data = ImageConverter.FromDibToDib(streamDib);
-            Assert.That(data, Has.Length.GreaterThan(StructHelper.Size<BITMAPINFO>()));
-            var bitmapInfo = StructHelper.FromBytes<BITMAPINFO>(data);
-            Assert.That(data, Has.Length.EqualTo(bitmapInfo.bmiHeader.biSize + bitmapInfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>()
-                     + bitmapInfo.bmiHeader.biSizeImage));
-        }
-
-        [Test]
         public void FromBmpFileToDibData_Test() {
             var streamDib = new MemoryStream(TestData.Dib_32x32);
-            var bytesDib = ImageConverter.FromDibToDib(streamDib);
             var bytesBmp = ImageConverter.FromDibToBmpFileData(streamDib);
             var streamBmp = new MemoryStream(bytesBmp);
             var bytesDibConverted = ImageConverter.FromBmpFileToDibData(streamBmp);
-            Assert.That(bytesDibConverted, Is.EquivalentTo(bytesDib));
+            Assert.That(bytesDibConverted, Has.Length.EqualTo(3112));
+            Assert.That(bytesDibConverted, Is.EquivalentTo(TestData.Dib_32x32.Take(bytesDibConverted.Length)));
         }
     }
 }

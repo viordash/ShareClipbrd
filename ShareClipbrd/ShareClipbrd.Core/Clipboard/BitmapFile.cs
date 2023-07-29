@@ -41,7 +41,6 @@ namespace ShareClipbrd.Core.Clipboard {
             return bytesBmp.Skip((int)StructHelper.Size<BITMAPFILEHEADER>()).ToArray();
         }
 
-
         public static byte[] Create(byte[] bytes, BITMAPV5INFO bitmapinfo) {
             throw new NotImplementedException();
         }
