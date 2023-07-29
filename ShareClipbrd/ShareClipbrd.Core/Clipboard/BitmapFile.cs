@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Clipboard {
@@ -21,8 +20,11 @@ namespace ShareClipbrd.Core.Clipboard {
             var bitmapFileHeader = new BITMAPFILEHEADER();
 
             using var memorystream = new MemoryStream();
+            var sizeImage = bitmapinfo.bmiHeader.biSizeImage > 0
+                ? bitmapinfo.bmiHeader.biSizeImage
+                : (uint)(bitmapinfo.bmiHeader.biBitCount / 8) * (uint)bitmapinfo.bmiHeader.biWidth * (uint)bitmapinfo.bmiHeader.biHeight;
             var sizeDib = bitmapinfo.bmiHeader.biSize + bitmapinfo.bmiHeader.biClrUsed * StructHelper.Size<RGBQUAD>()
-                + bitmapinfo.bmiHeader.biSizeImage;
+                + sizeImage;
 
             bitmapFileHeader.bfType = 0x4D42;
             bitmapFileHeader.bfSize = StructHelper.Size<BITMAPFILEHEADER>() + sizeDib;
