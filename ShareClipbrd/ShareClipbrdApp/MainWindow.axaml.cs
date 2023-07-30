@@ -248,7 +248,10 @@ namespace ShareClipbrdApp {
             }
         }
 
-        public void ShowConnectStatus(bool online) {
+        public async void ShowConnectStatus(bool online) {
+            if(online && !crOnline.IsVisible) {
+                await dataClient!.Ping();
+            }
             crOnline.IsVisible = online;
         }
     }
