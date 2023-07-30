@@ -10,7 +10,7 @@ using ShareClipbrd.Core.Helpers;
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
         void Start();
-        void Stop();
+        Task Stop();
     }
 
     public class DataServer : IDataServer {
@@ -20,6 +20,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
         CancellationTokenSource? cts;
+        TaskCompletionSource<bool> tcsStopped;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
@@ -38,6 +39,9 @@ namespace ShareClipbrd.Core.Services {
             this.dispatchService = dispatchService;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
+
+            tcsStopped = new TaskCompletionSource<bool>(true);
+            tcsStopped.TrySetResult(true);
         }
 
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -141,6 +145,7 @@ namespace ShareClipbrd.Core.Services {
         public void Start() {
             cts?.Cancel();
             cts = new CancellationTokenSource();
+            tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
@@ -175,13 +180,17 @@ namespace ShareClipbrd.Core.Services {
                     }
                 }
                 connectStatusService.Offline();
+                tcsStopped.TrySetResult(true);
             }, cancellationToken);
         }
 
-        public void Stop() {
+        public Task Stop() {
             Debug.WriteLine($"tcpServer request to stop");
             cts?.Cancel();
-            connectStatusService.Offline();
+            if(tcsStopped.Task.IsCompleted) {
+                connectStatusService.Offline();
+            }
+            return tcsStopped.Task;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -164,7 +165,7 @@ namespace ShareClipbrdApp {
         async void SettingsUpdated() {
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
-            dataServer?.Stop();
+            await (dataServer?.Stop() ?? Task.CompletedTask);
             dataServer?.Start();
             await dataClient!.Ping();
         }

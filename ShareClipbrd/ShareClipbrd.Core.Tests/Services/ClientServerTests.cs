@@ -348,18 +348,28 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Ping_Test() {
+            await Task.Delay(200);
             await client.Ping();
             connectStatusServiceMock.Verify(x => x.Online());
         }
 
         [Test]
         public async Task Stop_Server_To_Offline_Test() {
+            await Task.Delay(200);
             await client.Ping();
             connectStatusServiceMock.Verify(x => x.Online(), Times.Once());
             connectStatusServiceMock.Verify(x => x.Offline(), Times.Never());
 
-            server.Stop();
+            await server.Stop();
             connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
+        }
+
+        [Test]
+        public async Task Sequential_Calls_Stop_Server_Test() {
+            await server.Stop();
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
+            await server.Stop();
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Exactly(2));
         }
     }
 }
