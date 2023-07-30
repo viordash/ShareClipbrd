@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;

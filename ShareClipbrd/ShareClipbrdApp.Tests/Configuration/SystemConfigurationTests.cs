@@ -13,13 +13,13 @@ namespace ShareClipbrdApp.Tests.Configuration {
 
         [Test]
         public void HostAddress_Test() {
-            Settings.Default.HostAddress = "127.1.2.3:8081";
+            Settings.Default.HostAddress0 = "127.1.2.3:8081";
             Assert.That(testable.HostAddress, Is.EqualTo("127.1.2.3:8081"));
         }
 
         [Test]
         public void PartnerAddress_Test() {
-            Settings.Default.PartnerAddress = "127.1.2.3:8082";
+            Settings.Default.PartnerAddress0 = "127.1.2.3:8082";
             Assert.That(testable.PartnerAddress, Is.EqualTo("127.1.2.3:8082"));
         }
     }

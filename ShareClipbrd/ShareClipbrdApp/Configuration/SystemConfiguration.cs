@@ -1,16 +1,36 @@
-﻿using ShareClipbrd.Core.Configuration;
+﻿using System;
+using ShareClipbrd.Core.Configuration;
 using ShareClipbrdApp.Properties;
 
 namespace ShareClipbrdApp.Configuration {
     public class SystemConfiguration : ISystemConfiguration {
         public string HostAddress {
             get {
-                return Settings.Default.HostAddress;
+                switch(SettingsProfile) {
+                    case 1:
+                        return Settings.Default.HostAddress0;
+                    case 2:
+                        return Settings.Default.HostAddress1;
+                    default:
+                        return Settings.Default.HostAddress2;
+                }
             }
         }
         public string PartnerAddress {
             get {
-                return Settings.Default.PartnerAddress;
+                switch(SettingsProfile) {
+                    case 1:
+                        return Settings.Default.PartnerAddress1;
+                    case 2:
+                        return Settings.Default.PartnerAddress2;
+                    default:
+                        return Settings.Default.PartnerAddress0;
+                }
+            }
+        }
+        public int SettingsProfile {
+            get {
+                return Math.Clamp(Settings.Default.SettingsProfile, 0, 2);
             }
         }
     }

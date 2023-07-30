@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ShareClipbrdApp.Properties" GeneratedClassName="Settings1">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ShareClipbrdApp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="MainFormLocation" Type="System.Drawing.Point" Scope="User">
@@ -8,11 +8,26 @@
     <Setting Name="MainFormSize" Type="System.Drawing.Size" Scope="User">
       <Value Profile="(Default)">100, 100</Value>
     </Setting>
-    <Setting Name="HostAddress" Type="System.String" Scope="User">
+    <Setting Name="HostAddress0" Type="System.String" Scope="User">
       <Value Profile="(Default)">127.0.0.1:8090</Value>
     </Setting>
-    <Setting Name="PartnerAddress" Type="System.String" Scope="User">
+    <Setting Name="PartnerAddress0" Type="System.String" Scope="User">
       <Value Profile="(Default)">127.0.0.1:8091</Value>
+    </Setting>
+    <Setting Name="HostAddress1" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="PartnerAddress1" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="HostAddress2" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="PartnerAddress2" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="SettingsProfile" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>
