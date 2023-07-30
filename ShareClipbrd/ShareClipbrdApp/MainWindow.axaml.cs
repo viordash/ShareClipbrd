@@ -71,7 +71,7 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            dataServer?.Start();
+            //dataServer?.Start();
             edSettingsProfile.SelectedIndex = systemConfiguration!.SettingsProfile;
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
@@ -127,7 +127,7 @@ namespace ShareClipbrdApp {
 
         private void edHostAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
-                switch(edSettingsProfile.SelectedIndex) {
+                switch(systemConfiguration!.SettingsProfile) {
                     case 0:
                         Settings.Default.HostAddress0 = edHostAddress.Text;
                         break;
@@ -143,7 +143,7 @@ namespace ShareClipbrdApp {
 
         private void edPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
-                switch(edSettingsProfile.SelectedIndex) {
+                switch(systemConfiguration!.SettingsProfile) {
                     case 0:
                         Settings.Default.PartnerAddress0 = edPartnerAddress.Text;
                         break;
@@ -155,6 +155,18 @@ namespace ShareClipbrdApp {
                         break;
                 }
             }
+        }
+
+        private void edSettingsProfile_SelectionChanged(object? sender, SelectionChangedEventArgs e) {
+            Settings.Default.SettingsProfile = edSettingsProfile.SelectedIndex;
+            SettingsUpdated();
+        }
+
+        void SettingsUpdated() {
+            edHostAddress.Text = systemConfiguration!.HostAddress;
+            edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
+            dataServer?.Stop();
+            dataServer?.Start();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {

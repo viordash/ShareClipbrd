@@ -35,7 +35,7 @@
       <Separator />
       <MenuItem Header="Settings" >
 
-        <ComboBox x:Name="edSettingsProfile" SelectedIndex="0" >
+        <ComboBox x:Name="edSettingsProfile" SelectionChanged ="edSettingsProfile_SelectionChanged">
           <ComboBoxItem>Profile 1</ComboBoxItem>
           <ComboBoxItem>Profile 2</ComboBoxItem>
           <ComboBoxItem>Profile 3</ComboBoxItem>
