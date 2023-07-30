@@ -18,22 +18,26 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
+        readonly IConnectStatusService connectStatusService;
         CancellationTokenSource? cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
             IDialogService dialogService,
             IDispatchService dispatchService,
-            IProgressService progressService
+            IProgressService progressService,
+            IConnectStatusService connectStatusService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
+            Guard.NotNull(connectStatusService, nameof(connectStatusService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
+            this.connectStatusService = connectStatusService;
         }
 
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -85,6 +89,7 @@ namespace ShareClipbrd.Core.Services {
         async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
 
+            connectStatusService.Online();
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
             await using(progressService.Begin(ProgressMode.Receive)) {
                 try {
@@ -164,12 +169,14 @@ namespace ShareClipbrd.Core.Services {
                         await dialogService.ShowError(ex);
                     }
                 }
+                connectStatusService.Offline();
             }, cancellationToken);
         }
 
         public void Stop() {
             Debug.WriteLine($"tcpServer request to stop");
             cts?.Cancel();
+            connectStatusService.Offline();
         }
     }
 }

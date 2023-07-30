@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ColorTextBlock.Avalonia;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -60,7 +61,6 @@ namespace ShareClipbrdApp {
             this.dialogService = dialogService;
             this.progressService = progressService;
             this.systemConfiguration = systemConfiguration;
-
             SetProgressMode(ProgressMode.None);
             SetProgress(100.0);
         }
@@ -71,7 +71,6 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            //dataServer?.Start();
             edSettingsProfile.SelectedIndex = systemConfiguration!.SettingsProfile;
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
@@ -246,6 +245,10 @@ namespace ShareClipbrdApp {
                     SuperImage.IsVisible = false;
                     break;
             }
+        }      
+        
+        public void ShowConnectStatus(bool online) {
+            crOnline.IsVisible = online;
         }
     }
 }
