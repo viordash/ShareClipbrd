@@ -8,11 +8,11 @@ namespace ShareClipbrdApp.Configuration {
             get {
                 switch(SettingsProfile) {
                     case 1:
-                        return Settings.Default.HostAddress0;
-                    case 2:
                         return Settings.Default.HostAddress1;
-                    default:
+                    case 2:
                         return Settings.Default.HostAddress2;
+                    default:
+                        return Settings.Default.HostAddress0;
                 }
             }
         }
