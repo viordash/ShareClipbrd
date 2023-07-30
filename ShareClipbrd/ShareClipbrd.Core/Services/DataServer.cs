@@ -18,7 +18,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
-        CancellationTokenSource cts;
+        CancellationTokenSource? cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
