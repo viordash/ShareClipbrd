@@ -217,7 +217,7 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
                 return;
             }
 
-            //throw new NotSupportedException($"OS: {Environment.OSVersion}");
+            throw new NotSupportedException($"OS: {Environment.OSVersion}");
         }
     }
 }
