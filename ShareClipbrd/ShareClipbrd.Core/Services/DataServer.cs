@@ -108,8 +108,6 @@ namespace ShareClipbrd.Core.Services {
                         var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
                         dispatchService.ReceiveFiles(receivedFiles);
 
-                    } else if(format == ClipboardData.Format.Bitmap) {
-
                     } else if(format == ClipboardData.Format.WaveAudio) {
 
                     } else {

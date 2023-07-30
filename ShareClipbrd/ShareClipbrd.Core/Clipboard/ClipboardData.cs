@@ -1,21 +1,24 @@
 ﻿using System.Diagnostics;
 
 namespace ShareClipbrd.Core.Clipboard {
-    public record ClipboardItem {
-        public string Format { get; set; }
-        public MemoryStream Stream { get; set; }
-        public ClipboardItem(string format, MemoryStream stream) {
-            Format = format;
-            Stream = stream;
-        }
-    }
     public class ClipboardData {
+        public record Item {
+            public string Format { get; set; }
+            public MemoryStream Stream { get; set; }
+            public Item(string format, MemoryStream stream) {
+                Format = format;
+                Stream = stream;
+            }
+        }
+
         public class Convert {
             public Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> From { get; set; }
             public Func<Stream, object> To { get; set; }
-            public Convert(Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> from, Func<Stream, object> to) {
+            public Func<string> GetFormat { get; set; }
+            public Convert(Func<ClipboardData, Func<string, Task<object?>>, Task<bool>> from, Func<Stream, object> to, Func<string> getFormat) {
                 From = from;
                 To = to;
+                GetFormat = getFormat;
             }
         }
 
@@ -27,8 +30,12 @@ namespace ShareClipbrd.Core.Clipboard {
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
             public const string Html = "HTML Format";
-            public const string Bitmap = "Bitmap";
             public const string WaveAudio = "WaveAudio";
+
+            public const string Bitmap = "Bitmap";
+            public const string Dib = "Dib";
+
+            public const string ImageBmp = "image/bmp";
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
@@ -39,9 +46,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
-                )
-                },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.Text
+            )},
             { Format.UnicodeText, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.UnicodeText);
@@ -49,9 +56,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray())
-                )
-            },
+                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.UnicodeText
+            )},
             { Format.StringFormat, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.StringFormat);
@@ -59,9 +66,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray())
-                )
-            },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.StringFormat
+            )},
             { Format.OemText, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.OemText);
@@ -69,9 +76,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray())
-                )
-            },
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.OemText
+            )},
             { Format.Rtf, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Rtf);
@@ -79,9 +86,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     else if (data is byte[] bytes) {c.Add(Format.Rtf, new MemoryStream(bytes)); return true; }
                     else {return false;}
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
-                )
-            },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
+                () => Format.Rtf
+            )},
             { Format.Locale, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Locale);
@@ -89,9 +96,9 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.Locale, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => stream
-                )
-            },
+                (stream) => stream,
+                () => Format.Locale
+            )},
             { Format.Html, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Html);
@@ -99,15 +106,85 @@ namespace ShareClipbrd.Core.Clipboard {
                     if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray())
-                )
-            },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
+                () => Format.Html
+            )},
+
+            { Format.Dib, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Dib);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Dib, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromDibToBmpFileData(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Dib;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.ImageBmp;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.ImageBmp, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.ImageBmp);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.ImageBmp, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromBmpFileToDibData(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Dib;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.ImageBmp;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
         };
 
-        public List<ClipboardItem> Formats { get; } = new();
+        public List<ClipboardData.Item> Formats { get; } = new();
 
         public void Add(string format, MemoryStream stream) {
-            Formats.Add(new ClipboardItem(format, stream));
+            Formats.Add(new ClipboardData.Item(format, stream));
         }
 
         public async Task Serialize(string[] formats, Func<string, Task<object?>> getDataFunc) {
@@ -146,9 +223,9 @@ namespace ShareClipbrd.Core.Clipboard {
                             Debug.WriteLine($"--- {format} {str}");
                         }
                         return stream;
-                    });
+                    }, () => format.Format);
                 }
-                setDataFunc(format.Format, convertFunc.To(format.Stream));
+                setDataFunc(convertFunc.GetFormat(), convertFunc.To(format.Stream));
             }
         }
 

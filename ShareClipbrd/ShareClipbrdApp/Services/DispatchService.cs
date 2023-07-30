@@ -18,7 +18,7 @@ using ShareClipbrd.Core.Services;
 namespace ShareClipbrdApp.Services {
     public class DispatchService : IDispatchService {
         public async void ReceiveData(ClipboardData clipboardData) {
-            await Dispatcher.UIThread.InvokeAsync(new Action(() => {
+            await Dispatcher.UIThread.InvokeAsync(new Action(async () => {
                 var dataObject = new DataObject();
                 clipboardData.Deserialize((f, o) => dataObject.Set(f, o));
                 if(dataObject.GetDataFormats().Any()) {
@@ -26,8 +26,9 @@ namespace ShareClipbrdApp.Services {
 
                     if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
                         var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
-                        clipboard.ClearAsync();
-                        clipboard.SetDataObjectAsync(dataObject);
+                        await clipboard.ClearAsync();
+                        await Task.Delay(100);
+                        await clipboard.SetDataObjectAsync(dataObject);
                     }
 
                 }
@@ -70,9 +71,11 @@ namespace ShareClipbrdApp.Services {
 
                     var clipboard = TopLevel.GetTopLevel(desktop.MainWindow)!.Clipboard!;
                     await clipboard.ClearAsync();
+                    await Task.Delay(100);
                     await clipboard.SetDataObjectAsync(dataObject);
                 }
             }));
         }
+
     }
 }
