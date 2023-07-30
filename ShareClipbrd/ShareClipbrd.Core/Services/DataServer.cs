@@ -101,7 +101,12 @@ namespace ShareClipbrd.Core.Services {
                     }
                     await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
-                    var total = await ReceiveSize(stream, cancellationToken);
+                    long total;
+                    try {
+                        total = await ReceiveSize(stream, cancellationToken);
+                    } catch(EndOfStreamException) {
+                        return;
+                    }
                     var format = await ReceiveFormat(stream, cancellationToken);
 
                     if(format == ClipboardFile.Format.FileDrop) {

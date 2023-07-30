@@ -11,6 +11,7 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
+        Task Ping();
     }
 
     public class DataClient : IDataClient {
@@ -108,6 +109,18 @@ namespace ShareClipbrd.Core.Services {
                     }
                 }
             }
+        }
+
+        public async Task Ping() {
+            cts.Cancel(true);
+            cts.Dispose();
+            cts = new CancellationTokenSource(500);
+            var cancellationToken = cts.Token;
+            try {
+                using(TcpClient tcpClient = new()) {
+                    await Connect(tcpClient, cancellationToken);
+                }
+            } catch { }
         }
     }
 }

@@ -161,11 +161,12 @@ namespace ShareClipbrdApp {
             SettingsUpdated();
         }
 
-        void SettingsUpdated() {
+        async void SettingsUpdated() {
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
             dataServer?.Stop();
             dataServer?.Start();
+            await dataClient!.Ping();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {
@@ -245,8 +246,8 @@ namespace ShareClipbrdApp {
                     SuperImage.IsVisible = false;
                     break;
             }
-        }      
-        
+        }
+
         public void ShowConnectStatus(bool online) {
             crOnline.IsVisible = online;
         }

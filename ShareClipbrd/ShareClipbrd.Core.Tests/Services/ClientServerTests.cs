@@ -345,5 +345,21 @@ namespace ShareClipbrd.Core.Tests.Services {
             progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(2));
 
         }
+
+        [Test]
+        public async Task Ping_Test() {
+            await client.Ping();
+            connectStatusServiceMock.Verify(x => x.Online());
+        }
+
+        [Test]
+        public async Task Stop_Server_To_Offline_Test() {
+            await client.Ping();
+            connectStatusServiceMock.Verify(x => x.Online(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Never());
+
+            server.Stop();
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
+        }
     }
 }
