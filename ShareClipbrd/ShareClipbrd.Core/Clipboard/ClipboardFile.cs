@@ -145,7 +145,7 @@ namespace ShareClipbrd.Core.Clipboard {
                     "kde" => ClipboardFile.Format.XKdeFileNames,
                     "mate" or "xfce" => ClipboardFile.Format.XMateFileNames,
                     "gnome" => ClipboardFile.Format.XGnomeFileNames,
-                    _ => throw new NotSupportedException($"X desktop: {desktop}")
+                    _ => ClipboardFile.Format.XGnomeFileNames
                 };
 
                 var urls = new List<string>() { "copy" };
