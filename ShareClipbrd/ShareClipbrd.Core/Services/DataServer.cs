@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;
@@ -17,9 +16,9 @@ namespace ShareClipbrd.Core.Services {
     public class DataServer : IDataServer {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
-        readonly CancellationTokenSource cts;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
+        CancellationTokenSource cts;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
@@ -35,8 +34,6 @@ namespace ShareClipbrd.Core.Services {
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
-
-            cts = new CancellationTokenSource();
         }
 
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -132,6 +129,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public void Start() {
+            cts?.Cancel();
+            cts = new CancellationTokenSource();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
@@ -157,6 +156,7 @@ namespace ShareClipbrd.Core.Services {
 
                         Debug.WriteLine($"tcpServer stop");
                         tcpServer.Stop();
+                        Debug.WriteLine($"tcpServer stopped");
 
                     } catch(SocketException ex) {
                         await dialogService.ShowError(ex);
@@ -164,14 +164,12 @@ namespace ShareClipbrd.Core.Services {
                         await dialogService.ShowError(ex);
                     }
                 }
-
-                Debug.WriteLine($"tcpServer stopped");
             }, cancellationToken);
         }
 
         public void Stop() {
             Debug.WriteLine($"tcpServer request to stop");
-            cts.Cancel();
+            cts?.Cancel();
         }
     }
 }

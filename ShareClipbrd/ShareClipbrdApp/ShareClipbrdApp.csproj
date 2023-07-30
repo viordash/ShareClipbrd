@@ -26,7 +26,7 @@
     <PackageReference Include="Avalonia.Themes.Simple" Version="11.0.999-cibuild0037897-beta" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.999-cibuild0037897-beta" />
-    <PackageReference Include="MessageBox.Avalonia" Version="3.0.0" />
+    <PackageReference Include="MessageBox.Avalonia" Version="3.1.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
   </ItemGroup>
@@ -57,4 +57,9 @@
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
+
+  <ItemGroup Label="InternalsVisibleTo">
+    <InternalsVisibleTo Include="ShareClipbrdApp.Tests" />
+  </ItemGroup>
+  
 </Project>

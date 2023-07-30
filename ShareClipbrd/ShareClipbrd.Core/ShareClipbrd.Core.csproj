@@ -15,4 +15,8 @@
     <PackageReference Include="MessagePack" Version="2.5.108" />
   </ItemGroup>
 
+  <ItemGroup Label="InternalsVisibleTo">
+    <InternalsVisibleTo Include="ShareClipbrd.Core.Tests" />
+  </ItemGroup>
+  
 </Project>

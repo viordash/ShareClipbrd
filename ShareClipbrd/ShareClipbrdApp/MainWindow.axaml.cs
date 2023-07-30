@@ -13,6 +13,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
+using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Components;
 using ShareClipbrdApp.Helpers;
@@ -25,6 +26,7 @@ namespace ShareClipbrdApp {
         readonly IDataServer? dataServer;
         readonly IDialogService? dialogService;
         readonly IProgressService? progressService;
+        readonly ISystemConfiguration? systemConfiguration;
 
         WriteableBitmap? progressBarBitmap;
         public WriteableBitmap? ProgressBarBitmap {
@@ -38,11 +40,13 @@ namespace ShareClipbrdApp {
             IDataClient dataClient,
             IDataServer dataServer,
             IDialogService dialogService,
-            IProgressService progressService) : this() {
+            IProgressService progressService,
+            ISystemConfiguration? systemConfiguration) : this() {
             Guard.NotNull(dataClient, nameof(dataClient));
             Guard.NotNull(dataServer, nameof(dataServer));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(progressService, nameof(progressService));
+            Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
 
             progressBar = new TetrisProgressBar((int)Width - 6, (int)Height - 6, new Random().Next());
             progressBarBitmap = new WriteableBitmap(new PixelSize(progressBar.Width, progressBar.Height), new Vector(1.0, 1.0),
@@ -55,6 +59,7 @@ namespace ShareClipbrdApp {
             this.dataServer = dataServer;
             this.dialogService = dialogService;
             this.progressService = progressService;
+            this.systemConfiguration = systemConfiguration;
 
             SetProgressMode(ProgressMode.None);
             SetProgress(100.0);
@@ -66,10 +71,11 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
+            //dataServer?.Start();
+            edSettingsProfile.SelectedIndex = systemConfiguration!.SettingsProfile;
+            edHostAddress.Text = systemConfiguration!.HostAddress;
+            edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
 
-            dataServer?.Start();
-            edHostAddress.Text = Settings.Default.HostAddress;
-            edPartnerAddress.Text = Settings.Default.PartnerAddress;
         }
 
         void OnClosing(object sender, WindowClosingEventArgs e) {
@@ -121,14 +127,46 @@ namespace ShareClipbrdApp {
 
         private void edHostAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
-                Settings.Default.HostAddress = edHostAddress.Text;
+                switch(systemConfiguration!.SettingsProfile) {
+                    case 0:
+                        Settings.Default.HostAddress0 = edHostAddress.Text;
+                        break;
+                    case 1:
+                        Settings.Default.HostAddress1 = edHostAddress.Text;
+                        break;
+                    case 2:
+                        Settings.Default.HostAddress2 = edHostAddress.Text;
+                        break;
+                }
             }
         }
 
         private void edPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
-                Settings.Default.PartnerAddress = edPartnerAddress.Text;
+                switch(systemConfiguration!.SettingsProfile) {
+                    case 0:
+                        Settings.Default.PartnerAddress0 = edPartnerAddress.Text;
+                        break;
+                    case 1:
+                        Settings.Default.PartnerAddress1 = edPartnerAddress.Text;
+                        break;
+                    case 2:
+                        Settings.Default.PartnerAddress2 = edPartnerAddress.Text;
+                        break;
+                }
             }
+        }
+
+        private void edSettingsProfile_SelectionChanged(object? sender, SelectionChangedEventArgs e) {
+            Settings.Default.SettingsProfile = edSettingsProfile.SelectedIndex;
+            SettingsUpdated();
+        }
+
+        void SettingsUpdated() {
+            edHostAddress.Text = systemConfiguration!.HostAddress;
+            edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
+            dataServer?.Stop();
+            dataServer?.Start();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {

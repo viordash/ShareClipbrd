@@ -15,7 +15,7 @@
         SystemDecorations="BorderOnly"
         CanResize="False"
         TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="Black"     
+        TransparencyBackgroundFallback="Black"
         Opacity="0.5"
         
         Opened="OnOpened"
@@ -34,6 +34,13 @@
       <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
       <Separator />
       <MenuItem Header="Settings" >
+
+        <ComboBox x:Name="edSettingsProfile" SelectionChanged ="edSettingsProfile_SelectionChanged">
+          <ComboBoxItem>Profile 1</ComboBoxItem>
+          <ComboBoxItem>Profile 2</ComboBoxItem>
+          <ComboBoxItem>Profile 3</ComboBoxItem>
+        </ComboBox>
+
         <MenuItem Header="Host address">
           <TextBox x:Name="edHostAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edHostAddress_PropertyChanged" />
         </MenuItem>

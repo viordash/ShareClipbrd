@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
 using ShareClipbrd.Core.Services;
 
@@ -24,10 +26,20 @@ namespace ShareClipbrdApp.Services {
         public Task ShowError(Exception exception) {
             return Dispatcher.UIThread.InvokeAsync(new Func<Task<ButtonResult>>(async () => {
                 var msgbox = MessageBoxManager
-                            .GetMessageBoxStandard(string.Empty, exception.GetBaseException().Message, ButtonEnum.Ok, Icon.Error);
-                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-                    return await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
-                }
+                            .GetMessageBoxStandard(
+                    new MessageBoxStandardParams {
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentTitle = string.Empty,
+                        //ContentHeader = header,
+                        ContentMessage = exception.GetBaseException().Message,
+                        Icon = Icon.Error,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        CanResize = false,
+                        SizeToContent = SizeToContent.WidthAndHeight,
+                        ShowInCenter = true,
+                        Topmost = true,
+                        SystemDecorations = SystemDecorations.Full
+                    });
                 return await msgbox.ShowWindowAsync();
             }));
         }
