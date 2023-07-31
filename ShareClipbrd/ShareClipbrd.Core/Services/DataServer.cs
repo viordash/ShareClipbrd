@@ -95,49 +95,57 @@ namespace ShareClipbrd.Core.Services {
 
             connectStatusService.Online();
             var sessionDir = new Lazy<string>(RecreateTempDirectory);
-            await using(progressService.Begin(ProgressMode.Receive)) {
-                try {
-                    var stream = tcpClient.GetStream();
 
-                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException("Wrong version of the other side");
-                    }
-                    await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+            while(!cancellationToken.IsCancellationRequested) {
+                var stream = tcpClient.GetStream();
 
-                    long total;
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException("Wrong version of the other side");
+                }
+                await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+
+                await using(progressService.Begin(ProgressMode.Receive)) {
                     try {
-                        total = await ReceiveSize(stream, cancellationToken);
-                    } catch(EndOfStreamException) {
-                        return;
-                    }
-                    var format = await ReceiveFormat(stream, cancellationToken);
-
-                    if(format == ClipboardFile.Format.FileDrop) {
-                        var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, cancellationToken);
-                        await fileReceiver.Receive();
-                        var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
-                        dispatchService.ReceiveFiles(receivedFiles);
-
-                    } else if(format == ClipboardData.Format.WaveAudio) {
-
-                    } else {
-                        progressService.SetMaxTick(total);
-                        while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
-                            var size = await ReceiveSize(stream, cancellationToken);
-                            progressService.Tick(size);
-                            clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
-                            format = await ReceiveFormat(stream, cancellationToken);
+                        long total;
+                        try {
+                            total = await ReceiveSize(stream, cancellationToken);
+                        } catch(EndOfStreamException) {
+                            return;
                         }
-                        dispatchService.ReceiveData(clipboardData);
+                        var format = await ReceiveFormat(stream, cancellationToken);
+
+                        if(format == ClipboardFile.Format.FileDrop) {
+                            var fileReceiver = new FileReceiver(progressService, stream, sessionDir.Value, total, cancellationToken);
+                            await fileReceiver.Receive();
+                            var receivedFiles = DirectoryHelper.GetDirectoriesAndFiles(sessionDir.Value);
+                            dispatchService.ReceiveFiles(receivedFiles);
+
+                        } else if(format == ClipboardData.Format.WaveAudio) {
+
+                        } else {
+                            progressService.SetMaxTick(total);
+                            while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
+                                var size = await ReceiveSize(stream, cancellationToken);
+                                progressService.Tick(size);
+                                clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
+
+                                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.MoreData) {
+                                    break;
+                                }
+
+                                format = await ReceiveFormat(stream, cancellationToken);
+                            }
+                            dispatchService.ReceiveData(clipboardData);
+                        }
+
+                        Debug.WriteLine($"tcpServer success finished");
+
+                    } catch(OperationCanceledException ex) {
+                        Debug.WriteLine($"tcpServer canceled {ex}");
+                    } catch(Exception ex) {
+                        await dialogService.ShowError(ex);
                     }
-
-                    Debug.WriteLine($"tcpServer success finished");
-
-                } catch(OperationCanceledException ex) {
-                    Debug.WriteLine($"tcpServer canceled {ex}");
-                } catch(Exception ex) {
-                    await dialogService.ShowError(ex);
                 }
             }
         }

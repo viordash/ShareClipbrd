@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
@@ -93,7 +94,8 @@ namespace ShareClipbrd.Core.Services {
                     throw new NotSupportedException($"Others do not support total: {totalLenght}");
                 }
 
-                foreach(var clipboard in clipboardData.Formats) {
+                for(var i = 0; i < clipboardData.Formats.Count; i++) {
+                    var clipboard = clipboardData.Formats[i];
                     progressService.Tick(clipboard.Stream.Length);
                     await SendFormat(clipboard.Format, stream, cancellationToken);
                     await SendSize(clipboard.Stream.Length, stream, cancellationToken);
@@ -105,7 +107,14 @@ namespace ShareClipbrd.Core.Services {
                         await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                         throw new NotSupportedException($"Transfer data error");
                     }
+
+                    var moreData = i < clipboardData.Formats.Count - 1;
+                    if(moreData) {
+                        await stream.WriteAsync(CommunProtocol.MoreData, cancellationToken);
+                    }
                 }
+                await stream.WriteAsync(CommunProtocol.Finish, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
             }
         }
 

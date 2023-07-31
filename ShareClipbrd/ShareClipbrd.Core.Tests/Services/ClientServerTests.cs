@@ -4,7 +4,6 @@ using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;
-using ShareClipbrd.Core.Tests.Helpers;
 
 namespace ShareClipbrd.Core.Tests.Services {
     public class Tests {
@@ -31,12 +30,11 @@ namespace ShareClipbrd.Core.Tests.Services {
                 progressServiceMock.Object, connectStatusServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object, dispatchServiceMock.Object, progressServiceMock.Object,
                 connectStatusServiceMock.Object, dialogServiceMock.Object);
-            
+
         }
 
         [TearDown]
         public void Teardown() {
-            server.Stop();
         }
 
         [Test]
@@ -47,309 +45,339 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
+            server.Start();
+            await client.Connect();
+
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
+            await client.SendData(clipboardData);
+
+            clipboardData = new ClipboardData();
+            clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
+
+            await client.SendData(clipboardData);
+            client.Disconnect();
+            await server.Stop();
+
+            dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
+            Assert.IsNotNull(receivedClipboard);
+            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText", "Text" }));
+            Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] {
+                new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")),
+                new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789"))
+            }));
+        }
+
+        [Test]
+        public async Task Send_Common_Big_Data_Test() {
+            ClipboardData? receivedClipboard = null;
+
+            dispatchServiceMock
+                .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
+                .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            //await Task.Delay(100);
             await client.Connect();
-            await client.SendData(clipboardData);
-            await Task.Delay(10000);
 
-            //await client.SendData(clipboardData);
+            var clipboardData = new ClipboardData();
+
+            var rnd = new Random();
+            var bytes = new byte[1_000_000_003];
+            rnd.NextBytes(bytes);
+
+            clipboardData.Add("Text", new MemoryStream(bytes));
+
+            await client.SendData(clipboardData);
+            client.Disconnect();
+            await server.Stop();
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(receivedClipboard);
-            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText" }));
-            Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")) }));
+            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
+            Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream, Has.Length.EqualTo(1_000_000_003));
+            Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream.ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
+
         }
 
-        //[Test]
-        //public async Task Send_Common_Big_Data_Test() {
-        //    ClipboardData? receivedClipboard = null;
+        [Test]
+        public async Task Send_Files_Test() {
+            IList<string>? fileDropList = null;
 
-        //    dispatchServiceMock
-        //        .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
-        //        .Callback<ClipboardData>(x => receivedClipboard = x);
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
-        //    var clipboardData = new ClipboardData();
+            var clipboardData = new ClipboardData();
 
-        //    var rnd = new Random();
-        //    var bytes = new byte[1_000_000_003];
-        //    rnd.NextBytes(bytes);
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
 
-        //    clipboardData.Add("Text", new MemoryStream(bytes));
+            var rnd = new Random();
+            var bytes = new byte[3_333_333];
+            rnd.NextBytes(bytes);
+            var testdata = new MemoryStream(bytes);
 
-        //    await Task.Delay(100);
-        //    await client.SendData(clipboardData);
-        //    await Task.Delay(1000);
+            var files = new StringCollection();
 
-        //    dispatchServiceMock.VerifyAll();
-        //    Assert.IsNotNull(receivedClipboard);
-        //    Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
-        //    Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream, Has.Length.EqualTo(1_000_000_003));
-        //    Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream.ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
-        //}
+            var buffer = new byte[3_333_333 / 100];
+            testdata.Position = 0;
+            for(int i = 0; i < 100; i++) {
+                var filename = Path.Combine(testsPath, $"Unicode юникод ® _{i}");
+                testdata.Read(buffer, 0, buffer.Length);
 
-        //[Test]
-        //public async Task Send_Files_Test() {
-        //    IList<string>? fileDropList = null;
+                File.WriteAllBytes(filename, buffer);
+                files.Add(filename);
+            }
 
-        //    dispatchServiceMock
-        //        .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
-        //        .Callback<IList<string>>(x => fileDropList = x);
+            server.Start();
+            await client.Connect();
 
-        //    var clipboardData = new ClipboardData();
+            try {
+                await client.SendFileDropList(files);
+                await client.SendFileDropList(files);
+                await client.SendFileDropList(files);
 
-        //    var testsPath = Path.Combine(Path.GetTempPath(), "tests");
-        //    Directory.CreateDirectory(testsPath);
+            } finally {
+                Directory.Delete(testsPath, true);
+                client.Disconnect();
+                await server.Stop();
+            }
 
-        //    var rnd = new Random();
-        //    var bytes = new byte[3_333_333];
-        //    rnd.NextBytes(bytes);
-        //    var testdata = new MemoryStream(bytes);
+            dispatchServiceMock.Verify(x => x.ReceiveFiles(It.IsAny<IList<string>>()), Times.Exactly(3));
+            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList.Count, Is.EqualTo(100));
 
-        //    var files = new StringCollection();
 
-        //    var buffer = new byte[3_333_333 / 100];
-        //    testdata.Position = 0;
-        //    for(int i = 0; i < 100; i++) {
-        //        var filename = Path.Combine(testsPath, $"Unicode юникод ® _{i}");
-        //        testdata.Read(buffer, 0, buffer.Length);
+            testdata.Position = 0;
+            for(int i = 0; i < 100; i++) {
+                var otherFilename = fileDropList.First(x => x.EndsWith($"Unicode юникод ® _{i}"));
 
-        //        File.WriteAllBytes(filename, buffer);
-        //        files.Add(filename);
-        //    }
+                Assert.That(otherFilename, Does.Exist);
 
-        //    try {
-        //        await client.SendFileDropList(files);
-        //    } finally {
-        //        Directory.Delete(testsPath, true);
-        //    }
-        //    await Task.Delay(1000);
+                var otherBytes = File.ReadAllBytes(otherFilename);
+                File.Delete(otherFilename);
 
-        //    dispatchServiceMock.VerifyAll();
-        //    Assert.IsNotNull(fileDropList);
-        //    Assert.That(fileDropList.Count, Is.EqualTo(100));
+                Assert.That(otherBytes, Has.Length.EqualTo(3_333_333 / 100));
+                testdata.Read(buffer, 0, buffer.Length);
+                Assert.That(otherBytes, Is.EquivalentTo(buffer));
+            }
+        }
 
+        [Test]
+        public async Task Send_Big_File_Test() {
+            IList<string>? fileDropList = null;
 
-        //    testdata.Position = 0;
-        //    for(int i = 0; i < 100; i++) {
-        //        var otherFilename = fileDropList.First(x => x.EndsWith($"Unicode юникод ® _{i}"));
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
-        //        Assert.That(otherFilename, Does.Exist);
+            var rnd = new Random();
+            var bytes = new byte[1_000_003];
+            rnd.NextBytes(bytes);
 
-        //        var otherBytes = File.ReadAllBytes(otherFilename);
-        //        File.Delete(otherFilename);
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
 
-        //        Assert.That(otherBytes, Has.Length.EqualTo(3_333_333 / 100));
-        //        testdata.Read(buffer, 0, buffer.Length);
-        //        Assert.That(otherBytes, Is.EquivalentTo(buffer));
-        //    }
-        //}
+            var files = new StringCollection();
+            var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
 
-        //[Test]
-        //public async Task Send_Big_File_Test() {
-        //    IList<string>? fileDropList = null;
+            using(var fs = new FileStream(filename, FileMode.CreateNew)) {
+                fs.Write(bytes);
+                fs.Seek(4096L * 1024 * 1024, SeekOrigin.Begin);
+                fs.WriteByte(0);
+            }
 
-        //    dispatchServiceMock
-        //        .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
-        //        .Callback<IList<string>>(x => fileDropList = x);
+            files.Add(filename);
 
-        //    var rnd = new Random();
-        //    var bytes = new byte[1_000_003];
-        //    rnd.NextBytes(bytes);
+            server.Start();
+            await client.Connect();
 
-        //    var testsPath = Path.Combine(Path.GetTempPath(), "tests");
-        //    Directory.CreateDirectory(testsPath);
+            try {
+                await client.SendFileDropList(files);
+            } finally {
+                Directory.Delete(testsPath, true);
+                client.Disconnect();
+                await server.Stop();
+            }
+            //await Task.Delay(1000);
 
-        //    var files = new StringCollection();
-        //    var filename = Path.Combine(testsPath, Path.GetFileName(Path.GetTempFileName()));
+            dispatchServiceMock.VerifyAll();
+            Assert.IsNotNull(fileDropList);
+            var otherFilename = fileDropList[0];
 
-        //    using(var fs = new FileStream(filename, FileMode.CreateNew)) {
-        //        fs.Write(bytes);
-        //        fs.Seek(4096L * 1024 * 1024, SeekOrigin.Begin);
-        //        fs.WriteByte(0);
-        //    }
+            Assert.That(otherFilename, Does.Exist);
 
-        //    files.Add(filename);
 
-        //    try {
-        //        await client.SendFileDropList(files);
-        //    } finally {
-        //        Directory.Delete(testsPath, true);
-        //    }
-        //    await Task.Delay(1000);
+            using(var fs = new FileStream(otherFilename, FileMode.Open, FileAccess.Read)) {
+                Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
 
-        //    dispatchServiceMock.VerifyAll();
-        //    Assert.IsNotNull(fileDropList);
-        //    var otherFilename = fileDropList[0];
+                var otherBytes = new byte[1_000_003];
+                fs.Read(otherBytes);
+                Assert.That(otherBytes, Is.EquivalentTo(bytes));
+            }
+            File.Delete(otherFilename);
 
-        //    Assert.That(otherFilename, Does.Exist);
+        }
 
+        [Test]
+        public async Task Send_Files_And_Folders_Test() {
+            IList<string>? fileDropList = null;
 
-        //    using(var fs = new FileStream(otherFilename, FileMode.Open, FileAccess.Read)) {
-        //        Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
-        //        var otherBytes = new byte[1_000_003];
-        //        fs.Read(otherBytes);
-        //        Assert.That(otherBytes, Is.EquivalentTo(bytes));
-        //    }
-        //    File.Delete(otherFilename);
 
-        //}
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
 
-        //[Test]
-        //public async Task Send_Files_And_Folders_Test() {
-        //    IList<string>? fileDropList = null;
+            var rnd = new Random();
+            var bytes0 = new byte[555_000];
+            rnd.NextBytes(bytes0);
+            var bytes1 = new byte[777_000];
+            rnd.NextBytes(bytes1);
 
-        //    dispatchServiceMock
-        //        .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
-        //        .Callback<IList<string>>(x => fileDropList = x);
+            var filename0 = Path.Combine(testsPath, "filename0.bin");
+            File.WriteAllBytes(filename0, bytes0);
 
+            var directory0 = Path.Combine(testsPath, "directory0");
+            Directory.CreateDirectory(directory0);
 
-        //    var testsPath = Path.Combine(Path.GetTempPath(), "tests");
-        //    Directory.CreateDirectory(testsPath);
+            var directory0_filename1 = Path.Combine(directory0, "filename1.bin");
+            File.WriteAllBytes(directory0_filename1, bytes1);
 
-        //    var rnd = new Random();
-        //    var bytes0 = new byte[555_000];
-        //    rnd.NextBytes(bytes0);
-        //    var bytes1 = new byte[777_000];
-        //    rnd.NextBytes(bytes1);
+            Directory.CreateDirectory(Path.Combine(directory0, "Child0"));
 
-        //    var filename0 = Path.Combine(testsPath, "filename0.bin");
-        //    File.WriteAllBytes(filename0, bytes0);
+            var directory0_child1 = Path.Combine(directory0, "Дочерний1™");
+            Directory.CreateDirectory(directory0_child1);
 
-        //    var directory0 = Path.Combine(testsPath, "directory0");
-        //    Directory.CreateDirectory(directory0);
+            var directory0_child1_empty0 = Path.Combine(directory0_child1, "Empty0");
+            Directory.CreateDirectory(directory0_child1_empty0);
 
-        //    var directory0_filename1 = Path.Combine(directory0, "filename1.bin");
-        //    File.WriteAllBytes(directory0_filename1, bytes1);
+            var filename2 = Path.Combine(directory0_child1, "Файл2.dat");
+            File.WriteAllBytes(filename2, bytes1);
 
-        //    Directory.CreateDirectory(Path.Combine(directory0, "Child0"));
+            var files = new StringCollection();
+            files.Add(filename0);
+            files.Add(directory0);
+            files.Add(directory0_filename1);
+            files.Add(directory0_child1);
+            files.Add(directory0_child1_empty0);
 
-        //    var directory0_child1 = Path.Combine(directory0, "Дочерний1™");
-        //    Directory.CreateDirectory(directory0_child1);
+            server.Start();
+            await client.Connect();
+            try {
+                await client.SendFileDropList(files);
+            } finally {
+                Directory.Delete(testsPath, true);
+                client.Disconnect();
+                await server.Stop();
 
-        //    var directory0_child1_empty0 = Path.Combine(directory0_child1, "Empty0");
-        //    Directory.CreateDirectory(directory0_child1_empty0);
+            }
+            await Task.Delay(500);
 
-        //    var filename2 = Path.Combine(directory0_child1, "Файл2.dat");
-        //    File.WriteAllBytes(filename2, bytes1);
+            dispatchServiceMock.VerifyAll();
+            Assert.IsNotNull(fileDropList);
 
-        //    var files = new StringCollection();
-        //    files.Add(filename0);
-        //    files.Add(directory0);
-        //    files.Add(directory0_filename1);
-        //    files.Add(directory0_child1);
-        //    files.Add(directory0_child1_empty0);
+            Assert.That(fileDropList.Count, Is.EqualTo(5));
 
-        //    try {
-        //        await client.SendFileDropList(files);
-        //    } finally {
-        //        Directory.Delete(testsPath, true);
+            Assert.That(fileDropList.First(x => Path.GetFileName(x) == "filename0.bin"), Does.Exist);
+            Assert.That(fileDropList.First(x => x.EndsWith("directory0")), Does.Exist);
+            Assert.That(fileDropList.First(x => Path.GetFileName(x) == "filename1.bin"), Does.Exist);
+            Assert.That(fileDropList.First(x => x.EndsWith("Дочерний1™")), Does.Exist);
+            Assert.That(fileDropList.First(x => x.EndsWith("Empty0")), Does.Exist);
 
-        //    }
-        //    await Task.Delay(500);
+            const string pathShareClipbrd = "ShareClipbrd_60D54950";
+            var tempDir = Path.Combine(Path.GetTempPath(), pathShareClipbrd);
+            var storedFiles = DirectoryHelper.RecursiveGetFiles(tempDir)
+                .Concat(DirectoryHelper.RecursiveGetEmptyFolders(tempDir))
+                .Select(x => x.Replace('\\', Path.AltDirectorySeparatorChar));
+            Assert.That(storedFiles.Count, Is.EqualTo(9));
 
-        //    dispatchServiceMock.VerifyAll();
-        //    Assert.IsNotNull(fileDropList);
+            var otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename0.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-        //    Assert.That(fileDropList.Count, Is.EqualTo(5));
+            otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename1.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-        //    Assert.That(fileDropList.First(x => Path.GetFileName(x) == "filename0.bin"), Does.Exist);
-        //    Assert.That(fileDropList.First(x => x.EndsWith("directory0")), Does.Exist);
-        //    Assert.That(fileDropList.First(x => Path.GetFileName(x) == "filename1.bin"), Does.Exist);
-        //    Assert.That(fileDropList.First(x => x.EndsWith("Дочерний1™")), Does.Exist);
-        //    Assert.That(fileDropList.First(x => x.EndsWith("Empty0")), Does.Exist);
+            var otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Empty0"));
+            Assert.That(otherDirectory, Does.Exist);
 
-        //    const string pathShareClipbrd = "ShareClipbrd_60D54950";
-        //    var tempDir = Path.Combine(Path.GetTempPath(), pathShareClipbrd);
-        //    var storedFiles = DirectoryHelper.RecursiveGetFiles(tempDir)
-        //        .Concat(DirectoryHelper.RecursiveGetEmptyFolders(tempDir))
-        //        .Select(x => x.Replace('\\', Path.AltDirectorySeparatorChar));
-        //    Assert.That(storedFiles.Count, Is.EqualTo(9));
+            otherDirectory = storedFiles.First(x => x.EndsWith("directory0/Child0"));
+            Assert.That(otherDirectory, Does.Exist);
 
-        //    var otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename0.bin"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
+            otherDirectory = storedFiles.First(x => x.EndsWith("directory0/Дочерний1™/Empty0"));
+            Assert.That(otherDirectory, Does.Exist);
 
-        //    otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/filename1.bin"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+            otherFilename = storedFiles.First(x => x.EndsWith("directory0/Дочерний1™/Файл2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-        //    var otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Empty0"));
-        //    Assert.That(otherDirectory, Does.Exist);
+            otherFilename = storedFiles.First(x => x.EndsWith("directory0/filename1.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-        //    otherDirectory = storedFiles.First(x => x.EndsWith("directory0/Child0"));
-        //    Assert.That(otherDirectory, Does.Exist);
+            otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Empty0"));
+            Assert.That(otherDirectory, Does.Exist);
 
-        //    otherDirectory = storedFiles.First(x => x.EndsWith("directory0/Дочерний1™/Empty0"));
-        //    Assert.That(otherDirectory, Does.Exist);
+            otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Файл2.dat"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-        //    otherFilename = storedFiles.First(x => x.EndsWith("directory0/Дочерний1™/Файл2.dat"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
+            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(9 * 2));
+        }
 
-        //    otherFilename = storedFiles.First(x => x.EndsWith("directory0/filename1.bin"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
+        [Test]
+        public async Task Send_identical_Files__Test() {
+            IList<string>? fileDropList = null;
 
-        //    otherDirectory = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Empty0"));
-        //    Assert.That(otherDirectory, Does.Exist);
+            dispatchServiceMock
+                .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
+                .Callback<IList<string>>(x => fileDropList = x);
 
-        //    otherFilename = storedFiles.First(x => x.EndsWith(pathShareClipbrd + "/Дочерний1™/Файл2.dat"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes1));
 
-        //    progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
-        //    progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
-        //    progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
-        //    progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(9 * 2));
-        //}
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests");
+            Directory.CreateDirectory(testsPath);
 
-        //[Test]
-        //public async Task Send_identical_Files__Test() {
-        //    IList<string>? fileDropList = null;
+            var rnd = new Random();
+            var bytes0 = new byte[1000];
+            rnd.NextBytes(bytes0);
 
-        //    dispatchServiceMock
-        //        .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
-        //        .Callback<IList<string>>(x => fileDropList = x);
+            var files = new StringCollection();
 
+            var filename0 = Path.Combine(testsPath, "filename0.bin");
+            File.WriteAllBytes(filename0, bytes0);
+            files.Add(filename0);
+            files.Add(filename0);
+            files.Add(filename0);
 
-        //    var testsPath = Path.Combine(Path.GetTempPath(), "tests");
-        //    Directory.CreateDirectory(testsPath);
+            server.Start();
+            await client.Connect();
+            try {
+                await client.SendFileDropList(files);
+            } finally {
+                Directory.Delete(testsPath, true);
+                client.Disconnect();
+                await server.Stop();
 
-        //    var rnd = new Random();
-        //    var bytes0 = new byte[1000];
-        //    rnd.NextBytes(bytes0);
+            }
+            await Task.Delay(500);
 
-        //    var files = new StringCollection();
+            dispatchServiceMock.VerifyAll();
+            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList.Count, Is.EqualTo(1));
 
-        //    var filename0 = Path.Combine(testsPath, "filename0.bin");
-        //    File.WriteAllBytes(filename0, bytes0);
-        //    files.Add(filename0);
-        //    files.Add(filename0);
-        //    files.Add(filename0);
+            var otherFilename = fileDropList[0];
+            Assert.That(otherFilename, Does.Exist);
+            Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0.bin"));
+            Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
 
-        //    try {
-        //        await client.SendFileDropList(files);
-        //    } finally {
-        //        Directory.Delete(testsPath, true);
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
+            progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
+            progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
+            progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(2));
 
-        //    }
-        //    await Task.Delay(500);
-
-        //    dispatchServiceMock.VerifyAll();
-        //    Assert.IsNotNull(fileDropList);
-        //    Assert.That(fileDropList.Count, Is.EqualTo(1));
-
-        //    var otherFilename = fileDropList[0];
-        //    Assert.That(otherFilename, Does.Exist);
-        //    Assert.That(Path.GetFileName(otherFilename), Is.EqualTo("filename0.bin"));
-        //    Assert.That(File.ReadAllBytes(otherFilename), Is.EquivalentTo(bytes0));
-
-        //    progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Send)), Times.Once);
-        //    progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
-        //    progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
-        //    progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(2));
-
-        //}
+        }
 
         ////[Test]
         ////public async Task Ping_Test() {
@@ -369,12 +397,12 @@ namespace ShareClipbrd.Core.Tests.Services {
         ////    connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
         ////}
 
-        //[Test]
-        //public async Task Sequential_Calls_Stop_Server_Test() {
-        //    await server.Stop();
-        //    connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
-        //    await server.Stop();
-        //    connectStatusServiceMock.Verify(x => x.Offline(), Times.Exactly(2));
-        //}
+        [Test]
+        public async Task Sequential_Calls_Stop_Server_Test() {
+            await server.Stop();
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
+            await server.Stop();
+            connectStatusServiceMock.Verify(x => x.Offline(), Times.Exactly(2));
+        }
     }
 }
