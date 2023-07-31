@@ -11,36 +11,44 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
-        Task Ping();
+        Task Connect();
+        void Disconnect();
     }
 
     public class DataClient : IDataClient {
         readonly ISystemConfiguration systemConfiguration;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
+        readonly IConnectStatusService connectStatusService;
+        readonly IDialogService dialogService;
+        readonly TcpClient client;
         CancellationTokenSource cts;
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
             IDispatchService dispatchService,
-            IProgressService progressService
+            IProgressService progressService,
+            IConnectStatusService connectStatusService,
+            IDialogService dialogService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
+            Guard.NotNull(connectStatusService, nameof(connectStatusService));
+            Guard.NotNull(dialogService, nameof(dialogService));
             this.systemConfiguration = systemConfiguration;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
+            this.connectStatusService = connectStatusService;
+            this.dialogService = dialogService;
 
-            cts = new CancellationTokenSource();
+            client = new();
+            cts = new();
         }
 
-        async ValueTask<NetworkStream> Connect(TcpClient tcpClient, CancellationToken cancellationToken) {
-            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-            await tcpClient.ConnectAsync(adr.Address, adr.Port, cancellationToken);
-
-            var stream = tcpClient.GetStream();
-
+        async ValueTask<NetworkStream> Handshake() {
+            var cancellationToken = cts.Token;
+            var stream = client.GetStream();
             await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
@@ -50,16 +58,9 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
-            cts.Cancel(true);
-            cts.Dispose();
-            cts = new CancellationTokenSource();
-
-            using TcpClient tcpClient = new();
-
-            var cancellationToken = cts.Token;
-            var stream = await Connect(tcpClient, cancellationToken);
+            var stream = await Handshake();
             var fileTransmitter = new FileTransmitter(progressService, stream);
-            await fileTransmitter.Send(fileDropList, cancellationToken);
+            await fileTransmitter.Send(fileDropList, cts.Token);
         }
 
         static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
@@ -79,15 +80,12 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
-            cts.Cancel(true);
-            cts.Dispose();
-            cts = new CancellationTokenSource();
             await using(progressService.Begin(ProgressMode.Send)) {
                 var totalLenght = clipboardData.GetTotalLenght();
                 progressService.SetMaxTick(totalLenght);
+                var stream = await Handshake();
+
                 var cancellationToken = cts.Token;
-                using TcpClient tcpClient = new();
-                var stream = await Connect(tcpClient, cancellationToken);
 
                 await stream.WriteAsync(totalLenght, cancellationToken);
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
@@ -111,16 +109,26 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public async Task Ping() {
+        public async Task Connect() {
             cts.Cancel(true);
-            cts.Dispose();
-            cts = new CancellationTokenSource(500);
-            var cancellationToken = cts.Token;
-            try {
-                using(TcpClient tcpClient = new()) {
-                    await Connect(tcpClient, cancellationToken);
+            cts = new();
+
+            do {
+                try {
+                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                    await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+
+                } catch(SocketException ex) {
+                    await dialogService.ShowError(ex);
+                } catch(ArgumentException ex) {
+                    await dialogService.ShowError(ex);
                 }
-            } catch { }
+
+            } while(!cts.IsCancellationRequested && !client.Connected);
+        }
+
+        public void Disconnect() {
+            cts.Cancel();
         }
     }
 }
