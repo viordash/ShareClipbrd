@@ -61,8 +61,8 @@
         <Ellipse Fill="Lime" Width="5" Height="5" Canvas.Left="2" Canvas.Top="2"/>
       </Canvas>
       <Canvas x:Name="crClientOnline" >
-        <Ellipse Fill="DarkGreen" Width="7" Height="7" Canvas.Left="9" Canvas.Top="1"/>
-        <Ellipse Fill="Lime" Width="5" Height="5" Canvas.Left="10" Canvas.Top="2"/>
+        <Ellipse Fill="DarkGreen" Width="7" Height="7" Canvas.Left="7" Canvas.Top="1"/>
+        <Ellipse Fill="Lime" Width="5" Height="5" Canvas.Left="8" Canvas.Top="2"/>
       </Canvas>
     </Canvas>
   </Border>
