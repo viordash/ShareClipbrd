@@ -254,7 +254,7 @@ namespace ShareClipbrdApp {
         }
 
         public void ShowClientConnectStatus(bool online) {
-            crOnline.IsVisible = online;
+            crClientOnline.IsVisible = online;
         }
     }
 }
