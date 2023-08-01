@@ -46,7 +46,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            await client.Connect();
+            await client.Start();
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -56,7 +56,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
 
             await client.SendData(clipboardData);
-            client.Disconnect();
+            client.Stop();
             await server.Stop();
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
@@ -77,7 +77,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            await client.Connect();
+            await client.Start();
 
             var clipboardData = new ClipboardData();
 
@@ -88,7 +88,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
-            client.Disconnect();
+            client.Stop();
             await server.Stop();
 
             dispatchServiceMock.VerifyAll();
@@ -130,7 +130,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             server.Start();
-            await client.Connect();
+            await client.Start();
 
             try {
                 await client.SendFileDropList(files);
@@ -139,7 +139,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Disconnect();
+                client.Stop();
                 await server.Stop();
             }
 
@@ -190,13 +190,13 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename);
 
             server.Start();
-            await client.Connect();
+            await client.Start();
 
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Disconnect();
+                client.Stop();
                 await server.Stop();
             }
             //await Task.Delay(1000);
@@ -265,12 +265,12 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1_empty0);
 
             server.Start();
-            await client.Connect();
+            await client.Start();
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Disconnect();
+                client.Stop();
                 await server.Stop();
 
             }
@@ -352,12 +352,12 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename0);
 
             server.Start();
-            await client.Connect();
+            await client.Start();
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Disconnect();
+                client.Stop();
                 await server.Stop();
 
             }
@@ -379,23 +379,68 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         }
 
-        ////[Test]
-        ////public async Task Ping_Test() {
-        ////    await Task.Delay(200);
-        ////    await client.Ping();
-        ////    connectStatusServiceMock.Verify(x => x.Online());
-        ////}
+        [Test]
+        public async Task Client_Connecting_Loop_Test() {
+            systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:0");
 
-        ////[Test]
-        ////public async Task Stop_Server_To_Offline_Test() {
-        ////    await Task.Delay(200);
-        ////    await client.Ping();
-        ////    connectStatusServiceMock.Verify(x => x.Online(), Times.Once());
-        ////    connectStatusServiceMock.Verify(x => x.Offline(), Times.Never());
+            int connectCounter = 1;
+            connectStatusServiceMock
+                .Setup(x => x.ClientOffline())
+                .Callback(() => {
+                    if(++connectCounter >= 5) {
+                        client.Stop();
+                    }
+                });
 
-        ////    await server.Stop();
-        ////    connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
-        ////}
+            server.Start();
+            await client.Start();
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(5));
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Never());
+
+            connectStatusServiceMock.Reset();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
+            connectCounter = 1;
+
+            await client.Start();
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+
+            client.Stop();
+            await server.Stop();
+        }
+
+        [Test]
+        public async Task Client_Reconnecting_Test() {
+
+
+            server.Start();
+            await client.Start();
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+
+            await server.Stop();
+
+            connectStatusServiceMock.Reset();
+            int connectCounter = 0;
+            connectStatusServiceMock
+                .Setup(x => x.ClientOffline())
+                .Callback(() => {
+                    if(++connectCounter == 2) {
+                        server.Start();
+                    }
+                });
+
+            var clipboardData = new ClipboardData();
+            clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
+            await client.SendData(clipboardData);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(2));
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+
+            client.Stop();
+            await server.Stop();
+        }
 
         [Test]
         public async Task Sequential_Calls_Stop_Server_Test() {

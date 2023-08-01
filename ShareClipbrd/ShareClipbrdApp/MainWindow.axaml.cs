@@ -167,7 +167,7 @@ namespace ShareClipbrdApp {
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
             await (dataServer?.Stop() ?? Task.CompletedTask);
             dataServer?.Start();
-            await dataClient!.Ping();
+            dataClient?.Start();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {
@@ -249,10 +249,11 @@ namespace ShareClipbrdApp {
             }
         }
 
-        public async void ShowConnectStatus(bool online) {
-            if(online && !crOnline.IsVisible) {
-                await dataClient!.Ping();
-            }
+        public void ShowConnectStatus(bool online) {
+            crOnline.IsVisible = online;
+        }
+
+        public void ShowClientConnectStatus(bool online) {
             crOnline.IsVisible = online;
         }
     }

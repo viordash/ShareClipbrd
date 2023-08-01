@@ -12,8 +12,8 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
-        Task Connect();
-        void Disconnect();
+        Task Start();
+        void Stop();
     }
 
     public class DataClient : IDataClient {
@@ -22,7 +22,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
         readonly IDialogService dialogService;
-        readonly TcpClient client;
+        TcpClient client;
         CancellationTokenSource cts;
 
         public DataClient(
@@ -59,9 +59,19 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
-            var stream = await Handshake();
-            var fileTransmitter = new FileTransmitter(progressService, stream);
-            await fileTransmitter.Send(fileDropList, cts.Token);
+            try {
+                var stream = await Handshake();
+                var fileTransmitter = new FileTransmitter(progressService, stream);
+                await fileTransmitter.Send(fileDropList, cts.Token);
+            } catch(SocketException ex) {
+                await dialogService.ShowError(ex);
+                await Start();
+            } catch(IOException ex) {
+                await dialogService.ShowError(ex);
+                await Start();
+            } catch(ArgumentException ex) {
+                await dialogService.ShowError(ex);
+            }
         }
 
         static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
@@ -81,63 +91,83 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
-            await using(progressService.Begin(ProgressMode.Send)) {
-                var totalLenght = clipboardData.GetTotalLenght();
-                progressService.SetMaxTick(totalLenght);
-                var stream = await Handshake();
+            try {
+                await using(progressService.Begin(ProgressMode.Send)) {
+                    var totalLenght = clipboardData.GetTotalLenght();
+                    progressService.SetMaxTick(totalLenght);
+                    var stream = await Handshake();
 
-                var cancellationToken = cts.Token;
+                    var cancellationToken = cts.Token;
 
-                await stream.WriteAsync(totalLenght, cancellationToken);
-                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
-                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                    throw new NotSupportedException($"Others do not support total: {totalLenght}");
-                }
-
-                for(var i = 0; i < clipboardData.Formats.Count; i++) {
-                    var clipboard = clipboardData.Formats[i];
-                    progressService.Tick(clipboard.Stream.Length);
-                    await SendFormat(clipboard.Format, stream, cancellationToken);
-                    await SendSize(clipboard.Stream.Length, stream, cancellationToken);
-                    clipboard.Stream.Position = 0;
-
-                    await clipboard.Stream.CopyToAsync(stream, cancellationToken);
-
-                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                    await stream.WriteAsync(totalLenght, cancellationToken);
+                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
                         await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException($"Transfer data error");
+                        throw new NotSupportedException($"Others do not support total: {totalLenght}");
                     }
 
-                    var moreData = i < clipboardData.Formats.Count - 1;
-                    if(moreData) {
-                        await stream.WriteAsync(CommunProtocol.MoreData, cancellationToken);
+                    for(var i = 0; i < clipboardData.Formats.Count; i++) {
+                        var clipboard = clipboardData.Formats[i];
+                        progressService.Tick(clipboard.Stream.Length);
+                        await SendFormat(clipboard.Format, stream, cancellationToken);
+                        await SendSize(clipboard.Stream.Length, stream, cancellationToken);
+                        clipboard.Stream.Position = 0;
+
+                        await clipboard.Stream.CopyToAsync(stream, cancellationToken);
+
+                        if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessData) {
+                            await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                            throw new NotSupportedException($"Transfer data error");
+                        }
+
+                        var moreData = i < clipboardData.Formats.Count - 1;
+                        if(moreData) {
+                            await stream.WriteAsync(CommunProtocol.MoreData, cancellationToken);
+                        }
                     }
+                    await stream.WriteAsync(CommunProtocol.Finish, cancellationToken);
+                    await stream.FlushAsync(cancellationToken);
                 }
-                await stream.WriteAsync(CommunProtocol.Finish, cancellationToken);
-                await stream.FlushAsync(cancellationToken);
+            } catch(SocketException ex) {
+                await dialogService.ShowError(ex);
+                await Start();
+            } catch(IOException ex) {
+                await dialogService.ShowError(ex);
+                await Start();
+            } catch(ArgumentException ex) {
+                await dialogService.ShowError(ex);
             }
         }
 
-        public async Task Connect() {
-            cts.Cancel(true);
+        public async Task Start() {
+            cts.Cancel();
             cts = new();
 
-            do {
+            client.Close();
+            client = new();
+            while(!cts.IsCancellationRequested && !client.Connected) {
+                connectStatusService.ClientOffline();
                 try {
                     var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
                     await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-
                 } catch(SocketException ex) {
+                    await dialogService.ShowError(ex);
+                } catch(IOException ex) {
                     await dialogService.ShowError(ex);
                 } catch(ArgumentException ex) {
                     await dialogService.ShowError(ex);
+                } catch(TaskCanceledException) {
                 }
-
-            } while(!cts.IsCancellationRequested && !client.Connected);
+            }
+            if(!client.Connected) {
+                connectStatusService.ClientOffline();
+            } else {
+                connectStatusService.ClientOnline();
+            }
         }
 
-        public void Disconnect() {
-            cts.Cancel();
+        public void Stop() {
+            Debug.WriteLine($"tcpServer request to stop");
+            cts?.Cancel();
         }
     }
 }
