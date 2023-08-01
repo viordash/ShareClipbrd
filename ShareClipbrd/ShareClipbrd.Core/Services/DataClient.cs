@@ -149,13 +149,16 @@ namespace ShareClipbrd.Core.Services {
                 try {
                     var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
                     await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-                } catch(SocketException ex) {
-                    await dialogService.ShowError(ex);
+                } catch(SocketException) {
                 } catch(IOException ex) {
                     await dialogService.ShowError(ex);
                 } catch(ArgumentException ex) {
                     await dialogService.ShowError(ex);
                 } catch(TaskCanceledException) {
+                }
+
+                if(!client.Connected) {
+                    await Task.Delay(5000);
                 }
             }
             if(!client.Connected) {
