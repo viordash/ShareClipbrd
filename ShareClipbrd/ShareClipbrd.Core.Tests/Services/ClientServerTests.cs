@@ -46,7 +46,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            await client.Start();
+            client.Start();
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -77,7 +77,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            await client.Start();
+            client.Start();
 
             var clipboardData = new ClipboardData();
 
@@ -130,7 +130,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             server.Start();
-            await client.Start();
+            client.Start();
 
             try {
                 await client.SendFileDropList(files);
@@ -190,7 +190,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename);
 
             server.Start();
-            await client.Start();
+            client.Start();
 
             try {
                 await client.SendFileDropList(files);
@@ -265,7 +265,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1_empty0);
 
             server.Start();
-            await client.Start();
+            client.Start();
             try {
                 await client.SendFileDropList(files);
             } finally {
@@ -352,7 +352,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename0);
 
             server.Start();
-            await client.Start();
+            client.Start();
             try {
                 await client.SendFileDropList(files);
             } finally {
@@ -394,7 +394,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 });
 
             server.Start();
-            await client.Start();
+            client.Start();
             connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(5));
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Never());
 
@@ -402,7 +402,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
             connectCounter = 1;
 
-            await client.Start();
+            client.Start();
             connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
 
@@ -415,7 +415,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
 
             server.Start();
-            await client.Start();
+            client.Start();
             connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
 

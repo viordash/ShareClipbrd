@@ -138,23 +138,6 @@ namespace ShareClipbrd.Core.Services {
             cts.Cancel();
             cts = new();
 
-            //while(!cts.IsCancellationRequested && !client.Connected) {
-            //    connectStatusService.ClientOffline();
-            //    try {
-            //        var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-            //        await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-            //    } catch(SocketException) {
-            //    } catch(IOException ex) {
-            //        await dialogService.ShowError(ex);
-            //    } catch(ArgumentException ex) {
-            //        await dialogService.ShowError(ex);
-            //    } catch(TaskCanceledException) {
-            //    }
-
-            //    if(!client.Connected) {
-            //        await Task.Delay(5000);
-            //    }
-            //}
             _ = Task.Run(async () => {
                 var connected = IsSocketConnected(client.Client);
                 while(!cts.IsCancellationRequested) {
@@ -191,17 +174,6 @@ namespace ShareClipbrd.Core.Services {
 
         static bool IsSocketConnected(Socket s) {
             return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
-
-            /* The long, but simpler-to-understand version:
-
-                    bool part1 = s.Poll(1000, SelectMode.SelectRead);
-                    bool part2 = (s.Available == 0);
-                    if ((part1 && part2 ) || !s.Connected)
-                        return false;
-                    else
-                        return true;
-
-            */
         }
 
         public void Stop() {
