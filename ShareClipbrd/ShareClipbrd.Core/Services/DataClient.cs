@@ -12,7 +12,7 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
-        Task Start();
+        void Start();
         void Stop();
     }
 
@@ -65,10 +65,8 @@ namespace ShareClipbrd.Core.Services {
                 await fileTransmitter.Send(fileDropList, cts.Token);
             } catch(SocketException ex) {
                 await dialogService.ShowError(ex);
-                await Start();
             } catch(IOException ex) {
                 await dialogService.ShowError(ex);
-                await Start();
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             }
@@ -129,43 +127,81 @@ namespace ShareClipbrd.Core.Services {
                 }
             } catch(SocketException ex) {
                 await dialogService.ShowError(ex);
-                await Start();
             } catch(IOException ex) {
                 await dialogService.ShowError(ex);
-                await Start();
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             }
         }
 
-        public async Task Start() {
+        public void Start() {
             cts.Cancel();
             cts = new();
 
-            client.Close();
-            client = new();
-            while(!cts.IsCancellationRequested && !client.Connected) {
-                connectStatusService.ClientOffline();
-                try {
-                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                    await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-                } catch(SocketException) {
-                } catch(IOException ex) {
-                    await dialogService.ShowError(ex);
-                } catch(ArgumentException ex) {
-                    await dialogService.ShowError(ex);
-                } catch(TaskCanceledException) {
-                }
+            //while(!cts.IsCancellationRequested && !client.Connected) {
+            //    connectStatusService.ClientOffline();
+            //    try {
+            //        var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+            //        await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+            //    } catch(SocketException) {
+            //    } catch(IOException ex) {
+            //        await dialogService.ShowError(ex);
+            //    } catch(ArgumentException ex) {
+            //        await dialogService.ShowError(ex);
+            //    } catch(TaskCanceledException) {
+            //    }
 
-                if(!client.Connected) {
+            //    if(!client.Connected) {
+            //        await Task.Delay(5000);
+            //    }
+            //}
+            _ = Task.Run(async () => {
+                var connected = IsSocketConnected(client.Client);
+                while(!cts.IsCancellationRequested) {
+                    if(!connected) {
+                        client.Close();
+                        client = new();
+                        try {
+                            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                            await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+                        } catch(SocketException) {
+                        } catch(IOException ex) {
+                            await dialogService.ShowError(ex);
+                        } catch(ArgumentException ex) {
+                            await dialogService.ShowError(ex);
+                        } catch(TaskCanceledException) {
+                        }
+                    }
+
+                    var socketConnected = IsSocketConnected(client.Client);
+                    if(connected != socketConnected) {
+                        if(socketConnected) {
+                            connectStatusService.ClientOnline();
+                        } else {
+                            connectStatusService.ClientOffline();
+
+                        }
+                    }
+                    connected = socketConnected;
                     await Task.Delay(5000);
                 }
-            }
-            if(!client.Connected) {
                 connectStatusService.ClientOffline();
-            } else {
-                connectStatusService.ClientOnline();
-            }
+            });
+        }
+
+        static bool IsSocketConnected(Socket s) {
+            return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+
+            /* The long, but simpler-to-understand version:
+
+                    bool part1 = s.Poll(1000, SelectMode.SelectRead);
+                    bool part2 = (s.Available == 0);
+                    if ((part1 && part2 ) || !s.Connected)
+                        return false;
+                    else
+                        return true;
+
+            */
         }
 
         public void Stop() {

@@ -186,8 +186,8 @@ namespace ShareClipbrd.Core.Services {
                     } catch(ArgumentException ex) {
                         await dialogService.ShowError(ex);
                     }
+                    connectStatusService.Offline();
                 }
-                connectStatusService.Offline();
                 tcsStopped.TrySetResult(true);
             }, cancellationToken);
         }
