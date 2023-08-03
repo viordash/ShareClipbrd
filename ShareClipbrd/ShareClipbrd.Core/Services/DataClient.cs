@@ -162,7 +162,6 @@ namespace ShareClipbrd.Core.Services {
                             connectStatusService.ClientOnline();
                         } else {
                             connectStatusService.ClientOffline();
-
                         }
                     }
                     connected = socketConnected;
