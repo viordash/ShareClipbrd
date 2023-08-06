@@ -40,7 +40,7 @@ namespace ShareClipbrd.Core.Services {
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
 
-            tcsStopped = new TaskCompletionSource<bool>(true);
+            tcsStopped = new TaskCompletionSource<bool>();
             tcsStopped.TrySetResult(true);
         }
 

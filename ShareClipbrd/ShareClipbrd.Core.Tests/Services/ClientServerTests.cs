@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Diagnostics;
 using Moq;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -12,8 +13,11 @@ namespace ShareClipbrd.Core.Tests.Services {
         Mock<IDispatchService> dispatchServiceMock;
         Mock<IProgressService> progressServiceMock;
         Mock<IConnectStatusService> connectStatusServiceMock;
+        Mock<ITimeService> timeServiceMock;
         DataServer server;
         DataClient client;
+
+        bool clientConnected;
 
         [SetUp]
         public void Setup() {
@@ -22,19 +26,42 @@ namespace ShareClipbrd.Core.Tests.Services {
             dispatchServiceMock = new();
             progressServiceMock = new();
             connectStatusServiceMock = new();
+            timeServiceMock = new();
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
                 progressServiceMock.Object, connectStatusServiceMock.Object);
-            client = new DataClient(systemConfigurationMock.Object, dispatchServiceMock.Object, progressServiceMock.Object,
-                connectStatusServiceMock.Object, dialogServiceMock.Object);
+            client = new DataClient(systemConfigurationMock.Object, progressServiceMock.Object,
+                connectStatusServiceMock.Object, dialogServiceMock.Object, timeServiceMock.Object);
 
+            clientConnected = false;
+            connectStatusServiceMock
+                .Setup(x => x.ClientOnline())
+                .Callback(() => {
+                    clientConnected = true;
+                });
+
+            connectStatusServiceMock
+                .Setup(x => x.ClientOffline())
+                .Callback(() => {
+                    clientConnected = false;
+                });
+
+            timeServiceMock.SetupGet(x => x.DataClientPollTime).Returns(TimeSpan.FromMilliseconds(100));
         }
 
         [TearDown]
         public void Teardown() {
+        }
+
+        async Task AwaitClientConnectStatus(bool isConnected) {
+            var cts = new CancellationTokenSource(5000);
+            while(clientConnected != isConnected && !cts.IsCancellationRequested) {
+                await Task.Delay(10);
+            }
+            Assert.That(clientConnected, Is.EqualTo(isConnected));
         }
 
         [Test]
@@ -47,6 +74,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start();
             client.Start();
+            await AwaitClientConnectStatus(true);
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -57,6 +85,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             await client.SendData(clipboardData);
             client.Stop();
+            await AwaitClientConnectStatus(false);
             await server.Stop();
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
@@ -78,6 +107,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start();
             client.Start();
+            await AwaitClientConnectStatus(true);
 
             var clipboardData = new ClipboardData();
 
@@ -89,6 +119,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             await client.SendData(clipboardData);
             client.Stop();
+            await AwaitClientConnectStatus(false);
             await server.Stop();
 
             dispatchServiceMock.VerifyAll();
@@ -131,6 +162,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start();
             client.Start();
+            await AwaitClientConnectStatus(true);
 
             try {
                 await client.SendFileDropList(files);
@@ -140,6 +172,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             } finally {
                 Directory.Delete(testsPath, true);
                 client.Stop();
+                await AwaitClientConnectStatus(false);
                 await server.Stop();
             }
 
@@ -191,15 +224,16 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start();
             client.Start();
+            await AwaitClientConnectStatus(true);
 
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
                 client.Stop();
+                await AwaitClientConnectStatus(false);
                 await server.Stop();
             }
-            //await Task.Delay(1000);
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
@@ -265,16 +299,16 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1_empty0);
 
             server.Start();
-            client.Start();
+            client.Start(); 
+            await AwaitClientConnectStatus(true);
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
                 client.Stop();
+                await AwaitClientConnectStatus(false);
                 await server.Stop();
-
             }
-            await Task.Delay(500);
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
@@ -353,15 +387,16 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             server.Start();
             client.Start();
+            await AwaitClientConnectStatus(true);
             try {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
                 client.Stop();
+                await AwaitClientConnectStatus(false);
                 await server.Stop();
 
             }
-            await Task.Delay(500);
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(fileDropList);
@@ -376,69 +411,75 @@ namespace ShareClipbrd.Core.Tests.Services {
             progressServiceMock.Verify(x => x.Begin(It.Is<ProgressMode>(p => p == ProgressMode.Receive)), Times.Once);
             progressServiceMock.Verify(x => x.SetMaxTick(It.IsAny<Int64>()), Times.Exactly(2));
             progressServiceMock.Verify(x => x.Tick(It.IsAny<Int64>()), Times.Exactly(2));
-
         }
 
         [Test]
-        public async Task Client_Connecting_Loop_Test() {
+        public async Task Client_Connect_Pooling_Test() {
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:0");
 
-            int connectCounter = 1;
-            connectStatusServiceMock
-                .Setup(x => x.ClientOffline())
-                .Callback(() => {
-                    if(++connectCounter >= 5) {
-                        client.Stop();
-                    }
-                });
-
             server.Start();
             client.Start();
-            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(5));
+            await Task.Delay(1000);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Never());
 
-            connectStatusServiceMock.Reset();
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
-            connectCounter = 1;
 
-            client.Start();
-            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            await AwaitClientConnectStatus(true);
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
 
             client.Stop();
+            await AwaitClientConnectStatus(false);
             await server.Stop();
         }
 
         [Test]
         public async Task Client_Reconnecting_Test() {
-
-
             server.Start();
             client.Start();
-            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+
+            await AwaitClientConnectStatus(true);
+
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
 
             await server.Stop();
+            await AwaitClientConnectStatus(false);
 
-            connectStatusServiceMock.Reset();
-            int connectCounter = 0;
-            connectStatusServiceMock
-                .Setup(x => x.ClientOffline())
-                .Callback(() => {
-                    if(++connectCounter == 2) {
-                        server.Start();
-                    }
-                });
+            server.Start();
+            await AwaitClientConnectStatus(true);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(2));
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Exactly(2));
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
             await client.SendData(clipboardData);
 
+            dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Once);
+
+            client.Stop();
+            await AwaitClientConnectStatus(false);
+            await server.Stop();
+        }
+
+        [Test]
+        public async Task Client_Stop_Test() {
+            server.Start();
+            client.Start();
+            await AwaitClientConnectStatus(true);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+
+
+            client.Stop();
+            await AwaitClientConnectStatus(false);
             connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Exactly(2));
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
 
-            client.Stop();
             await server.Stop();
         }
 

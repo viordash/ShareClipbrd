@@ -18,30 +18,30 @@ namespace ShareClipbrd.Core.Services {
 
     public class DataClient : IDataClient {
         readonly ISystemConfiguration systemConfiguration;
-        readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
         readonly IDialogService dialogService;
+        readonly ITimeService timeService;
         TcpClient client;
         CancellationTokenSource cts;
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
-            IDispatchService dispatchService,
             IProgressService progressService,
             IConnectStatusService connectStatusService,
-            IDialogService dialogService
+            IDialogService dialogService,
+            ITimeService timeService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
-            Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
             Guard.NotNull(dialogService, nameof(dialogService));
+            Guard.NotNull(timeService, nameof(timeService));
             this.systemConfiguration = systemConfiguration;
-            this.dispatchService = dispatchService;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
             this.dialogService = dialogService;
+            this.timeService = timeService;
 
             client = new();
             cts = new();
@@ -131,14 +131,16 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
+            } catch(InvalidOperationException ex) {
+                await dialogService.ShowError(ex);
             }
         }
 
         public void Start() {
             cts.Cancel();
             cts = new();
-
             _ = Task.Run(async () => {
+                connectStatusService.ClientOffline();
                 var connected = IsSocketConnected(client.Client);
                 while(!cts.IsCancellationRequested) {
                     if(!connected) {
@@ -165,7 +167,7 @@ namespace ShareClipbrd.Core.Services {
                         }
                     }
                     connected = socketConnected;
-                    await Task.Delay(5000);
+                    await Task.Delay(timeService.DataClientPollTime.Milliseconds);
                 }
                 connectStatusService.ClientOffline();
             });
