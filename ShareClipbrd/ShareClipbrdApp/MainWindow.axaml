@@ -60,10 +60,6 @@
         <Ellipse Fill="DarkCyan" Width="6" Height="6" Canvas.Left="1" Canvas.Top="1"/>
         <Ellipse Fill="DarkTurquoise" Width="4" Height="4" Canvas.Left="2" Canvas.Top="2"/>
       </Canvas>
-      <Canvas x:Name="crClientOnline" >
-        <Ellipse Fill="DarkCyan" Width="6" Height="6" Canvas.Left="7" Canvas.Top="1"/>
-        <Ellipse Fill="DarkTurquoise" Width="4" Height="4" Canvas.Left="8" Canvas.Top="2"/>
-      </Canvas>
     </Canvas>
   </Border>
 

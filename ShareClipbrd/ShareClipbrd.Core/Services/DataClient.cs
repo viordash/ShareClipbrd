@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
@@ -12,8 +11,6 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
-        void Start();
-        void Stop();
     }
 
     public class DataClient : IDataClient {
@@ -21,7 +18,6 @@ namespace ShareClipbrd.Core.Services {
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
         readonly IDialogService dialogService;
-        readonly ITimeService timeService;
         TcpClient client;
         CancellationTokenSource cts;
 
@@ -29,19 +25,16 @@ namespace ShareClipbrd.Core.Services {
             ISystemConfiguration systemConfiguration,
             IProgressService progressService,
             IConnectStatusService connectStatusService,
-            IDialogService dialogService,
-            ITimeService timeService
+            IDialogService dialogService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
             Guard.NotNull(dialogService, nameof(dialogService));
-            Guard.NotNull(timeService, nameof(timeService));
             this.systemConfiguration = systemConfiguration;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
             this.dialogService = dialogService;
-            this.timeService = timeService;
 
             client = new();
             cts = new();
@@ -59,6 +52,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            await Connect();
             try {
                 var stream = await Handshake();
                 var fileTransmitter = new FileTransmitter(progressService, stream);
@@ -89,6 +83,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            await Connect();
             try {
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
@@ -136,50 +131,26 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start() {
-            cts.Cancel();
-            cts = new();
-            _ = Task.Run(async () => {
-                connectStatusService.ClientOffline();
-                var connected = IsSocketConnected(client.Client);
-                while(!cts.IsCancellationRequested) {
-                    if(!connected) {
-                        client.Close();
-                        client = new();
-                        try {
-                            var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                            await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-                        } catch(SocketException) {
-                        } catch(IOException ex) {
-                            await dialogService.ShowError(ex);
-                        } catch(ArgumentException ex) {
-                            await dialogService.ShowError(ex);
-                        } catch(TaskCanceledException) {
-                        }
-                    }
-
-                    var socketConnected = IsSocketConnected(client.Client);
-                    if(connected != socketConnected) {
-                        if(socketConnected) {
-                            connectStatusService.ClientOnline();
-                        } else {
-                            connectStatusService.ClientOffline();
-                        }
-                    }
-                    connected = socketConnected;
-                    await Task.Delay(timeService.DataClientPollTime.Milliseconds);
+        async Task Connect() {
+            var connected = IsSocketConnected(client.Client);
+            if(!connected) {
+                client.Close();
+                client = new();
+                try {
+                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                    await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+                } catch(SocketException) {
+                } catch(IOException ex) {
+                    await dialogService.ShowError(ex);
+                } catch(ArgumentException ex) {
+                    await dialogService.ShowError(ex);
+                } catch(TaskCanceledException) {
                 }
-                connectStatusService.ClientOffline();
-            });
+            }
         }
 
         static bool IsSocketConnected(Socket s) {
             return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
-        }
-
-        public void Stop() {
-            Debug.WriteLine($"tcpServer request to stop");
-            cts?.Cancel();
         }
     }
 }

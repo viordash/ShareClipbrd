@@ -156,7 +156,6 @@ namespace ShareClipbrd.Core.Services {
             tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
-
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
                         var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);

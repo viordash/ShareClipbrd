@@ -19,7 +19,6 @@ namespace ShareClipbrdApp {
                     .AddSingleton<IDispatchService, DispatchService>()
                     .AddSingleton<IProgressService, ProgressService>()
                     .AddSingleton<IConnectStatusService, ConnectStatusService>()
-                    .AddSingleton<ITimeService, TimeService>()
                     ;
 
             var serviceProvider = services.BuildServiceProvider();
