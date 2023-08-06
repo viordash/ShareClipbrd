@@ -24,5 +24,25 @@ namespace ShareClipbrdApp.Services {
                 mainWindow.ShowConnectStatus(false);
             }), DispatcherPriority.Send);
         }
+
+        public void ClientOnline() {
+            Dispatcher.UIThread.InvokeAsync(new Action(() => {
+                if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
+                    return;
+                }
+                var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                mainWindow.ShowClientConnectStatus(true);
+            }), DispatcherPriority.Send);
+        }
+
+        public void ClientOffline() {
+            Dispatcher.UIThread.InvokeAsync(new Action(() => {
+                if(!(Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)) {
+                    return;
+                }
+                var mainWindow = desktop.MainWindow as MainWindow ?? throw new InvalidOperationException("MainWindow not found");
+                mainWindow.ShowClientConnectStatus(false);
+            }), DispatcherPriority.Send);
+        }
     }
 }

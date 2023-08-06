@@ -13,8 +13,10 @@ namespace ShareClipbrd.Core.Tests.Services {
         Mock<IDispatchService> dispatchServiceMock;
         Mock<IProgressService> progressServiceMock;
         Mock<IConnectStatusService> connectStatusServiceMock;
+        Mock<ITimeService> timeServiceMock;
         DataServer server;
         DataClient client;
+
 
         [SetUp]
         public void Setup() {
@@ -23,6 +25,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             dispatchServiceMock = new();
             progressServiceMock = new();
             connectStatusServiceMock = new();
+            timeServiceMock = new();
+            timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(1000));
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
@@ -30,7 +34,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
                 progressServiceMock.Object, connectStatusServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object, progressServiceMock.Object,
-                connectStatusServiceMock.Object, dialogServiceMock.Object);
+                connectStatusServiceMock.Object, dialogServiceMock.Object, timeServiceMock.Object);
+
         }
 
         [TearDown]
@@ -69,6 +74,7 @@ namespace ShareClipbrd.Core.Tests.Services {
         [Test]
         public async Task Send_Common_Big_Data_Test() {
             ClipboardData? receivedClipboard = null;
+            timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
 
             dispatchServiceMock
                 .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
@@ -160,6 +166,7 @@ namespace ShareClipbrd.Core.Tests.Services {
         [Test]
         public async Task Send_Big_File_Test() {
             IList<string>? fileDropList = null;
+            timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
 
             dispatchServiceMock
                 .Setup(x => x.ReceiveFiles(It.IsAny<IList<string>>()))
@@ -368,6 +375,51 @@ namespace ShareClipbrd.Core.Tests.Services {
             connectStatusServiceMock.Verify(x => x.Offline(), Times.Once());
             await server.Stop();
             connectStatusServiceMock.Verify(x => x.Offline(), Times.Exactly(2));
+        }
+
+
+        bool clientConnected = false;
+        async Task AwaitClientConnectStatus(bool isConnected) {
+            var cts = new CancellationTokenSource(5000);
+            while(clientConnected != isConnected && !cts.IsCancellationRequested) {
+                await Task.Delay(10);
+            }
+            Assert.That(clientConnected, Is.EqualTo(isConnected));
+        }
+
+        [Test]
+        public async Task DataClient_Ping_Periodic_Test() {
+            timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(100));
+            clientConnected = false;
+            connectStatusServiceMock
+                .Setup(x => x.ClientOnline())
+                .Callback(() => {
+                    clientConnected = true;
+                    Debug.WriteLine("clientConnected = true");
+                });
+
+            connectStatusServiceMock
+                .Setup(x => x.ClientOffline())
+                .Callback(() => {
+                    clientConnected = false;
+                    Debug.WriteLine("clientConnected = false");
+                });
+
+            server.Start();
+            client.Start();
+
+            await AwaitClientConnectStatus(true);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.Once());
+
+            await Task.Delay(500);
+
+            connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
+            connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.AtLeast(3));
+
+            client.Stop();
+            await server.Stop();
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Net.Sockets;
+using System.Timers;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -11,6 +13,8 @@ namespace ShareClipbrd.Core.Services {
     public interface IDataClient {
         Task SendFileDropList(StringCollection files);
         Task SendData(ClipboardData clipboardData);
+        void Start();
+        void Stop();
     }
 
     public class DataClient : IDataClient {
@@ -18,6 +22,8 @@ namespace ShareClipbrd.Core.Services {
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
         readonly IDialogService dialogService;
+        readonly System.Timers.Timer pingTimer;
+        readonly ITimeService timeService;
         TcpClient client;
         CancellationTokenSource cts;
 
@@ -25,19 +31,25 @@ namespace ShareClipbrd.Core.Services {
             ISystemConfiguration systemConfiguration,
             IProgressService progressService,
             IConnectStatusService connectStatusService,
-            IDialogService dialogService
+            IDialogService dialogService,
+            ITimeService timeService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
             Guard.NotNull(dialogService, nameof(dialogService));
+            Guard.NotNull(timeService, nameof(timeService));
             this.systemConfiguration = systemConfiguration;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
             this.dialogService = dialogService;
+            this.timeService = timeService;
 
             client = new();
             cts = new();
+            pingTimer = new();
+            pingTimer.AutoReset = false;
+            pingTimer.Elapsed += OnPingTimerEvent;
         }
 
         async ValueTask<NetworkStream> Handshake() {
@@ -48,12 +60,13 @@ namespace ShareClipbrd.Core.Services {
                 await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
                 throw new NotSupportedException("Wrong version of the other side");
             }
+            connectStatusService.ClientOnline();
             return stream;
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
-            await Connect();
             try {
+                await Connect();
                 var stream = await Handshake();
                 var fileTransmitter = new FileTransmitter(progressService, stream);
                 await fileTransmitter.Send(fileDropList, cts.Token);
@@ -83,8 +96,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
-            await Connect();
             try {
+                await Connect();
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
                     progressService.SetMaxTick(totalLenght);
@@ -132,25 +145,55 @@ namespace ShareClipbrd.Core.Services {
         }
 
         async Task Connect() {
-            var connected = IsSocketConnected(client.Client);
-            if(!connected) {
-                client.Close();
-                client = new();
-                try {
+            if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
+                pingTimer.Enabled = true;
+                pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
+            }
+            pingTimer.Enabled = false;
+            try {
+                var connected = IsSocketConnected(client.Client);
+                if(!connected) {
+                    connectStatusService.ClientOffline();
+                    client.Close();
+                    client = new();
                     var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
                     await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-                } catch(SocketException) {
-                } catch(IOException ex) {
-                    await dialogService.ShowError(ex);
-                } catch(ArgumentException ex) {
-                    await dialogService.ShowError(ex);
-                } catch(TaskCanceledException) {
                 }
+            } finally {
+                pingTimer.Enabled = true;
             }
         }
 
         static bool IsSocketConnected(Socket s) {
             return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+        }
+
+        async Task Ping() {
+            try {
+                await Connect();
+                if(!IsSocketConnected(client.Client)) {
+                    return;
+                }
+                var stream = await Handshake();
+                var cancellationToken = cts.Token;
+
+                await stream.WriteAsync((Int64)0, cancellationToken);
+                await stream.ReadUInt16Async(cancellationToken);
+            } catch(Exception) {
+            }
+        }
+
+        void OnPingTimerEvent(object? source, ElapsedEventArgs e) {
+            _ = Ping();
+        }
+
+        public void Start() {
+            pingTimer.Enabled = true;
+        }
+
+        public void Stop() {
+            pingTimer.Enabled = false;
+            cts.Cancel();
         }
     }
 }

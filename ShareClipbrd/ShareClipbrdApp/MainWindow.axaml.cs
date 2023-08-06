@@ -79,6 +79,7 @@ namespace ShareClipbrdApp {
         }
 
         void OnClosing(object sender, WindowClosingEventArgs e) {
+            dataClient?.Stop();
             dataServer?.Stop();
             Settings.Default.MainFormLocation = new System.Drawing.Point(Position.X, Position.Y);
             Settings.Default.Save();
@@ -167,6 +168,7 @@ namespace ShareClipbrdApp {
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
             await (dataServer?.Stop() ?? Task.CompletedTask);
             dataServer?.Start();
+            dataClient?.Start();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {
@@ -250,6 +252,10 @@ namespace ShareClipbrdApp {
 
         public void ShowConnectStatus(bool online) {
             crOnline.IsVisible = online;
+        }
+
+        public void ShowClientConnectStatus(bool online) {
+            crClientOnline.IsVisible = online;
         }
     }
 }

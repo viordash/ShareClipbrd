@@ -113,6 +113,12 @@ namespace ShareClipbrd.Core.Services {
                         } catch(EndOfStreamException) {
                             return;
                         }
+
+                        bool ping = total == 0;
+                        if(ping) {
+                            continue;
+                        }
+
                         var format = await ReceiveFormat(stream, cancellationToken);
 
                         if(format == ClipboardFile.Format.FileDrop) {
