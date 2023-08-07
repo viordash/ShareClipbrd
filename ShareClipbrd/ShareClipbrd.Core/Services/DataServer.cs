@@ -105,20 +105,19 @@ namespace ShareClipbrd.Core.Services {
                 }
                 await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
 
+                long total;
+                try {
+                    total = await ReceiveSize(stream, cancellationToken);
+                } catch(EndOfStreamException) {
+                    return;
+                }
+
+                bool ping = total == 0;
+                if(ping) {
+                    continue;
+                }
+
                 await using(progressService.Begin(ProgressMode.Receive)) {
-                    long total;
-                    try {
-                        total = await ReceiveSize(stream, cancellationToken);
-                    } catch(EndOfStreamException) {
-                        return;
-                    }
-
-                    bool ping = total == 0;
-                    if(ping) {
-                        progressService.SetMaxTick(total);
-                        continue;
-                    }
-
                     var format = await ReceiveFormat(stream, cancellationToken);
 
                     if(format == ClipboardFile.Format.FileDrop) {
