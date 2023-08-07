@@ -142,7 +142,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(SocketException ex) {
                 await dialogService.ShowError(ex);
             } catch(IOException ex) {
-                await dialogService.ShowError(ex);
+                Debug.WriteLine($"tcpClient IO exception {ex}");
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(InvalidOperationException ex) {
