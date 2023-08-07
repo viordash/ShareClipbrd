@@ -220,7 +220,7 @@ namespace ShareClipbrdApp {
         }
 
         public void SetProgress(double percent) {
-            Debug.WriteLine($"{percent:0.#####}");
+            // Debug.WriteLine($"{percent:0.#####}");
             using(var pixelsLock = progressBarBitmap!.Lock()) unsafe {
                     var rawBitmapDrawer = new RawBitmapDrawer(progressBar!.Width, progressBar!.Height, pixelsLock.Address);
                     progressBar.SetProgress(percent, rawBitmapDrawer);

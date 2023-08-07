@@ -170,6 +170,10 @@ namespace ShareClipbrd.Core.Services {
                             }
                         } catch(OperationCanceledException ex) {
                             Debug.WriteLine($"tcpServer canceled {ex}");
+                        } catch(EndOfStreamException ex) {
+                            Debug.WriteLine($"tcpServer EndOfStream {ex}");
+                        } catch(IOException ex) {
+                            Debug.WriteLine($"tcpServer IO exception {ex}");
                         } catch(Exception ex) {
                             await dialogService.ShowError(ex);
                         }
