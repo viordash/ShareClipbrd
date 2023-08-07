@@ -65,11 +65,12 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            var cancellationToken = cts.Token;
             try {
                 await Connect();
                 var stream = await Handshake();
                 var fileTransmitter = new FileTransmitter(progressService, stream);
-                await fileTransmitter.Send(fileDropList, cts.Token);
+                await fileTransmitter.Send(fileDropList, cancellationToken);
             } catch(SocketException ex) {
                 await dialogService.ShowError(ex);
             } catch(IOException ex) {
@@ -77,6 +78,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             }
+            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
         }
 
         static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
@@ -96,6 +98,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            var cancellationToken = cts.Token;
             try {
                 await Connect();
                 await using(progressService.Begin(ProgressMode.Send)) {
@@ -103,7 +106,6 @@ namespace ShareClipbrd.Core.Services {
                     progressService.SetMaxTick(totalLenght);
                     var stream = await Handshake();
 
-                    var cancellationToken = cts.Token;
 
                     await stream.WriteAsync(totalLenght, cancellationToken);
                     if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessSize) {
@@ -142,25 +144,18 @@ namespace ShareClipbrd.Core.Services {
             } catch(InvalidOperationException ex) {
                 await dialogService.ShowError(ex);
             }
+            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
         }
 
         async Task Connect() {
-            if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
-                pingTimer.Enabled = true;
-                pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
-            }
             pingTimer.Enabled = false;
-            try {
-                var connected = IsSocketConnected(client.Client);
-                if(!connected) {
-                    connectStatusService.ClientOffline();
-                    client.Close();
-                    client = new();
-                    var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                    await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
-                }
-            } finally {
-                pingTimer.Enabled = true;
+            var connected = IsSocketConnected(client.Client);
+            if(!connected) {
+                connectStatusService.ClientOffline();
+                client.Close();
+                client = new();
+                var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
             }
         }
 
@@ -169,17 +164,21 @@ namespace ShareClipbrd.Core.Services {
         }
 
         async Task Ping() {
+            var cancellationToken = cts.Token;
             try {
                 await Connect();
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
                 var stream = await Handshake();
-                var cancellationToken = cts.Token;
 
                 await stream.WriteAsync((Int64)0, cancellationToken);
                 await stream.ReadUInt16Async(cancellationToken);
             } catch(Exception) {
+            }
+            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+            if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
+                pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
             }
         }
 
@@ -192,8 +191,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public void Stop() {
-            pingTimer.Enabled = false;
             cts.Cancel();
+            pingTimer.Enabled = false;
         }
     }
 }
