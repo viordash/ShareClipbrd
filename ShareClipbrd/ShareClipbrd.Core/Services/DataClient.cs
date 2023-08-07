@@ -65,6 +65,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            cts.Cancel();
+            cts = new();
             var cancellationToken = cts.Token;
             try {
                 await Connect();
@@ -98,6 +100,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            cts.Cancel();
+            cts = new();
             var cancellationToken = cts.Token;
             try {
                 await Connect();
