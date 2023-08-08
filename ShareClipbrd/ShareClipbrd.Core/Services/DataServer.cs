@@ -10,7 +10,7 @@ using ShareClipbrd.Core.Helpers;
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
         void Start();
-        void Stop();
+        Task Stop();
     }
 
     public class DataServer : IDataServer {
@@ -18,22 +18,30 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
+        readonly IConnectStatusService connectStatusService;
         CancellationTokenSource? cts;
+        TaskCompletionSource<bool> tcsStopped;
 
         public DataServer(
             ISystemConfiguration systemConfiguration,
             IDialogService dialogService,
             IDispatchService dispatchService,
-            IProgressService progressService
+            IProgressService progressService,
+            IConnectStatusService connectStatusService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
+            Guard.NotNull(connectStatusService, nameof(connectStatusService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
+            this.connectStatusService = connectStatusService;
+
+            tcsStopped = new TaskCompletionSource<bool>();
+            tcsStopped.TrySetResult(true);
         }
 
         static async ValueTask<MemoryStream> HandleData(NetworkStream stream, int dataSize, CancellationToken cancellationToken) {
@@ -85,18 +93,31 @@ namespace ShareClipbrd.Core.Services {
         async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
             var clipboardData = new ClipboardData();
 
-            var sessionDir = new Lazy<string>(RecreateTempDirectory);
-            await using(progressService.Begin(ProgressMode.Receive)) {
+            connectStatusService.Online();
+
+            while(!cancellationToken.IsCancellationRequested) {
+                var sessionDir = new Lazy<string>(RecreateTempDirectory);
+                var stream = tcpClient.GetStream();
+
+                if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
+                    await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
+                    throw new NotSupportedException("Wrong version of the other side");
+                }
+                await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+
+                long total;
                 try {
-                    var stream = tcpClient.GetStream();
+                    total = await ReceiveSize(stream, cancellationToken);
+                } catch(EndOfStreamException) {
+                    return;
+                }
 
-                    if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
-                        await stream.WriteAsync(CommunProtocol.Error, cancellationToken);
-                        throw new NotSupportedException("Wrong version of the other side");
-                    }
-                    await stream.WriteAsync(CommunProtocol.SuccessVersion, cancellationToken);
+                bool ping = total == 0;
+                if(ping) {
+                    continue;
+                }
 
-                    var total = await ReceiveSize(stream, cancellationToken);
+                await using(progressService.Begin(ProgressMode.Receive)) {
                     var format = await ReceiveFormat(stream, cancellationToken);
 
                     if(format == ClipboardFile.Format.FileDrop) {
@@ -113,17 +134,16 @@ namespace ShareClipbrd.Core.Services {
                             var size = await ReceiveSize(stream, cancellationToken);
                             progressService.Tick(size);
                             clipboardData.Add(format, await HandleData(stream, (int)size, cancellationToken));
+
+                            if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.MoreData) {
+                                break;
+                            }
+
                             format = await ReceiveFormat(stream, cancellationToken);
                         }
                         dispatchService.ReceiveData(clipboardData);
                     }
-
                     Debug.WriteLine($"tcpServer success finished");
-
-                } catch(OperationCanceledException ex) {
-                    Debug.WriteLine($"tcpServer canceled {ex}");
-                } catch(Exception ex) {
-                    await dialogService.ShowError(ex);
                 }
             }
         }
@@ -131,9 +151,9 @@ namespace ShareClipbrd.Core.Services {
         public void Start() {
             cts?.Cancel();
             cts = new CancellationTokenSource();
+            tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
-
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
                         var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
@@ -150,6 +170,10 @@ namespace ShareClipbrd.Core.Services {
                             }
                         } catch(OperationCanceledException ex) {
                             Debug.WriteLine($"tcpServer canceled {ex}");
+                        } catch(EndOfStreamException ex) {
+                            Debug.WriteLine($"tcpServer EndOfStream {ex}");
+                        } catch(IOException ex) {
+                            Debug.WriteLine($"tcpServer IO exception {ex}");
                         } catch(Exception ex) {
                             await dialogService.ShowError(ex);
                         }
@@ -163,13 +187,19 @@ namespace ShareClipbrd.Core.Services {
                     } catch(ArgumentException ex) {
                         await dialogService.ShowError(ex);
                     }
+                    connectStatusService.Offline();
                 }
+                tcsStopped.TrySetResult(true);
             }, cancellationToken);
         }
 
-        public void Stop() {
+        public Task Stop() {
             Debug.WriteLine($"tcpServer request to stop");
             cts?.Cancel();
+            if(tcsStopped.Task.IsCompleted) {
+                connectStatusService.Offline();
+            }
+            return tcsStopped.Task;
         }
     }
 }

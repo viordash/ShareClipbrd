@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -11,6 +12,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ColorTextBlock.Avalonia;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
@@ -60,7 +62,6 @@ namespace ShareClipbrdApp {
             this.dialogService = dialogService;
             this.progressService = progressService;
             this.systemConfiguration = systemConfiguration;
-
             SetProgressMode(ProgressMode.None);
             SetProgress(100.0);
         }
@@ -71,7 +72,6 @@ namespace ShareClipbrdApp {
 
         void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
-            //dataServer?.Start();
             edSettingsProfile.SelectedIndex = systemConfiguration!.SettingsProfile;
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
@@ -79,6 +79,7 @@ namespace ShareClipbrdApp {
         }
 
         void OnClosing(object sender, WindowClosingEventArgs e) {
+            dataClient?.Stop();
             dataServer?.Stop();
             Settings.Default.MainFormLocation = new System.Drawing.Point(Position.X, Position.Y);
             Settings.Default.Save();
@@ -162,11 +163,12 @@ namespace ShareClipbrdApp {
             SettingsUpdated();
         }
 
-        void SettingsUpdated() {
+        async void SettingsUpdated() {
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
-            dataServer?.Stop();
+            await (dataServer?.Stop() ?? Task.CompletedTask);
             dataServer?.Start();
+            dataClient?.Start();
         }
 
         void OnKeyDown(object sender, KeyEventArgs e) {
@@ -213,12 +215,11 @@ namespace ShareClipbrdApp {
                 await dialogService!.ShowError(ex);
             } catch(IOException ex) {
                 await dialogService!.ShowError(ex);
-            } catch(OperationCanceledException) {
             }
         }
 
         public void SetProgress(double percent) {
-            Debug.WriteLine($"{percent:0.#####}");
+            // Debug.WriteLine($"{percent:0.#####}");
             using(var pixelsLock = progressBarBitmap!.Lock()) unsafe {
                     var rawBitmapDrawer = new RawBitmapDrawer(progressBar!.Width, progressBar!.Height, pixelsLock.Address);
                     progressBar.SetProgress(percent, rawBitmapDrawer);
@@ -246,6 +247,14 @@ namespace ShareClipbrdApp {
                     SuperImage.IsVisible = false;
                     break;
             }
+        }
+
+        public void ShowConnectStatus(bool online) {
+            crOnline.IsVisible = online;
+        }
+
+        public void ShowClientConnectStatus(bool online) {
+            crClientOnline.IsVisible = online;
         }
     }
 }
