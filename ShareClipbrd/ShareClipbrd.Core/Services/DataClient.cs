@@ -68,7 +68,7 @@ namespace ShareClipbrd.Core.Services {
             cts.Cancel();
             var inProcess = !pingTimer.Enabled;
             if(inProcess) {
-                Debug.WriteLine("--- inProcess");
+                Debug.WriteLine("--- inProcess 0");
                 await Task.Delay(1000);
             }
             cts = new();
@@ -84,8 +84,11 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
+            } catch(OperationCanceledException) {
+                client.Close();
+            } finally {
+                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
             }
-            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
         }
 
         static async Task SendFormat(string format, NetworkStream stream, CancellationToken cancellationToken) {
@@ -108,7 +111,7 @@ namespace ShareClipbrd.Core.Services {
             cts.Cancel();
             var inProcess = !pingTimer.Enabled;
             if(inProcess) {
-                Debug.WriteLine("--- inProcess");
+                Debug.WriteLine("--- inProcess 0");
                 await Task.Delay(1000);
             }
             cts = new();
@@ -157,8 +160,11 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(InvalidOperationException ex) {
                 await dialogService.ShowError(ex);
+            } catch(OperationCanceledException) {
+                client.Close();
+            } finally {
+                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
             }
-            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
         }
 
         async Task Connect() {
@@ -174,7 +180,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static bool IsSocketConnected(Socket s) {
-            return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+            return s != null && !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
         }
 
         async Task Ping() {
