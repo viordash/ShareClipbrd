@@ -66,6 +66,11 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task SendFileDropList(StringCollection fileDropList) {
             cts.Cancel();
+            var inProcess = !pingTimer.Enabled;
+            if(inProcess) {
+                Debug.WriteLine("--- inProcess");
+                await Task.Delay(1000);
+            }
             cts = new();
             var cancellationToken = cts.Token;
             try {
@@ -101,6 +106,11 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task SendData(ClipboardData clipboardData) {
             cts.Cancel();
+            var inProcess = !pingTimer.Enabled;
+            if(inProcess) {
+                Debug.WriteLine("--- inProcess");
+                await Task.Delay(1000);
+            }
             cts = new();
             var cancellationToken = cts.Token;
             try {
