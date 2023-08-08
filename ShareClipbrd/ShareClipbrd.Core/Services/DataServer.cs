@@ -94,9 +94,9 @@ namespace ShareClipbrd.Core.Services {
             var clipboardData = new ClipboardData();
 
             connectStatusService.Online();
-            var sessionDir = new Lazy<string>(RecreateTempDirectory);
 
             while(!cancellationToken.IsCancellationRequested) {
+                var sessionDir = new Lazy<string>(RecreateTempDirectory);
                 var stream = tcpClient.GetStream();
 
                 if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.Version) {
