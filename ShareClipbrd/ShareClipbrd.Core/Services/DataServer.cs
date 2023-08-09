@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net.Sockets;
 using GuardNet;
+using Makaretu.Dns;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
@@ -148,12 +149,54 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
+        static void ttttt() {
+            Debug.WriteLine("Multicast DNS spike");
+
+
+            var mdns = new MulticastService();
+
+            foreach(var a in MulticastService.GetIPAddresses()) {
+                Debug.WriteLine($"IP address {a}");
+            }
+
+            mdns.QueryReceived += (s, e) => {
+                var names = e.Message.Questions
+                    .Select(q => q.Name + " " + q.Type);
+                Debug.WriteLine($"got a query for {String.Join(", ", names)}");
+            };
+            mdns.AnswerReceived += (s, e) => {
+                var names = e.Message.Answers
+                    .Select(q => q.Name + " " + q.Type)
+                    .Distinct();
+                Debug.WriteLine($"got answer for {String.Join(", ", names)}");
+            };
+            mdns.NetworkInterfaceDiscovered += (s, e) => {
+                foreach(var nic in e.NetworkInterfaces) {
+                    Debug.WriteLine($"discovered NIC '{nic.Name}'");
+                }
+            };
+
+            var sd = new ServiceDiscovery(mdns);
+            sd.Advertise(new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010));
+            sd.Advertise(new ServiceProfile("x1", "_xservice._tcp", 5011));
+            sd.Advertise(new ServiceProfile("x2", "_xservice._tcp", 666));
+            var z1 = new ServiceProfile("z1", "_zservice._udp", 5012);
+            z1.AddProperty("foo", "bar");
+            sd.Advertise(z1);
+
+            mdns.Start();
+        }
+
         public void Start() {
             cts?.Cancel();
             cts = new CancellationTokenSource();
             tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
+
+                ttttt();
+                //await EnumerateAllServicesFromAllHosts();
+
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
                         var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
