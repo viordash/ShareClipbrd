@@ -23,14 +23,19 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public void Advertise(string key, int port) {
-            var service = new ServiceProfile(HashKey(key), serviceName, (ushort)port);
+            var hashKey = HashKey(key);
+            var service = new ServiceProfile(hashKey, serviceName, (ushort)port);
             Debug.WriteLine($"------- Advertise 0 {service.FullyQualifiedName}");
             var sd = new ServiceDiscovery();
             sd.Advertise(service);
         }
 
         public Task<IPEndPoint> Discover(string key) {
+            var hashKey = HashKey(key);
             var tcs = new TaskCompletionSource<IPEndPoint>();
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            cts.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
+
             Debug.WriteLine($"------- dddd 0");
             var sd = new ServiceDiscovery();
             sd.ServiceDiscovered += (s, serviceName) => {
@@ -38,11 +43,19 @@ namespace ShareClipbrd.Core.Services {
             };
 
             sd.ServiceInstanceDiscovered += (s, e) => {
-                Debug.WriteLine($"ServiceInstanceDiscovered {s}  {e}");
-                tcs.TrySetResult(new IPEndPoint(IPAddress.Any, 0));
+                Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
+
+                if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashKey) {
+                    var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
+                    var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
+                    if(srvRecord != null && aRecord != null) {
+                        var ipEndPoint = new IPEndPoint(aRecord.Address, srvRecord.Port);
+                        Debug.WriteLine($"Discover client: {ipEndPoint}");
+                        tcs.TrySetResult(ipEndPoint);
+                    }
+                }
             };
             sd.QueryUnicastServiceInstances(serviceName);
-
 
             Debug.WriteLine($"------- dddd 1");
             return tcs.Task;

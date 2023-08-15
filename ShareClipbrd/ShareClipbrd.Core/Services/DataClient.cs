@@ -178,7 +178,10 @@ namespace ShareClipbrd.Core.Services {
                 connectStatusService.ClientOffline();
                 client.Close();
                 client = new();
-                var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                //var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+
+                var adr = await addressDiscoveryService.Discover(systemConfiguration.PartnerAddress);
+
                 await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
             }
         }
