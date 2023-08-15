@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Guard.Net" Version="3.0.0" />
     <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
-    <PackageReference Include="System.IO.Hashing" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="InternalsVisibleTo">

@@ -1,6 +1,5 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
 using GuardNet;
 using Makaretu.Dns;
@@ -21,7 +20,6 @@ namespace ShareClipbrd.Core.Services {
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
-        readonly IAddressDiscoveryService addressDiscoveryService;
         CancellationTokenSource? cts;
         TaskCompletionSource<bool> tcsStopped;
 
@@ -30,21 +28,18 @@ namespace ShareClipbrd.Core.Services {
             IDialogService dialogService,
             IDispatchService dispatchService,
             IProgressService progressService,
-            IConnectStatusService connectStatusService,
-            IAddressDiscoveryService addressDiscoveryService
+            IConnectStatusService connectStatusService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
-            Guard.NotNull(addressDiscoveryService, nameof(addressDiscoveryService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
-            this.addressDiscoveryService = addressDiscoveryService;
 
             tcsStopped = new TaskCompletionSource<bool>();
             tcsStopped.TrySetResult(true);
@@ -181,50 +176,15 @@ namespace ShareClipbrd.Core.Services {
                 }
             };
 
-            //var sd = new ServiceDiscovery(mdns);
-            //sd.Advertise(new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010));
-            //sd.Advertise(new ServiceProfile("x1", "_xservice._tcp", 5011));
-            //sd.Advertise(new ServiceProfile("x2", "_xservice._tcp", 666));
-            //var z1 = new ServiceProfile("z1", "_zservice._udp", 5012);
-            //z1.AddProperty("foo", "bar");
-            //sd.Advertise(z1);
+            var sd = new ServiceDiscovery(mdns);
+            sd.Advertise(new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010));
+            sd.Advertise(new ServiceProfile("x1", "_xservice._tcp", 5011));
+            sd.Advertise(new ServiceProfile("x2", "_xservice._tcp", 666));
+            var z1 = new ServiceProfile("z1", "_zservice._udp", 5012);
+            z1.AddProperty("foo", "bar");
+            sd.Advertise(z1);
 
             mdns.Start();
-        }
-
-
-        async Task dddd() {
-            Debug.WriteLine($"------- dddd 0");
-            var sd = new ServiceDiscovery();
-            sd.ServiceDiscovered += (s, serviceName) => {
-                Debug.WriteLine($"ServiceDiscovered {s}  {serviceName}");
-            };
-
-            sd.ServiceInstanceDiscovered += (s, e) => {
-                Debug.WriteLine($"ServiceInstanceDiscovered {s}  {e}");
-            };
-            sd.QueryUnicastServiceInstances("_zservice._tcp");
-            //sd.QueryAllServices();
-            Debug.WriteLine($"------- dddd 1");
-            await Task.Delay(30000);
-            Debug.WriteLine($"------- dddd 2");
-
-            //var service = new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 1024);
-            //var sd = new ServiceDiscovery();
-            //sd.Advertise(service);
-
-
-
-            //var service = "_ipfs-discovery._udp1";
-            //var query = new Message();
-            //query.Questions.Add(new Question { Name = service, Type = DnsType.ANY });
-            //var cancellation = new CancellationTokenSource(2000);
-
-            //using(var mdns = new MulticastService()) {
-            //    mdns.Start();
-            //    var response = await mdns.ResolveAsync(query, cancellation.Token);
-            //    // Do something
-            //}
         }
 
         public void Start() {
@@ -234,19 +194,16 @@ namespace ShareClipbrd.Core.Services {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
-                //var adr1 = await addressDiscoveryService.DiscoverClient(systemConfiguration.HostAddress);
-                //ttttt();
-                //await dddd();
+                ttttt();
+                //await EnumerateAllServicesFromAllHosts();
 
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
                         var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
-                        var tcpServer = new TcpListener(adr.Address, 0);
+                        var tcpServer = new TcpListener(adr.Address, adr.Port);
                         try {
                             Debug.WriteLine($"start tcpServer: {adr}");
                             tcpServer.Start();
-
-                            addressDiscoveryService.Advertise(systemConfiguration.HostAddress, ((IPEndPoint)tcpServer.LocalEndpoint).Port);
 
                             while(!cancellationToken.IsCancellationRequested) {
                                 using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);
