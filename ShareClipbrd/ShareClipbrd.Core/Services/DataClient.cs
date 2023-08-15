@@ -24,6 +24,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly System.Timers.Timer pingTimer;
         readonly ITimeService timeService;
+        readonly IAddressDiscoveryService addressDiscoveryService;
         TcpClient client;
         CancellationTokenSource cts;
 
@@ -32,18 +33,21 @@ namespace ShareClipbrd.Core.Services {
             IProgressService progressService,
             IConnectStatusService connectStatusService,
             IDialogService dialogService,
-            ITimeService timeService
+            ITimeService timeService,
+            IAddressDiscoveryService addressDiscoveryService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(timeService, nameof(timeService));
+            Guard.NotNull(addressDiscoveryService, nameof(addressDiscoveryService));
             this.systemConfiguration = systemConfiguration;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
             this.dialogService = dialogService;
             this.timeService = timeService;
+            this.addressDiscoveryService = addressDiscoveryService;
 
             client = new();
             cts = new();
