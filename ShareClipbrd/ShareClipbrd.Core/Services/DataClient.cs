@@ -192,7 +192,14 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static bool IsSocketConnected(Socket s) {
-            return s != null && !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+            if(s == null) {
+                return false;
+            }
+            try {
+                return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+            } catch(ObjectDisposedException) {
+                return false;
+            }
         }
 
         async Task Ping() {
