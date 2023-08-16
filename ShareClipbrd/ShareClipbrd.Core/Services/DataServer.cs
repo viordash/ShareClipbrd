@@ -154,79 +154,6 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        static void ttttt() {
-            Debug.WriteLine("Multicast DNS spike");
-
-
-            var mdns = new MulticastService();
-
-            foreach(var a in MulticastService.GetIPAddresses()) {
-                Debug.WriteLine($"IP address {a}");
-            }
-
-            mdns.QueryReceived += (s, e) => {
-                var names = e.Message.Questions
-                    .Select(q => q.Name + " " + q.Type);
-                Debug.WriteLine($"got a query for {String.Join(", ", names)}");
-            };
-            mdns.AnswerReceived += (s, e) => {
-                var names = e.Message.Answers
-                    .Select(q => q.Name + " " + q.Type)
-                    .Distinct();
-                Debug.WriteLine($"got answer for {String.Join(", ", names)}");
-            };
-            mdns.NetworkInterfaceDiscovered += (s, e) => {
-                foreach(var nic in e.NetworkInterfaces) {
-                    Debug.WriteLine($"discovered NIC '{nic.Name}'");
-                }
-            };
-
-            //var sd = new ServiceDiscovery(mdns);
-            //sd.Advertise(new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 5010));
-            //sd.Advertise(new ServiceProfile("x1", "_xservice._tcp", 5011));
-            //sd.Advertise(new ServiceProfile("x2", "_xservice._tcp", 666));
-            //var z1 = new ServiceProfile("z1", "_zservice._udp", 5012);
-            //z1.AddProperty("foo", "bar");
-            //sd.Advertise(z1);
-
-            mdns.Start();
-        }
-
-
-        async Task dddd() {
-            Debug.WriteLine($"------- dddd 0");
-            var sd = new ServiceDiscovery();
-            sd.ServiceDiscovered += (s, serviceName) => {
-                Debug.WriteLine($"ServiceDiscovered {s}  {serviceName}");
-            };
-
-            sd.ServiceInstanceDiscovered += (s, e) => {
-                Debug.WriteLine($"ServiceInstanceDiscovered {s}  {e}");
-            };
-            sd.QueryUnicastServiceInstances("_zservice._tcp");
-            //sd.QueryAllServices();
-            Debug.WriteLine($"------- dddd 1");
-            await Task.Delay(30000);
-            Debug.WriteLine($"------- dddd 2");
-
-            //var service = new ServiceProfile("ipfs1", "_ipfs-discovery._udp", 1024);
-            //var sd = new ServiceDiscovery();
-            //sd.Advertise(service);
-
-
-
-            //var service = "_ipfs-discovery._udp1";
-            //var query = new Message();
-            //query.Questions.Add(new Question { Name = service, Type = DnsType.ANY });
-            //var cancellation = new CancellationTokenSource(2000);
-
-            //using(var mdns = new MulticastService()) {
-            //    mdns.Start();
-            //    var response = await mdns.ResolveAsync(query, cancellation.Token);
-            //    // Do something
-            //}
-        }
-
         public void Start() {
             cts?.Cancel();
             cts = new CancellationTokenSource();
@@ -234,19 +161,25 @@ namespace ShareClipbrd.Core.Services {
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
-                //var adr1 = await addressDiscoveryService.DiscoverClient(systemConfiguration.HostAddress);
-                //ttttt();
-                //await dddd();
-
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
-                        var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
-                        var tcpServer = new TcpListener(adr.Address, 0);
-                        try {
-                            Debug.WriteLine($"start tcpServer: {adr}");
-                            tcpServer.Start();
+                        string hostAddress;
+                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id);
+                        if(useAddressDiscoveryService) {
+                            hostAddress = NetworkHelper.PublicIP;
+                        } else {
+                            hostAddress = systemConfiguration.HostAddress;
+                        }
+                        var ipEndPoint = NetworkHelper.ResolveHostName(hostAddress);
 
-                            addressDiscoveryService.Advertise(systemConfiguration.HostAddress, ((IPEndPoint)tcpServer.LocalEndpoint).Port);
+                        var tcpServer = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
+                        try {
+                            tcpServer.Start();
+                            Debug.WriteLine($"start tcpServer: {((IPEndPoint)tcpServer.LocalEndpoint)}");
+
+                            if(useAddressDiscoveryService) {
+                                addressDiscoveryService.Advertise(id, ((IPEndPoint)tcpServer.LocalEndpoint).Port);
+                            }
 
                             while(!cancellationToken.IsCancellationRequested) {
                                 using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);

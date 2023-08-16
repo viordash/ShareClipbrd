@@ -25,12 +25,13 @@ namespace ShareClipbrd.Core.Services {
         public void Advertise(string id, int port) {
             var hashId = HashId(id);
             var service = new ServiceProfile(hashId, serviceName, (ushort)port);
-            Debug.WriteLine($"------- Advertise 0 {service.FullyQualifiedName}");
+            Debug.WriteLine($"Advertise id:{id}, service:{service.FullyQualifiedName}");
             var sd = new ServiceDiscovery();
             sd.Advertise(service);
         }
 
         public async Task<IPEndPoint> Discover(string id) {
+            Debug.WriteLine($"Discover id:{id}");
             var hashId = HashId(id);
             var tcs = new TaskCompletionSource<IPEndPoint>();
             using var sd = new ServiceDiscovery();

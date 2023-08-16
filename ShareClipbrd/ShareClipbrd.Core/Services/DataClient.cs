@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Timers;
 using GuardNet;
@@ -178,11 +179,15 @@ namespace ShareClipbrd.Core.Services {
                 connectStatusService.ClientOffline();
                 client.Close();
                 client = new();
-                //var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
 
-                var adr = await addressDiscoveryService.Discover(systemConfiguration.PartnerAddress);
+                IPEndPoint ipEndPoint;
+                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id)) {
+                    ipEndPoint = await addressDiscoveryService.Discover(id);
+                } else {
+                    ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                }
 
-                await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cts.Token);
             }
         }
 
