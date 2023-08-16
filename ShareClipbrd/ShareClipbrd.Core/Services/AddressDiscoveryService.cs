@@ -6,8 +6,8 @@ using Makaretu.Dns;
 
 namespace ShareClipbrd.Core.Services {
     public interface IAddressDiscoveryService {
-        Task<IPEndPoint> Discover(string key);
-        void Advertise(string key, int port);
+        Task<IPEndPoint> Discover(string id);
+        void Advertise(string id, int port);
     }
 
     public class AddressDiscoveryService : IAddressDiscoveryService {
@@ -15,30 +15,30 @@ namespace ShareClipbrd.Core.Services {
 
         public AddressDiscoveryService() { }
 
-        static string HashKey(string key) {
-            var bytes = Encoding.ASCII.GetBytes(key);
+        static string HashId(string id) {
+            var bytes = Encoding.ASCII.GetBytes(id);
             var hash = Crc32.Hash(bytes);
             var b64 = Convert.ToBase64String(hash);
             return b64;
         }
 
-        public void Advertise(string key, int port) {
-            var hashKey = HashKey(key);
-            var service = new ServiceProfile(hashKey, serviceName, (ushort)port);
+        public void Advertise(string id, int port) {
+            var hashId = HashId(id);
+            var service = new ServiceProfile(hashId, serviceName, (ushort)port);
             Debug.WriteLine($"------- Advertise 0 {service.FullyQualifiedName}");
             var sd = new ServiceDiscovery();
             sd.Advertise(service);
         }
 
-        public async Task<IPEndPoint> Discover(string key) {
-            var hashKey = HashKey(key);
+        public async Task<IPEndPoint> Discover(string id) {
+            var hashId = HashId(id);
             var tcs = new TaskCompletionSource<IPEndPoint>();
             using var sd = new ServiceDiscovery();
 
             sd.ServiceInstanceDiscovered += (s, e) => {
                 Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
 
-                if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashKey) {
+                if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
                     var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
                     var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
                     if(srvRecord != null && aRecord != null) {
