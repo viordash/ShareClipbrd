@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Net.Sockets;
-
-namespace ShareClipbrd.Core.Services {
+﻿namespace ShareClipbrd.Core.Services {
     public class AddressResolver {
         public const string TagDiscoveryService = "mdns:";
 
