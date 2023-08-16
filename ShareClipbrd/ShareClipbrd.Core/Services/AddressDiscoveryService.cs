@@ -30,17 +30,10 @@ namespace ShareClipbrd.Core.Services {
             sd.Advertise(service);
         }
 
-        public Task<IPEndPoint> Discover(string key) {
+        public async Task<IPEndPoint> Discover(string key) {
             var hashKey = HashKey(key);
             var tcs = new TaskCompletionSource<IPEndPoint>();
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            cts.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
-
-            Debug.WriteLine($"------- dddd 0");
-            var sd = new ServiceDiscovery();
-            sd.ServiceDiscovered += (s, serviceName) => {
-                Debug.WriteLine($"ServiceDiscovered {s}  {serviceName}");
-            };
+            using var sd = new ServiceDiscovery();
 
             sd.ServiceInstanceDiscovered += (s, e) => {
                 Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
@@ -57,8 +50,12 @@ namespace ShareClipbrd.Core.Services {
             };
             sd.QueryUnicastServiceInstances(serviceName);
 
-            Debug.WriteLine($"------- dddd 1");
-            return tcs.Task;
+            var delayTask = Task.Run(async () => {
+                await Task.Delay(2000);
+                return await Task.FromException<IPEndPoint>(new OperationCanceledException());
+            });
+            var res = await Task.WhenAny(delayTask, tcs.Task).Unwrap();
+            return res;
         }
     }
 }
