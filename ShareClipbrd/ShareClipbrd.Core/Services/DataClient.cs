@@ -181,7 +181,10 @@ namespace ShareClipbrd.Core.Services {
                 client = new();
 
                 IPEndPoint ipEndPoint;
-                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id)) {
+                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
+                    if(mandatoryPort.HasValue) {
+                        throw new ArgumentException("mdns port for the partner address is not needed");
+                    }
                     ipEndPoint = await addressDiscoveryService.Discover(id);
                 } else {
                     ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
@@ -213,6 +216,8 @@ namespace ShareClipbrd.Core.Services {
 
                 await stream.WriteAsync((Int64)0, cancellationToken);
                 await stream.ReadUInt16Async(cancellationToken);
+            } catch(ArgumentException ex) {
+                await dialogService.ShowError(ex);
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;

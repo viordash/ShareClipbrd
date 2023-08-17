@@ -163,14 +163,18 @@ namespace ShareClipbrd.Core.Services {
 
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
-                        string hostAddress;
-                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id);
+                        IPEndPoint ipEndPoint;
+                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id, out int? mandatoryPort);
                         if(useAddressDiscoveryService) {
-                            hostAddress = NetworkHelper.PublicIP;
+                            if(mandatoryPort.HasValue) {
+                                ipEndPoint = new IPEndPoint(IPAddress.Any, mandatoryPort.Value);
+                            } else {
+                                ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                            }
                         } else {
-                            hostAddress = systemConfiguration.HostAddress;
+                            ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
                         }
-                        var ipEndPoint = NetworkHelper.ResolveHostName(hostAddress);
+
 
                         var tcpServer = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
                         try {
