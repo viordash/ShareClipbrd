@@ -14,6 +14,7 @@ namespace ShareClipbrd.Core.Tests.Services {
         Mock<IProgressService> progressServiceMock;
         Mock<IConnectStatusService> connectStatusServiceMock;
         Mock<ITimeService> timeServiceMock;
+        Mock<IAddressDiscoveryService> addressDiscoveryServiceMock;
         DataServer server;
         DataClient client;
 
@@ -26,15 +27,16 @@ namespace ShareClipbrd.Core.Tests.Services {
             progressServiceMock = new();
             connectStatusServiceMock = new();
             timeServiceMock = new();
+            addressDiscoveryServiceMock = new();
             timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
-                progressServiceMock.Object, connectStatusServiceMock.Object);
+                progressServiceMock.Object, connectStatusServiceMock.Object, addressDiscoveryServiceMock.Object);
             client = new DataClient(systemConfigurationMock.Object, progressServiceMock.Object,
-                connectStatusServiceMock.Object, dialogServiceMock.Object, timeServiceMock.Object);
+                connectStatusServiceMock.Object, dialogServiceMock.Object, timeServiceMock.Object, addressDiscoveryServiceMock.Object);
 
         }
 

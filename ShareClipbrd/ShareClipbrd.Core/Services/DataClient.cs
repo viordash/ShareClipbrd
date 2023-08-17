@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using System.Timers;
 using GuardNet;
@@ -24,6 +25,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IDialogService dialogService;
         readonly System.Timers.Timer pingTimer;
         readonly ITimeService timeService;
+        readonly IAddressDiscoveryService addressDiscoveryService;
         TcpClient client;
         CancellationTokenSource cts;
 
@@ -32,18 +34,21 @@ namespace ShareClipbrd.Core.Services {
             IProgressService progressService,
             IConnectStatusService connectStatusService,
             IDialogService dialogService,
-            ITimeService timeService
+            ITimeService timeService,
+            IAddressDiscoveryService addressDiscoveryService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(timeService, nameof(timeService));
+            Guard.NotNull(addressDiscoveryService, nameof(addressDiscoveryService));
             this.systemConfiguration = systemConfiguration;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
             this.dialogService = dialogService;
             this.timeService = timeService;
+            this.addressDiscoveryService = addressDiscoveryService;
 
             client = new();
             cts = new();
@@ -174,13 +179,27 @@ namespace ShareClipbrd.Core.Services {
                 connectStatusService.ClientOffline();
                 client.Close();
                 client = new();
-                var adr = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                await client.ConnectAsync(adr.Address, adr.Port, cts.Token);
+
+                IPEndPoint ipEndPoint;
+                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id)) {
+                    ipEndPoint = await addressDiscoveryService.Discover(id);
+                } else {
+                    ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+                }
+
+                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cts.Token);
             }
         }
 
         static bool IsSocketConnected(Socket s) {
-            return s != null && !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+            if(s == null) {
+                return false;
+            }
+            try {
+                return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+            } catch(ObjectDisposedException) {
+                return false;
+            }
         }
 
         async Task Ping() {

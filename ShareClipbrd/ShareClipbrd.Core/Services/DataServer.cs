@@ -1,7 +1,9 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using GuardNet;
+using Makaretu.Dns;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
@@ -19,6 +21,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IDispatchService dispatchService;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
+        readonly IAddressDiscoveryService addressDiscoveryService;
         CancellationTokenSource? cts;
         TaskCompletionSource<bool> tcsStopped;
 
@@ -27,18 +30,21 @@ namespace ShareClipbrd.Core.Services {
             IDialogService dialogService,
             IDispatchService dispatchService,
             IProgressService progressService,
-            IConnectStatusService connectStatusService
+            IConnectStatusService connectStatusService,
+            IAddressDiscoveryService addressDiscoveryService
             ) {
             Guard.NotNull(systemConfiguration, nameof(systemConfiguration));
             Guard.NotNull(dialogService, nameof(dialogService));
             Guard.NotNull(dispatchService, nameof(dispatchService));
             Guard.NotNull(progressService, nameof(progressService));
             Guard.NotNull(connectStatusService, nameof(connectStatusService));
+            Guard.NotNull(addressDiscoveryService, nameof(addressDiscoveryService));
             this.systemConfiguration = systemConfiguration;
             this.dialogService = dialogService;
             this.dispatchService = dispatchService;
             this.progressService = progressService;
             this.connectStatusService = connectStatusService;
+            this.addressDiscoveryService = addressDiscoveryService;
 
             tcsStopped = new TaskCompletionSource<bool>();
             tcsStopped.TrySetResult(true);
@@ -154,13 +160,26 @@ namespace ShareClipbrd.Core.Services {
             tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
+
                 while(!cancellationToken.IsCancellationRequested) {
                     try {
-                        var adr = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
-                        var tcpServer = new TcpListener(adr.Address, adr.Port);
+                        string hostAddress;
+                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id);
+                        if(useAddressDiscoveryService) {
+                            hostAddress = NetworkHelper.PublicIP;
+                        } else {
+                            hostAddress = systemConfiguration.HostAddress;
+                        }
+                        var ipEndPoint = NetworkHelper.ResolveHostName(hostAddress);
+
+                        var tcpServer = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
                         try {
-                            Debug.WriteLine($"start tcpServer: {adr}");
                             tcpServer.Start();
+                            Debug.WriteLine($"start tcpServer: {((IPEndPoint)tcpServer.LocalEndpoint)}");
+
+                            if(useAddressDiscoveryService) {
+                                addressDiscoveryService.Advertise(id, ((IPEndPoint)tcpServer.LocalEndpoint).Port);
+                            }
 
                             while(!cancellationToken.IsCancellationRequested) {
                                 using var tcpClient = await tcpServer.AcceptTcpClientAsync(cancellationToken);

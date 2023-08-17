@@ -3,6 +3,8 @@ using System.Net.Sockets;
 
 namespace ShareClipbrd.Core.Helpers {
     public class NetworkHelper {
+        public const string PublicIP = ":0";
+
         public static IPEndPoint ResolveHostName(string hostname) {
             int portStart = hostname.LastIndexOf(':');
             if(!int.TryParse(hostname[(portStart + 1)..], out int port)) {
