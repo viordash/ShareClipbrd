@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShareClipbrdApp.Tests", "Sh
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clipboard.Core", "Clipboard.Core\Clipboard.Core.csproj", "{0733CED8-2412-4C6F-A52E-B439796F2A24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clipboard.Win", "Clipboard.Win\Clipboard.Win.csproj", "{251A7D92-5357-489B-ACED-6B5310FA0C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clipboard", "Clipboard\Clipboard.csproj", "{2D05A457-0636-4689-B96E-30872DB89158}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{0733CED8-2412-4C6F-A52E-B439796F2A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0733CED8-2412-4C6F-A52E-B439796F2A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0733CED8-2412-4C6F-A52E-B439796F2A24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{251A7D92-5357-489B-ACED-6B5310FA0C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{251A7D92-5357-489B-ACED-6B5310FA0C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{251A7D92-5357-489B-ACED-6B5310FA0C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{251A7D92-5357-489B-ACED-6B5310FA0C07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D05A457-0636-4689-B96E-30872DB89158}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D05A457-0636-4689-B96E-30872DB89158}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D05A457-0636-4689-B96E-30872DB89158}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D05A457-0636-4689-B96E-30872DB89158}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

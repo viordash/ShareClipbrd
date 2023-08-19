@@ -6,8 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Clipboard.Core\Clipboard.Core.csproj" />
+  </ItemGroup>
+
+
   <ItemGroup Label="InternalsVisibleTo">
-    <InternalsVisibleTo Include="Clipboard.Win" />
+    <InternalsVisibleTo Include="Clipboard.Core" />
     <InternalsVisibleTo Include="Clipboard" />
   </ItemGroup>
 </Project>
