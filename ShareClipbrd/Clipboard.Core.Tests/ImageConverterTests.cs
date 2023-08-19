@@ -1,8 +1,6 @@
-using System.Linq;
-using ShareClipbrd.Core.Clipboard;
-using ShareClipbrd.Core.Helpers;
+using Clipboard.Core.Helpers;
 
-namespace ShareClipbrd.Core.Tests.Clipboard {
+namespace Clipboard.Core.Tests {
     public class ImageConverterTests {
 
         [Test]
