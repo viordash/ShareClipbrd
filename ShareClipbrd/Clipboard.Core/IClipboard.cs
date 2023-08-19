@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShareClipbrd.Clipboard.Core {
+namespace Clipboard.Core {
     internal interface IClipboard {
         Task<string[]> GetFormatsAsync();
         Task<bool> ContainsFileDropList();

@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using ShareClipbrd.Clipboard.Core.Helpers;
+using Clipboard.Core.Helpers;
 
-namespace ShareClipbrd.Clipboard.Core {
+namespace Clipboard.Core {
     public enum BitmapCompressionMode : uint {
         BI_RGB = 0,
         BI_RLE8 = 1,

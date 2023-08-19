@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace ShareClipbrd.Clipboard.Core {
+namespace Clipboard.Core {
     public class ClipboardData {
         public record Item {
             public string Format { get; set; }

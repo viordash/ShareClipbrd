@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ShareClipbrd.Clipboard.Core.Helpers {
+namespace Clipboard.Core.Helpers {
     public class StructHelper {
         public static uint Size<T>() {
             return (uint)Marshal.SizeOf<T>();

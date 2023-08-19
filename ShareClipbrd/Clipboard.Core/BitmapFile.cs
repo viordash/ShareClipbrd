@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using ShareClipbrd.Clipboard.Core.Helpers;
+using Clipboard.Core.Helpers;
 
-namespace ShareClipbrd.Clipboard.Core {
+namespace Clipboard.Core {
     public class BitmapFile {
         [StructLayout(LayoutKind.Sequential, Pack = 2)]
         public struct BITMAPFILEHEADER {

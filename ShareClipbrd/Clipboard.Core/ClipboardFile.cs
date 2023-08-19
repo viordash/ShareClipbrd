@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ShareClipbrd.Clipboard.Core {
+namespace Clipboard.Core {
     public class ClipboardFile {
         public class Convert {
             public Func<StringCollection, Func<string, Task<object?>>, Task<bool>> From { get; set; }
