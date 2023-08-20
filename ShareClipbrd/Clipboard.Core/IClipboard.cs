@@ -5,5 +5,10 @@
         Task<bool> ContainsImage();
 
         Task<object?> GetData(string format);
+
+        Task Clear();
+        Task SetDataObject(object data);
+        Task SetFileDropList(IList<string> files);
+        Task SetAudio(byte[] audioBytes);
     }
 }

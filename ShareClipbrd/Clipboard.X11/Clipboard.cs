@@ -2,6 +2,10 @@
 
 namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
+        public Task Clear() {
+            throw new NotImplementedException();
+        }
+
         public Task<bool> ContainsFileDropList() {
             return Task.FromResult(false);
         }
@@ -16,6 +20,18 @@ namespace Clipboard.OS {
 
         public Task<string[]> GetFormats() {
             return Task.FromResult(Array.Empty<string>());
+        }
+
+        public Task SetAudio(byte[] audioBytes) {
+            throw new NotImplementedException();
+        }
+
+        public Task SetDataObject(object data) {
+            throw new NotImplementedException();
+        }
+
+        public Task SetFileDropList(IList<string> files) {
+            throw new NotImplementedException();
         }
     }
 }
