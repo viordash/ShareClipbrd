@@ -1,7 +1,7 @@
 using System.Text;
 using Clipboard;
 
-namespace ShareClipbrd.Core.Tests.Clipboard {
+namespace Clipboard.Tests {
     public class ClipboardDataTests {
 
         ClipboardData testable;
