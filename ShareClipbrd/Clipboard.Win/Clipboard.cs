@@ -1,26 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Clipboard.Core;
+﻿using Clipboard.Core;
 
-namespace Clipboard.Win {
+namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
         public Task<bool> ContainsFileDropList() {
-            throw new NotImplementedException();
+            return Task.FromResult(System.Windows.Clipboard.ContainsFileDropList());
         }
 
         public Task<bool> ContainsImage() {
-            throw new NotImplementedException();
+            return Task.FromResult(System.Windows.Clipboard.ContainsImage());
         }
 
-        public Task<object?> GetData(string format) {
-            throw new NotImplementedException();
+        public Task<object> GetData(string format) {
+            return Task.FromResult(System.Windows.Clipboard.GetData(format));
         }
 
         public Task<string[]> GetFormatsAsync() {
-            throw new NotImplementedException();
+            var dataObject = System.Windows.Clipboard.GetDataObject();
+            var formats = dataObject?.GetFormats() ?? Array.Empty<string>();
+            return Task.FromResult(formats);
         }
     }
 }
