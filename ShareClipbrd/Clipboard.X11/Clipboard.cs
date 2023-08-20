@@ -1,7 +1,14 @@
-﻿using Clipboard.Core;
+﻿using Avalonia;
+using Avalonia.X11;
+using Clipboard.Core;
 
 namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
+        public Clipboard(object? parent) {
+            var platform = parent as AvaloniaX11Platform;
+            AvaloniaX11PlatformExtensions.InitializeX11Platform();
+        }
+
         public Task Clear() {
             throw new NotImplementedException();
         }

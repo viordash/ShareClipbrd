@@ -2,6 +2,9 @@
 
 namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
+        public Clipboard(object? parent) {
+            
+        }
         public Task Clear() {
             System.Windows.Clipboard.Clear();
             return Task.CompletedTask;

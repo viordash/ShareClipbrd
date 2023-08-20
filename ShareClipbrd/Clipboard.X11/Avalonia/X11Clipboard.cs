@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using static Avalonia.X11.XLib;
-namespace Avalonia.X11
-{
+namespace Avalonia.X11 {
     internal class X11Clipboard : IClipboard
     {
         #region inner classes

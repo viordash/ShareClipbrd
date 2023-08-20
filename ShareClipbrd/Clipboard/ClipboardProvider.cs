@@ -9,7 +9,7 @@ namespace Clipboard {
                 return current;
             }
 
-            current = new OS.Clipboard();
+            current = new OS.Clipboard(parent);
             return current;
         }
     }
