@@ -9,6 +9,7 @@
   <ItemGroup Label="InternalsVisibleTo">
     <InternalsVisibleTo Include="Clipboard.Core.Tests" />
     <InternalsVisibleTo Include="Clipboard.Win" />
+    <InternalsVisibleTo Include="Clipboard.X11" />
     <InternalsVisibleTo Include="Clipboard" />
   </ItemGroup>
 </Project>

@@ -11,8 +11,12 @@
     <ProjectReference Include="..\Clipboard.Core\Clipboard.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="$(TargetFramework.Contains('-windows')) != false ">
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
     <ProjectReference Include="..\Clipboard.Win\Clipboard.Win.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::IsOSUnixLike())">
+    <ProjectReference Include="..\Clipboard.Win\Clipboard.X11.csproj" />
   </ItemGroup>
 
 </Project>
