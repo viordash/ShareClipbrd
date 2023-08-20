@@ -10,4 +10,7 @@
     <ProjectReference Include="..\Clipboard.Core\Clipboard.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup Label="InternalsVisibleTo">
+    <InternalsVisibleTo Include="Clipboard" />
+  </ItemGroup>
 </Project>

@@ -13,7 +13,6 @@
 
 
   <ItemGroup Label="InternalsVisibleTo">
-    <InternalsVisibleTo Include="Clipboard.Core" />
     <InternalsVisibleTo Include="Clipboard" />
   </ItemGroup>
 </Project>
