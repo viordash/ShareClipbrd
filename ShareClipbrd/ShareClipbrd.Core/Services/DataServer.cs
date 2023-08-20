@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Clipboard;
 using GuardNet;
-using Makaretu.Dns;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;

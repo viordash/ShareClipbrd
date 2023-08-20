@@ -1,5 +1,5 @@
 using System.Text;
-using ShareClipbrd.Core.Clipboard;
+using Clipboard;
 
 namespace ShareClipbrd.Core.Tests.Clipboard {
     public class ClipboardDataTests {

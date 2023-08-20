@@ -11,5 +11,6 @@
     <InternalsVisibleTo Include="Clipboard.Win" />
     <InternalsVisibleTo Include="Clipboard.X11" />
     <InternalsVisibleTo Include="Clipboard" />
+    <InternalsVisibleTo Include="ShareClipbrdApp" />
   </ItemGroup>
 </Project>

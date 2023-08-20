@@ -1,9 +1,8 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
+using Clipboard;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;

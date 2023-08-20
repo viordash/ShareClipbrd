@@ -1,4 +1,4 @@
-﻿using ShareClipbrd.Core.Clipboard;
+﻿using Clipboard;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDispatchService {

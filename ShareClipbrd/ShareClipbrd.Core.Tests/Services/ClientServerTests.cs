@@ -1,7 +1,7 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
+using Clipboard;
 using Moq;
-using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;

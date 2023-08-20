@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ShareClipbrd.Core\ShareClipbrd.Core.csproj" />
+    <ProjectReference Include="..\Clipboard\Clipboard.csproj" />
   </ItemGroup>
 
   <ItemGroup>

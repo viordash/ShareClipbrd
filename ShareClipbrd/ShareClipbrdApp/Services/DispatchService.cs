@@ -9,7 +9,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using ShareClipbrd.Core.Clipboard;
+using Clipboard;
 using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrdApp.Services {
