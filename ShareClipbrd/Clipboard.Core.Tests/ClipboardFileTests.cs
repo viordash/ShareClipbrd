@@ -1,6 +1,4 @@
-﻿using Clipboard;
-
-namespace Clipboard.Tests {
+﻿namespace Clipboard.Core.Tests {
     public class ClipboardFileTests {
 
         static Func<string, Task<object?>> getDataFunc(string format, object? obj) {

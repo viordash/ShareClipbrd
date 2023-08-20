@@ -1,7 +1,6 @@
 using System.Text;
-using Clipboard.Core;
 
-namespace Clipboard.Tests {
+namespace Clipboard.Core.Tests {
     public class ClipboardDataTests {
 
         ClipboardData testable;

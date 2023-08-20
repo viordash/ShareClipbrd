@@ -1,6 +1,6 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
-using Clipboard;
+using Clipboard.Core;
 using Moq;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Helpers;
