@@ -26,7 +26,7 @@ namespace Clipboard.OS {
             throw new NotImplementedException();
         }
 
-        public Task SetDataObject(object data) {
+        public Task SetDataObject(ClipboardData data) {
             throw new NotImplementedException();
         }
 

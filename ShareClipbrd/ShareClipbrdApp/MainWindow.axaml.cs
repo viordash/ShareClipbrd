@@ -13,6 +13,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Clipboard;
+using Clipboard.Core;
 using GuardNet;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;

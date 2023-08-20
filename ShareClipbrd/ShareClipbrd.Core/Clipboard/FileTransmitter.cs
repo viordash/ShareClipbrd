@@ -2,7 +2,7 @@
 using System.Collections.Specialized;
 using System.Net.Sockets;
 using System.Text;
-using Clipboard;
+using Clipboard.Core;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;
 using ShareClipbrd.Core.Services;

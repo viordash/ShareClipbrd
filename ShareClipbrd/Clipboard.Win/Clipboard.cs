@@ -30,8 +30,10 @@ namespace Clipboard.OS {
             return Task.CompletedTask;
         }
 
-        public Task SetDataObject(object data) {
-            System.Windows.Clipboard.SetDataObject(data);
+        public Task SetDataObject(ClipboardData data) {
+            var dataObject = new System.Windows.DataObject();
+            data.Deserialize((f, o) => dataObject.SetData(f, o));
+            System.Windows.Clipboard.SetDataObject(dataObject);
             return Task.CompletedTask;
         }
 

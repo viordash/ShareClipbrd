@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Timers;
-using Clipboard;
+using Clipboard.Core;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;

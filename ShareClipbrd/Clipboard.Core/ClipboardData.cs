@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
-using Clipboard.Core;
 
-namespace Clipboard {
+namespace Clipboard.Core {
     public class ClipboardData {
         public record Item {
             public string Format { get; set; }
