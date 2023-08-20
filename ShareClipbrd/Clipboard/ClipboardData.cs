@@ -65,6 +65,7 @@ namespace Clipboard {
                     var data = await getDataFunc(Format.StringFormat);
                     if (data is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
                     if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
+                    if (data == null) { return true; }
                     return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),

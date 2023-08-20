@@ -200,7 +200,13 @@ namespace ShareClipbrdApp {
                 } else if(await clipboard.ContainsImage()) {
                     Debug.WriteLine("ContainsFileDropList");
                 } else {
-                    Debug.WriteLine("data");
+                    var formats = await clipboard.GetFormats();
+                    var clipboardData = new ClipboardData();
+                    await clipboardData.Serialize(formats, clipboard.GetData);
+                    if(clipboardData.Formats.Any()) {
+                        await dataClient!.SendData(clipboardData);
+                        return;
+                    }
                 }
 
                 //var clipboard = GetTopLevel(this)!.Clipboard!;

@@ -10,11 +10,11 @@ namespace Clipboard.OS {
             return Task.FromResult(false);
         }
 
-        public Task<object> GetData(string format) {
-            return Task.FromResult(new object());
+        public Task<object?> GetData(string format) {
+            return Task.FromResult<object?>(new object());
         }
 
-        public Task<string[]> GetFormatsAsync() {
+        public Task<string[]> GetFormats() {
             return Task.FromResult(Array.Empty<string>());
         }
     }

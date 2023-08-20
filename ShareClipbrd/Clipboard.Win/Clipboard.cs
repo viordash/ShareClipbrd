@@ -10,11 +10,11 @@ namespace Clipboard.OS {
             return Task.FromResult(System.Windows.Clipboard.ContainsImage());
         }
 
-        public Task<object> GetData(string format) {
-            return Task.FromResult(System.Windows.Clipboard.GetData(format));
+        public Task<object?> GetData(string format) {
+            return Task.FromResult<object?>(System.Windows.Clipboard.GetData(format));
         }
 
-        public Task<string[]> GetFormatsAsync() {
+        public Task<string[]> GetFormats() {
             var dataObject = System.Windows.Clipboard.GetDataObject();
             var formats = dataObject?.GetFormats() ?? Array.Empty<string>();
             return Task.FromResult(formats);
