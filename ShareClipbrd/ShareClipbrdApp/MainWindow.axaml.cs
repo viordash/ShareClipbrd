@@ -14,7 +14,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Clipboard;
 using GuardNet;
-using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Components;
@@ -177,34 +176,59 @@ namespace ShareClipbrdApp {
             }
         }
 
+        //void TransmitClipboard() {
+        //    var clipboardData = new ClipboardData();
+        //    if(System.Windows.Clipboard.ContainsFileDropList()) {
+        //        var fileDropList = System.Windows.Clipboard.GetFileDropList();
+        //        _ = Task.Run(async () => await dataClient.SendFileDropList(fileDropList));
+        //    } else if(System.Windows.Clipboard.ContainsImage()) {
+
+        //    } else if(System.Windows.Clipboard.ContainsAudio()) {
+
+        //    } else {
+        //        var dataObject = System.Windows.Clipboard.GetDataObject();
+        //        clipboardData.Serialize(dataObject.GetFormats(), (format) => { return Task.FromResult(dataObject.GetData(format)); });
+        //        _ = Task.Run(async () => await dataClient.SendData(clipboardData));
+        //    }
+        //}
+
         async void TransmitClipboard() {
             try {
-                var clipboard = GetTopLevel(this)!.Clipboard!;
-                var formats = await clipboard.GetFormatsAsync();
-
-                var fileDropList = await ClipboardFile.GetList(formats, async (format) => {
-                    var filesData = await clipboard.GetDataAsync(format);
-
-                    if(filesData is IEnumerable<IStorageItem> bclStorageItems) {
-                        return bclStorageItems
-                            .Select(x => x.Path.LocalPath)
-                            .ToList();
-                    }
-
-                    return filesData;
-                });
-
-                if(fileDropList.Count > 0) {
-                    await dataClient!.SendFileDropList(fileDropList);
-                    return;
+                var clipboard = ClipboardProvider.Get(this);
+                if(await clipboard.ContainsFileDropList()) {
+                    Debug.WriteLine("ContainsFileDropList");
+                } else if(await clipboard.ContainsImage()) {
+                    Debug.WriteLine("ContainsFileDropList");
+                } else {
+                    Debug.WriteLine("data");
                 }
 
-                var clipboardData = new ClipboardData();
-                await clipboardData.Serialize(formats, clipboard.GetDataAsync);
-                if(clipboardData.Formats.Any()) {
-                    await dataClient!.SendData(clipboardData);
-                    return;
-                }
+                //var clipboard = GetTopLevel(this)!.Clipboard!;
+                //var formats = await clipboard.GetFormatsAsync();
+
+                //var fileDropList = await ClipboardFile.GetList(formats, async (format) => {
+                //    var filesData = await clipboard.GetDataAsync(format);
+
+                //    if(filesData is IEnumerable<IStorageItem> bclStorageItems) {
+                //        return bclStorageItems
+                //            .Select(x => x.Path.LocalPath)
+                //            .ToList();
+                //    }
+
+                //    return filesData;
+                //});
+
+                //if(fileDropList.Count > 0) {
+                //    await dataClient!.SendFileDropList(fileDropList);
+                //    return;
+                //}
+
+                //var clipboardData = new ClipboardData();
+                //await clipboardData.Serialize(formats, clipboard.GetDataAsync);
+                //if(clipboardData.Formats.Any()) {
+                //    await dataClient!.SendData(clipboardData);
+                //    return;
+                //}
 
                 await using(progressService!.Begin(ProgressMode.Error)) {
                     Debug.WriteLine("Data empty error");

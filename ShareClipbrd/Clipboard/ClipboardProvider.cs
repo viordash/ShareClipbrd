@@ -2,9 +2,9 @@
 
 namespace Clipboard {
     internal class ClipboardProvider {
-        IClipboard? current;
+        static IClipboard? current;
 
-        public IClipboard Get(object? parent) {
+        public static IClipboard Get(object? parent) {
             if(current != null) {
                 return current;
             }

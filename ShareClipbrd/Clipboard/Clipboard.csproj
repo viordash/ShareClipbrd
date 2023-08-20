@@ -19,4 +19,8 @@
     <ProjectReference Include="..\Clipboard.X11\Clipboard.X11.csproj" />
   </ItemGroup>
 
+  <ItemGroup Label="InternalsVisibleTo">
+    <InternalsVisibleTo Include="ShareClipbrdApp" />
+  </ItemGroup>
+  
 </Project>
