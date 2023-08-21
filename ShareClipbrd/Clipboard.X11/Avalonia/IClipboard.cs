@@ -8,7 +8,7 @@ namespace Avalonia.Input.Platform {
 
         Task SetDataObjectAsync(IDataObject data);
 
-        Task<string[]?> GetFormatsAsync();
+        Task<string[]> GetFormatsAsync();
 
         Task<object?> GetDataAsync(string format);
     }

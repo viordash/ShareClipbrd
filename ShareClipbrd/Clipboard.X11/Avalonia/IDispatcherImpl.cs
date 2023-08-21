@@ -12,8 +12,8 @@ public interface IDispatcherImpl {
 
     // Asynchronously triggers Signaled callback
     void Signal();
-    event Action Signaled;
-    event Action Timer;
+    // event Action Signaled;
+    // event Action Timer;
     long Now { get; }
     void UpdateTimer(long? dueTimeInMs);
 }
@@ -80,8 +80,8 @@ class NullDispatcherImpl : IDispatcherImpl {
 
     }
 
-    public event Action? Signaled;
-    public event Action? Timer;
+    // public event Action? Signaled;
+    // public event Action? Timer;
 
     public long Now => 0;
 

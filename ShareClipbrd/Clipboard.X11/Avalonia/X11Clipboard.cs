@@ -211,13 +211,15 @@ namespace Avalonia.X11 {
 
         private unsafe IntPtr WriteTargetToProperty(IntPtr target, IntPtr window, IntPtr property) {
             if(target == _x11.Atoms.TARGETS) {
-                var atoms = ConvertDataObject(_storedDataObject);
-                XChangeProperty(_x11.Display, window, property,
-                    _x11.Atoms.XA_ATOM, 32, PropertyMode.Replace, atoms, atoms.Length);
+                if(_storedDataObject != null) {
+                    var atoms = ConvertDataObject(_storedDataObject);
+                    XChangeProperty(_x11.Display, window, property,
+                        _x11.Atoms.XA_ATOM, 32, PropertyMode.Replace, atoms, atoms.Length);
 
-                if(UseIncrProtocol(_storedDataObject)) {
-                    System.Diagnostics.Debug.WriteLine("--- _x11.Atoms.TARGETS");
-                    _storeAtomTcs?.TrySetResult(true);
+                    if(UseIncrProtocol(_storedDataObject)) {
+                        System.Diagnostics.Debug.WriteLine("--- _x11.Atoms.TARGETS");
+                        _storeAtomTcs?.TrySetResult(true);
+                    }
                 }
                 return property;
             }
@@ -319,7 +321,7 @@ namespace Avalonia.X11 {
             return await SendDataRequest(target) as string;
         }
 
-        private IntPtr[] ConvertDataObject(IDataObject? data) {
+        private IntPtr[] ConvertDataObject(IDataObject data) {
             var atoms = new HashSet<IntPtr> { _x11.Atoms.TARGETS, _x11.Atoms.MULTIPLE };
             if(data != null) {
                 foreach(var fmt in data.GetDataFormats()) {
@@ -384,17 +386,21 @@ namespace Avalonia.X11 {
             return _storeAtomTcs.Task;
         }
 
-        public async Task<string[]?> GetFormatsAsync() {
+        public async Task<string[]> GetFormatsAsync() {
             if(!HasOwner)
-                return null;
+                return Array.Empty<string>();
             var res = await SendFormatRequest();
             if(res == null)
-                return null;
-            var rv = new List<string?>();
+                return Array.Empty<string>();
+            var rv = new List<string>();
             if(_textAtoms.Any(res.Contains))
                 rv.Add(DataFormats.Text);
-            foreach(var t in res)
-                rv.Add(_x11.Atoms.GetAtomName(t));
+            foreach(var t in res) {
+                var format = _x11.Atoms.GetAtomName(t);
+                if(format != null) {
+                    rv.Add(format);
+                }
+            }
             return rv.ToArray();
         }
 
