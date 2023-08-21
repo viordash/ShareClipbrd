@@ -1,20 +1,32 @@
-﻿using Avalonia;
+﻿using System.Diagnostics;
+using Avalonia;
 using Avalonia.X11;
 using Clipboard.Core;
 
 namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
+        readonly X11Clipboard clipboard;
+
         public Clipboard(object? parent) {
-            var platform = parent as AvaloniaX11Platform;
-            AvaloniaX11PlatformExtensions.InitializeX11Platform();
+            // var platform = parent as AvaloniaX11Platform;
+            var platform = new AvaloniaX11Platform();
+            platform.Initialize(new X11PlatformOptions());
+            clipboard = new X11Clipboard(platform);
+            var cts = new CancellationTokenSource();
+            var platformThreading = new X11PlatformThreading(platform);
+            Task.Run(() => platformThreading.RunLoop(cts.Token));
+            Thread.Sleep(500);
         }
 
         public Task Clear() {
             throw new NotImplementedException();
         }
 
-        public Task<bool> ContainsFileDropList() {
-            return Task.FromResult(false);
+        public async Task<bool> ContainsFileDropList() {
+            var formats = await clipboard.GetFormatsAsync();
+
+            Debug.WriteLine($"----------- ContainsFileDropList 0 {formats}");
+            return formats?.Any(x => ClipboardFile.ContainsFileDropList(x)) ?? false;
         }
 
         public Task<bool> ContainsImage() {
@@ -22,11 +34,11 @@ namespace Clipboard.OS {
         }
 
         public Task<object?> GetData(string format) {
-            return Task.FromResult<object?>(new object());
+            return Task.FromResult<object?>(clipboard.GetDataAsync(format));
         }
 
         public Task<string[]> GetFormats() {
-            return Task.FromResult(Array.Empty<string>());
+            return clipboard.GetFormatsAsync();
         }
 
         public Task SetAudio(byte[] audioBytes) {

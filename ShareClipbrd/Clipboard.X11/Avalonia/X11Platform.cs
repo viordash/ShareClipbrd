@@ -64,8 +64,7 @@ namespace Avalonia.X11 {
             // if (options.UseDBusMenu)
             //     DBusHelper.TryInitialize();
 
-            new X11PlatformThreading(this);
-            new X11Clipboard(this);
+
             // AvaloniaLocator.CurrentMutable.BindToSelf(this)
             //     .Bind<IWindowingPlatform>().ToConstant(this)
             //     .Bind<IDispatcherImpl>().ToConstant(new X11PlatformThreading(this))

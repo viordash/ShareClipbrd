@@ -164,5 +164,10 @@ namespace Clipboard.Core {
 
             throw new NotSupportedException($"OS: {Environment.OSVersion}");
         }
+
+        public static bool ContainsFileDropList(string format) {
+            return Converters.ContainsKey(format);
+        }
+
     }
 }
