@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia.Input;
@@ -11,10 +10,10 @@ namespace Avalonia.X11 {
             private readonly X11Info _x11;
             public readonly IntPtr Property;
             private readonly int _total;
-            private readonly Action<IntPtr, object> _onCompleted;
+            private readonly Action<IntPtr, object?> _onCompleted;
             private readonly List<byte> _readData;
 
-            public IncrDataReader(X11Info x11, IntPtr property, int total, Action<IntPtr, object> onCompleted) {
+            public IncrDataReader(X11Info x11, IntPtr property, int total, Action<IntPtr, object?> onCompleted) {
                 _x11 = x11;
                 Property = property;
                 _total = total;
@@ -75,11 +74,11 @@ namespace Avalonia.X11 {
 
         private readonly AvaloniaX11Platform _platform;
         private readonly X11Info _x11;
-        private IDataObject _storedDataObject;
+        private IDataObject? _storedDataObject;
         private IntPtr _handle;
-        private TaskCompletionSource<bool> _storeAtomTcs;
-        private TaskCompletionSource<IntPtr[]> _requestedFormatsTcs;
-        private TaskCompletionSource<object> _requestedDataTcs;
+        private TaskCompletionSource<bool>? _storeAtomTcs;
+        private TaskCompletionSource<IntPtr[]?>? _requestedFormatsTcs;
+        private TaskCompletionSource<object?>? _requestedDataTcs;
         private readonly IntPtr[] _textAtoms;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
 
@@ -108,7 +107,7 @@ namespace Avalonia.X11 {
             return _textAtoms.Contains(atom);
         }
 
-        private static Encoding GetStringEncoding(X11Atoms atoms, IntPtr atom) {
+        private static Encoding? GetStringEncoding(X11Atoms atoms, IntPtr atom) {
             return (atom == atoms.XA_STRING
                     || atom == atoms.OEMTEXT)
                 ? Encoding.ASCII
@@ -120,7 +119,7 @@ namespace Avalonia.X11 {
         }
 
         private unsafe void OnEvent(ref XEvent ev) {
-            Debug.WriteLine($"--------- X11Clipboard.OnEvent {ev}");
+            System.Diagnostics.Debug.WriteLine($"--------- X11Clipboard.OnEvent {ev}");
             if(ev.type == XEventName.SelectionClear) {
                 System.Diagnostics.Debug.WriteLine("--- XEventName.SelectionClear");
                 _storeAtomTcs?.TrySetResult(true);
@@ -159,7 +158,7 @@ namespace Avalonia.X11 {
                 }
                 XGetWindowProperty(_x11.Display, _handle, sel.property, IntPtr.Zero, new IntPtr(0x7fffffff), true, (IntPtr)Atom.AnyPropertyType,
                     out var actualTypeAtom, out var actualFormat, out var nitems, out var bytes_after, out var prop);
-                Encoding textEnc = null;
+                Encoding? textEnc = null;
                 if(nitems == IntPtr.Zero) {
                     _requestedFormatsTcs?.TrySetResult(null);
                     _requestedDataTcs?.TrySetResult(null);
@@ -285,25 +284,25 @@ namespace Avalonia.X11 {
             return IntPtr.Zero;
         }
 
-        private Task<IntPtr[]> SendFormatRequest() {
-            Debug.WriteLine("----------- SendFormatRequest 0");
+        private Task<IntPtr[]?> SendFormatRequest() {
+            System.Diagnostics.Debug.WriteLine("----------- SendFormatRequest 0");
             if(_requestedFormatsTcs == null || _requestedFormatsTcs.Task.IsCompleted)
-                _requestedFormatsTcs = new TaskCompletionSource<IntPtr[]>();
+                _requestedFormatsTcs = new TaskCompletionSource<IntPtr[]?>();
             XConvertSelection(_x11.Display, _x11.Atoms.CLIPBOARD, _x11.Atoms.TARGETS, _x11.Atoms.TARGETS, _handle,
                 IntPtr.Zero);
             return _requestedFormatsTcs.Task;
         }
 
-        private Task<object> SendDataRequest(IntPtr format) {
+        private Task<object?> SendDataRequest(IntPtr format) {
             if(_requestedDataTcs == null || _requestedDataTcs.Task.IsCompleted)
-                _requestedDataTcs = new TaskCompletionSource<object>();
+                _requestedDataTcs = new TaskCompletionSource<object?>();
             XConvertSelection(_x11.Display, _x11.Atoms.CLIPBOARD, format, format, _handle, IntPtr.Zero);
             return _requestedDataTcs.Task;
         }
 
         private bool HasOwner => XGetSelectionOwner(_x11.Display, _x11.Atoms.CLIPBOARD) != IntPtr.Zero;
 
-        public async Task<string> GetTextAsync() {
+        public async Task<string?> GetTextAsync() {
             if(!HasOwner)
                 return null;
             var res = await SendFormatRequest();
@@ -317,17 +316,19 @@ namespace Avalonia.X11 {
                     }
             }
 
-            return (string)await SendDataRequest(target);
+            return await SendDataRequest(target) as string;
         }
 
-        private IntPtr[] ConvertDataObject(IDataObject data) {
+        private IntPtr[] ConvertDataObject(IDataObject? data) {
             var atoms = new HashSet<IntPtr> { _x11.Atoms.TARGETS, _x11.Atoms.MULTIPLE };
-            foreach(var fmt in data.GetDataFormats()) {
-                if(fmt == DataFormats.Text)
-                    foreach(var ta in _textAtoms)
-                        atoms.Add(ta);
-                else
-                    atoms.Add(_x11.Atoms.GetAtom(fmt));
+            if(data != null) {
+                foreach(var fmt in data.GetDataFormats()) {
+                    if(fmt == DataFormats.Text)
+                        foreach(var ta in _textAtoms)
+                            atoms.Add(ta);
+                    else if(fmt != null)
+                        atoms.Add(_x11.Atoms.GetAtom(fmt));
+                }
             }
             return atoms.ToArray();
         }
@@ -348,7 +349,7 @@ namespace Avalonia.X11 {
 
         private bool UseIncrProtocol(IDataObject data) {
             foreach(var fmt in data.GetDataFormats()) {
-                var objValue = _storedDataObject.Get(fmt);
+                var objValue = _storedDataObject?.Get(fmt);
                 var dataSize = objValue switch {
                     byte[] bytes => bytes.Length,
                     string str => str.Length,
@@ -360,7 +361,7 @@ namespace Avalonia.X11 {
             return false;
         }
 
-        public Task SetTextAsync(string text) {
+        public Task SetTextAsync(string? text) {
             var data = new DataObject();
             data.Set(DataFormats.Text, text);
             return SetDataObjectAsync(data);
@@ -383,13 +384,13 @@ namespace Avalonia.X11 {
             return _storeAtomTcs.Task;
         }
 
-        public async Task<string[]> GetFormatsAsync() {
+        public async Task<string[]?> GetFormatsAsync() {
             if(!HasOwner)
                 return null;
             var res = await SendFormatRequest();
             if(res == null)
                 return null;
-            var rv = new List<string>();
+            var rv = new List<string?>();
             if(_textAtoms.Any(res.Contains))
                 rv.Add(DataFormats.Text);
             foreach(var t in res)
@@ -397,7 +398,7 @@ namespace Avalonia.X11 {
             return rv.ToArray();
         }
 
-        public async Task<object> GetDataAsync(string format) {
+        public async Task<object?> GetDataAsync(string format) {
             if(!HasOwner)
                 return null;
             if(format == DataFormats.Text)
@@ -405,7 +406,7 @@ namespace Avalonia.X11 {
 
             var formatAtom = _x11.Atoms.GetAtom(format);
             var res = await SendFormatRequest();
-            if(!res.Contains(formatAtom))
+            if(res?.Contains(formatAtom) == false)
                 return null;
 
             return await SendDataRequest(formatAtom);

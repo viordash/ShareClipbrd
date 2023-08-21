@@ -1,13 +1,8 @@
-using System;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using static Avalonia.X11.XLib;
 // ReSharper disable UnusedAutoPropertyAccessor.Local
-namespace Avalonia.X11
-{
-    internal unsafe class X11Info
-    {
+namespace Avalonia.X11 {
+    internal unsafe class X11Info {
         public IntPtr Display { get; }
         public IntPtr DeferredDisplay { get; }
         public int DefaultScreen { get; }
@@ -17,17 +12,17 @@ namespace Avalonia.X11
         public IntPtr DefaultCursor { get; }
         public X11Atoms Atoms { get; }
         public IntPtr Xim { get; }
-        
+
         public int RandrEventBase { get; }
         public int RandrErrorBase { get; }
-        
-        public Version RandrVersion { get; }
-        
+
+        // public Version RandrVersion { get; }
+
         public int XInputOpcode { get; }
         public int XInputEventBase { get; }
         public int XInputErrorBase { get; }
-        
-        public Version XInputVersion { get; }
+
+        // public Version XInputVersion { get; }
 
         public IntPtr LastActivityTimestamp { get; set; }
         public XVisualInfo? TransparentVisualInfo { get; set; }
@@ -38,8 +33,7 @@ namespace Avalonia.X11
         [DllImport("libc")]
         private static extern void setlocale(int type, string s);
 
-        public unsafe X11Info(IntPtr display, IntPtr deferredDisplay, bool useXim)
-        {
+        public unsafe X11Info(IntPtr display, IntPtr deferredDisplay, bool useXim) {
             Display = display;
             DeferredDisplay = deferredDisplay;
             DefaultScreen = XDefaultScreen(display);
@@ -55,21 +49,17 @@ namespace Avalonia.X11
             // We have problems with text input otherwise
             setlocale(0, "");
 
-            if (useXim)
-            {
+            if(useXim) {
                 XSetLocaleModifiers("");
                 Xim = XOpenIM(display, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-                if (Xim != IntPtr.Zero)
+                if(Xim != IntPtr.Zero)
                     HasXim = true;
             }
 
-            if (Xim == IntPtr.Zero)
-            {
-                if (XSetLocaleModifiers("@im=none") == IntPtr.Zero)
-                {
+            if(Xim == IntPtr.Zero) {
+                if(XSetLocaleModifiers("@im=none") == IntPtr.Zero) {
                     setlocale(0, "en_US.UTF-8");
-                    if (XSetLocaleModifiers("@im=none") == IntPtr.Zero)
-                    {
+                    if(XSetLocaleModifiers("@im=none") == IntPtr.Zero) {
                         setlocale(0, "C.UTF-8");
                         XSetLocaleModifiers("@im=none");
                     }
@@ -78,50 +68,38 @@ namespace Avalonia.X11
             }
 
             XMatchVisualInfo(Display, DefaultScreen, 32, 4, out var visual);
-            if (visual.depth == 32)
+            if(visual.depth == 32)
                 TransparentVisualInfo = visual;
-            
-            try
-            {
-                if (XRRQueryExtension(display, out int randrEventBase, out var randrErrorBase) != 0)
-                {
+
+            try {
+                if(XRRQueryExtension(display, out int randrEventBase, out var randrErrorBase) != 0) {
                     RandrEventBase = randrEventBase;
                     RandrErrorBase = randrErrorBase;
-                    if (XRRQueryVersion(display, out var major, out var minor) != 0)
-                        RandrVersion = new Version(major, minor);
+                    // if(XRRQueryVersion(display, out var major, out var minor) != 0)
+                    //     RandrVersion = new Version(major, minor);
                 }
-            }
-            catch
-            {
+            } catch {
                 //Ignore, randr is not supported
             }
-            
-            try
-            {
-                if (XQueryExtension(display, "XInputExtension",
-                        out var xiopcode, out var xievent, out var xierror))
-                {
+
+            try {
+                if(XQueryExtension(display, "XInputExtension",
+                        out var xiopcode, out var xievent, out var xierror)) {
                     int major = 2, minor = 2;
-                    if (XIQueryVersion(display, ref major, ref minor) == Status.Success)
-                    {
-                        XInputVersion = new Version(major, minor);
+                    if(XIQueryVersion(display, ref major, ref minor) == Status.Success) {
+                        // XInputVersion = new Version(major, minor);
                         XInputOpcode = xiopcode;
                         XInputEventBase = xievent;
                         XInputErrorBase = xierror;
                     }
                 }
-            }
-            catch
-            {
+            } catch {
                 //Ignore, XI is not supported
             }
 
-            try
-            {
+            try {
                 HasXSync = XSyncInitialize(display, out _, out _) != Status.Success;
-            }
-            catch
-            {
+            } catch {
                 //Ignore, XSync is not supported
             }
         }

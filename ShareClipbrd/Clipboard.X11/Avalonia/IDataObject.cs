@@ -10,13 +10,13 @@ namespace Avalonia.Input {
         /// Lists all formats which are present in the DataObject.
         /// <seealso cref="DataFormats"/>
         /// </summary>
-        IEnumerable<string> GetDataFormats();
+        IEnumerable<string?> GetDataFormats();
 
         /// <summary>
         /// Checks whether a given DataFormat is present in this object
         /// <seealso cref="DataFormats"/>
         /// </summary>
-        bool Contains(string dataFormat);
+        bool Contains(string? dataFormat);
 
         /// <summary>
         /// Tries to get the data of the given DataFormat.
@@ -24,6 +24,6 @@ namespace Avalonia.Input {
         /// <returns>
         /// Object data. If format isn't available, returns null.
         /// </returns>
-        object? Get(string dataFormat);
+        object? Get(string? dataFormat);
     }
 }

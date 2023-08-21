@@ -9,8 +9,7 @@ namespace Clipboard.OS {
 
         public Clipboard(object? parent) {
             // var platform = parent as AvaloniaX11Platform;
-            var platform = new AvaloniaX11Platform();
-            platform.Initialize(new X11PlatformOptions());
+            var platform = new AvaloniaX11Platform(new X11PlatformOptions());
             clipboard = new X11Clipboard(platform);
             var cts = new CancellationTokenSource();
             var platformThreading = new X11PlatformThreading(platform);

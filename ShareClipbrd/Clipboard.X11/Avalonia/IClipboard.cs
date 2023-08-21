@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace Avalonia.Input.Platform {
     public interface IClipboard {
         Task<string?> GetTextAsync();
@@ -10,7 +8,7 @@ namespace Avalonia.Input.Platform {
 
         Task SetDataObjectAsync(IDataObject data);
 
-        Task<string[]> GetFormatsAsync();
+        Task<string[]?> GetFormatsAsync();
 
         Task<object?> GetDataAsync(string format);
     }

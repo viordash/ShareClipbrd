@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using static Avalonia.X11.XLib;
 
@@ -136,6 +132,7 @@ namespace Avalonia.X11 {
         }
 
         public void RunLoop(CancellationToken cancellationToken) {
+            Debug.WriteLine("-------------- RunLoop 0");
             while(!cancellationToken.IsCancellationRequested) {
                 var now = _clock.ElapsedMilliseconds;
                 if(_nextTimer.HasValue && now > _nextTimer.Value) {
@@ -156,6 +153,7 @@ namespace Avalonia.X11 {
                     var timeout = _nextTimer == null ? (int)-1 : Math.Max(1, _nextTimer.Value - now);
                     epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
 
+                    Debug.WriteLine("--------- epoll_wait");
                     // Drain the signaled pipe
                     int buf = 0;
                     while(read(_sigread, &buf, new IntPtr(4)).ToInt64() > 0) {
@@ -197,8 +195,8 @@ namespace Avalonia.X11 {
 
         public bool CurrentThreadIsLoopThread => Thread.CurrentThread == _mainThread;
 
-        public event Action Signaled;
-        public event Action Timer;
+        public event Action? Signaled;
+        public event Action? Timer;
 
         public void UpdateTimer(long? dueTimeInMs) {
             _nextTimer = dueTimeInMs;

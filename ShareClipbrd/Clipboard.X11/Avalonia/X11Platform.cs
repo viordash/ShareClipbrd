@@ -1,22 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-// using Avalonia.Controls;
-// using Avalonia.Controls.Platform;
-// using Avalonia.FreeDesktop;
-// using Avalonia.FreeDesktop.DBusIme;
-using Avalonia.Input;
-using Avalonia.Input.Platform;
-// using Avalonia.OpenGL;
-// using Avalonia.OpenGL.Egl;
+﻿using System.Reflection;
 using Avalonia.Platform;
-// using Avalonia.Rendering;
-// using Avalonia.Rendering.Composition;
-// using Avalonia.Threading;
-using Avalonia.X11;
-// using Avalonia.X11.Glx;
 using static Avalonia.X11.XLib;
 
 namespace Avalonia.X11 {
@@ -30,12 +13,12 @@ namespace Avalonia.X11 {
         // public IX11Screens X11Screens { get; private set; }
         // public Compositor Compositor { get; private set; }
         // public IScreenImpl Screens { get; private set; }
-        public X11PlatformOptions Options { get; private set; }
+        public X11PlatformOptions? Options { get; private set; }
         public IntPtr OrphanedWindow { get; private set; }
         // public X11Globals Globals { get; private set; }
         public ManualRawEventGrouperDispatchQueue EventGrouperDispatchQueue { get; } = new();
 
-        public void Initialize(X11PlatformOptions options) {
+        public AvaloniaX11Platform(X11PlatformOptions options) {
             Options = options;
 
             bool useXim = false;
@@ -307,7 +290,7 @@ namespace Avalonia {
         };
 
 
-        public string WmClass { get; set; }
+        public string? WmClass { get; set; }
 
         /// <summary>
         /// Enables multitouch support. The default value is true.
@@ -336,8 +319,8 @@ namespace Avalonia {
         //     return builder;
         // }
 
-        public static void InitializeX11Platform(X11PlatformOptions options = null) =>
-            new AvaloniaX11Platform().Initialize(options ?? new X11PlatformOptions());
+        // public static void InitializeX11Platform(X11PlatformOptions options = null) =>
+        //     new AvaloniaX11Platform().Initialize(options ?? new X11PlatformOptions());
     }
 
 }

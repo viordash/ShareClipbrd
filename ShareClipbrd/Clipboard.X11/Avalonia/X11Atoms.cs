@@ -216,7 +216,7 @@ namespace Avalonia.X11 {
             return atom;
         }
 
-        public string GetAtomName(IntPtr atom) {
+        public string? GetAtomName(IntPtr atom) {
             if(_atomsToNames.TryGetValue(atom, out var rv))
                 return rv;
             var name = XLib.GetAtomName(_display, atom);
