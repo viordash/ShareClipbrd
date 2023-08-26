@@ -11,11 +11,11 @@ public interface IDispatcherImpl {
     bool CurrentThreadIsLoopThread { get; }
 
     // Asynchronously triggers Signaled callback
-    void Signal();
+    // void Signal();
     // event Action Signaled;
     // event Action Timer;
-    long Now { get; }
-    void UpdateTimer(long? dueTimeInMs);
+    // long Now { get; }
+    // void UpdateTimer(long? dueTimeInMs);
 }
 
 //[PrivateApi]

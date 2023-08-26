@@ -194,19 +194,23 @@ namespace ShareClipbrdApp {
         async void TransmitClipboard() {
             try {
                 var clipboard = ClipboardProvider.Get(this);
-                if(await clipboard.ContainsFileDropList()) {
-                    Debug.WriteLine("ContainsFileDropList");
-                } else if(await clipboard.ContainsImage()) {
-                    Debug.WriteLine("ContainsFileDropList");
-                } else {
-                    var formats = await clipboard.GetFormats();
-                    var clipboardData = new ClipboardData();
-                    await clipboardData.Serialize(formats, clipboard.GetData);
-                    if(clipboardData.Formats.Any()) {
-                        await dataClient!.SendData(clipboardData);
-                        return;
-                    }
-                }
+                var formats = await clipboard.GetFormats();
+                Debug.WriteLine(string.Join(", ", formats));
+
+                // var clipboard = ClipboardProvider.Get(this);
+                // if(await clipboard.ContainsFileDropList()) {
+                //     Debug.WriteLine("ContainsFileDropList");
+                // } else if(await clipboard.ContainsImage()) {
+                //     Debug.WriteLine("ContainsFileDropList");
+                // } else {
+                //     var formats = await clipboard.GetFormats();
+                //     var clipboardData = new ClipboardData();
+                //     await clipboardData.Serialize(formats, clipboard.GetData);
+                //     if(clipboardData.Formats.Any()) {
+                //         await dataClient!.SendData(clipboardData);
+                //         return;
+                //     }
+                // }
 
                 //var clipboard = GetTopLevel(this)!.Clipboard!;
                 //var formats = await clipboard.GetFormatsAsync();

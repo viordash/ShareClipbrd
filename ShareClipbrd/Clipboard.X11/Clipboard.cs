@@ -10,10 +10,9 @@ namespace Clipboard.OS {
         public Clipboard(object? parent) {
             var platform = new AvaloniaX11Platform(new X11PlatformOptions());
             clipboard = new X11Clipboard(platform);
-            var cts = new CancellationTokenSource();
-            var platformThreading = new X11PlatformThreading(platform);
-            Task.Run(() => platformThreading.RunLoop(cts.Token));
-            // Thread.Sleep(500);
+            // var cts = new CancellationTokenSource();
+            // var platformThreading = new X11PlatformThreading(platform);
+            // Task.Run(() => platformThreading.RunLoop(cts.Token));
         }
 
         public Task Clear() {
@@ -21,10 +20,9 @@ namespace Clipboard.OS {
         }
 
         public async Task<bool> ContainsFileDropList() {
-            await Task.Delay(200);
             var formats = await clipboard.GetFormatsAsync();
 
-            Debug.WriteLine($"----------- ContainsFileDropList 0 {formats}");
+            Debug.WriteLine($"----------- ContainsFileDropList 0 {formats?.Length}");
             return formats?.Any(x => ClipboardFile.ContainsFileDropList(x)) ?? false;
         }
 
