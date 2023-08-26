@@ -25,15 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Avalonia.X11.XLib;
-// ReSharper disable FieldCanBeMadeReadOnly.Global
-// ReSharper disable IdentifierTypo
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedMember.Global
-// ReSharper disable CommentTypo
-// ReSharper disable ArrangeThisQualifier
-// ReSharper disable NotAccessedField.Global
-// ReSharper disable InconsistentNaming
-// ReSharper disable StringLiteralTypo
+
 #pragma warning disable 649
 
 namespace Avalonia.X11 {

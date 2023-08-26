@@ -2,18 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-// using Avalonia.Platform.Interop;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable FieldCanBeMadeReadOnly.Global
-// ReSharper disable CommentTypo
-// ReSharper disable UnusedMember.Global
-// ReSharper disable IdentifierTypo
-// ReSharper disable NotAccessedField.Global
-// ReSharper disable UnusedMethodReturnValue.Global
 
-namespace Avalonia.X11 {
-    internal unsafe static class XLib {
+namespace Avalonia.X11
+{
+    internal unsafe static class XLib
+    {
         private const string libX11 = "libX11.so.6";
         private const string libX11Randr = "libXrandr.so.2";
         private const string libX11Ext = "libXext.so.6";
@@ -124,8 +118,10 @@ namespace Avalonia.X11 {
         // public static uint XConfigureResizeWindow(IntPtr display, IntPtr window, PixelSize size)
         //     => XConfigureResizeWindow(display, window, size.Width, size.Height);
 
-        public static uint XConfigureResizeWindow(IntPtr display, IntPtr window, int width, int height) {
-            var changes = new XWindowChanges {
+        public static uint XConfigureResizeWindow(IntPtr display, IntPtr window, int width, int height)
+        {
+            var changes = new XWindowChanges
+            {
                 width = width,
                 height = height
             };
@@ -144,9 +140,10 @@ namespace Avalonia.X11 {
         [DllImport(libX11)]
         public static extern IntPtr XGetAtomName(IntPtr display, IntPtr atom);
 
-        public static string? GetAtomName(IntPtr display, IntPtr atom) {
+        public static string? GetAtomName(IntPtr display, IntPtr atom)
+        {
             var ptr = XGetAtomName(display, atom);
-            if(ptr == IntPtr.Zero)
+            if (ptr == IntPtr.Zero)
                 return null;
             var s = Marshal.PtrToStringAnsi(ptr);
             XFree(ptr);
@@ -450,7 +447,8 @@ namespace Avalonia.X11 {
         [DllImport(libX11)]
         public static extern IntPtr XCreateColormap(IntPtr display, IntPtr window, IntPtr visual, int create);
 
-        public enum XLookupStatus : uint {
+        public enum XLookupStatus : uint
+        {
             XBufferOverflow = 0xffffffffu,
             XLookupNone = 1,
             XLookupChars = 2,
@@ -588,7 +586,8 @@ namespace Avalonia.X11 {
         [DllImport(libXCursor)]
         public static extern IntPtr XcursorImageDestroy(IntPtr image);
 
-        public static void XISetMask(ref int mask, XiEventType ev) {
+        public static void XISetMask(ref int mask, XiEventType ev)
+        {
             mask |= (1 << (int)ev);
         }
 
@@ -605,14 +604,17 @@ namespace Avalonia.X11 {
             int num_masks
         );
 
-        public static Status XiSelectEvents(IntPtr display, IntPtr window, Dictionary<int, List<XiEventType>> devices) {
+        public static Status XiSelectEvents(IntPtr display, IntPtr window, Dictionary<int, List<XiEventType>> devices)
+        {
             var masks = stackalloc int[devices.Count];
             var emasks = stackalloc XIEventMask[devices.Count];
             int c = 0;
-            foreach(var d in devices) {
-                foreach(var ev in d.Value)
+            foreach (var d in devices)
+            {
+                foreach (var ev in d.Value)
                     XISetMask(ref masks[c], ev);
-                emasks[c] = new XIEventMask {
+                emasks[c] = new XIEventMask
+                {
                     Mask = &masks[c],
                     Deviceid = d.Key,
                     MaskLen = XiEventMaskLen
@@ -631,7 +633,8 @@ namespace Avalonia.X11 {
         [DllImport(libX11)]
         public static extern int XSetClassHint(IntPtr display, IntPtr window, XClassHint* class_hints);
 
-        public struct XGeometry {
+        public struct XGeometry
+        {
             public IntPtr root;
             public int x;
             public int y;
@@ -640,77 +643,16 @@ namespace Avalonia.X11 {
             public int bw;
             public int d;
         }
-        public struct XClassHint {
+        public struct XClassHint
+        {
             public byte* res_name;
             public byte* res_class;
         }
 
-        public struct XSyncValue {
+        public struct XSyncValue
+        {
             public int Hi;
             public uint Lo;
         }
-
-        public static bool XGetGeometry(IntPtr display, IntPtr window, out XGeometry geo) {
-            geo = new XGeometry();
-            return XGetGeometry(display, window, out geo.root, out geo.x, out geo.y, out geo.width, out geo.height,
-                out geo.bw, out geo.d);
-        }
-
-        public static void QueryPointer(IntPtr display, IntPtr w, out IntPtr root, out IntPtr child,
-            out int root_x, out int root_y, out int child_x, out int child_y,
-            out int mask) {
-
-            IntPtr c;
-
-            XGrabServer(display);
-
-            XQueryPointer(display, w, out root, out c,
-                out root_x, out root_y, out child_x, out child_y,
-                out mask);
-
-            if(root != w)
-                c = root;
-
-            IntPtr child_last = IntPtr.Zero;
-            while(c != IntPtr.Zero) {
-                child_last = c;
-                XQueryPointer(display, c, out root, out c,
-                    out root_x, out root_y, out child_x, out child_y,
-                    out mask);
-            }
-            XUngrabServer(display);
-            XFlush(display);
-
-            child = child_last;
-        }
-
-        public static (int x, int y) GetCursorPos(X11Info x11, IntPtr? handle = null) {
-            IntPtr root;
-            IntPtr child;
-            int root_x;
-            int root_y;
-            int win_x;
-            int win_y;
-            int keys_buttons;
-
-
-
-            QueryPointer(x11.Display, handle ?? x11.RootWindow, out root, out child, out root_x, out root_y, out win_x, out win_y,
-                out keys_buttons);
-
-
-            if(handle != null) {
-                return (win_x, win_y);
-            } else {
-                return (root_x, root_y);
-            }
-        }
-
-        // public static IntPtr CreateEventWindow(AvaloniaX11Platform plat, X11PlatformThreading.EventHandler handler) {
-        //     var win = XCreateSimpleWindow(plat.Display, plat.Info!.DefaultRootWindow,
-        //         0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);
-        //     plat.Windows[win] = handler;
-        //     return win;
-        // }
     }
 }

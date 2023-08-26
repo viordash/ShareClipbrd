@@ -8,8 +8,8 @@ namespace Clipboard.OS {
         readonly X11Clipboard clipboard;
 
         public Clipboard(object? parent) {
-            var platform = new AvaloniaX11Platform(new X11PlatformOptions());
-            clipboard = new X11Clipboard(platform);
+            // var platform = new AvaloniaX11Platform(new X11PlatformOptions());
+            clipboard = new X11Clipboard();
             // var cts = new CancellationTokenSource();
             // var platformThreading = new X11PlatformThreading(platform);
             // Task.Run(() => platformThreading.RunLoop(cts.Token));
