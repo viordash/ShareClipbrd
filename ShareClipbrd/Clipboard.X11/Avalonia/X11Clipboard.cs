@@ -104,7 +104,9 @@ namespace Avalonia.X11
         {
             _platform = platform;
             _x11 = platform.Info;
-            _handle = CreateEventWindow(platform, OnEvent);
+            _handle = XCreateSimpleWindow(platform.Display, platform.Info!.DefaultRootWindow,
+                    0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);
+
             XSelectInput(_x11.Display, _handle, new IntPtr((int)(EventMask.StructureNotifyMask | EventMask.PropertyChangeMask)));
 
             _avaloniaSaveTargetsAtom = XInternAtom(_x11.Display, "AVALONIA_SAVE_TARGETS_PROPERTY_ATOM", false);
@@ -323,13 +325,13 @@ namespace Avalonia.X11
                     var incrDataWriter = new IncrDataWriter(target, bytes,
                          (w) =>
                          {
-                             _platform.Windows.Remove(w);
+                            //  _platform.Windows.Remove(w);
                              System.Diagnostics.Debug.WriteLine("--- IncrDataWriter completed");
                              _storeAtomTcs?.TrySetResult(true);
 
                          });
 
-                    _platform.Windows[window] = incrDataWriter.OnEvent;
+                    // _platform.Windows[window] = incrDataWriter.OnEvent;
                     XSelectInput(_x11.Display, window, new IntPtr((int)EventMask.PropertyChangeMask));
                     var total = new IntPtr[] { (IntPtr)bytes.Length };
                     XChangeProperty(_x11.Display, window, property, _x11.Atoms.INCR, 32, PropertyMode.Replace, total, total.Length);
@@ -345,7 +347,7 @@ namespace Avalonia.X11
             return IntPtr.Zero;
         }
 
-        private Task<IntPtr[]?> SendFormatRequest()
+        private async Task<IntPtr[]?> SendFormatRequest()
         {
             System.Diagnostics.Debug.WriteLine("----------- SendFormatRequest 0");
             if (_requestedFormatsTcs == null || _requestedFormatsTcs.Task.IsCompleted)
@@ -354,7 +356,11 @@ namespace Avalonia.X11
             XConvertSelection(_x11.Display, _x11.Atoms.CLIPBOARD, _x11.Atoms.TARGETS, _x11.Atoms.TARGETS, _handle,
                 IntPtr.Zero);
 
-            return _requestedFormatsTcs.Task;
+
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await HandleEvents(cts.Token);
+
+            return await _requestedFormatsTcs.Task;
         }
 
         private Task<object?> SendDataRequest(IntPtr format)
@@ -470,14 +476,11 @@ namespace Avalonia.X11
             {
                 return Array.Empty<string>();
             }
-            var task = SendFormatRequest();
-
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            await HandleEvents(cts.Token);
-
-            var res = await task;
+            var res = await SendFormatRequest();
             if (res == null)
+            {
                 return Array.Empty<string>();
+            }
 
             var rv = new List<string>();
             if (_textAtoms.Any(res.Contains))

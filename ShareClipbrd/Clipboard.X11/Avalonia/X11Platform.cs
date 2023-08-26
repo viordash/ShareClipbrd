@@ -1,13 +1,12 @@
 ﻿using System.Reflection;
-using Avalonia.Platform;
 using static Avalonia.X11.XLib;
 
 namespace Avalonia.X11 {
-    internal class AvaloniaX11Platform : IWindowingPlatform {
+    internal class AvaloniaX11Platform  {
         // private Lazy<KeyboardDevice> _keyboardDevice = new Lazy<KeyboardDevice>(() => new KeyboardDevice());
         // public KeyboardDevice KeyboardDevice => _keyboardDevice.Value;
-        public Dictionary<IntPtr, X11PlatformThreading.EventHandler> Windows =
-            new Dictionary<IntPtr, X11PlatformThreading.EventHandler>();
+        // public Dictionary<IntPtr, X11PlatformThreading.EventHandler> Windows =
+        //     new Dictionary<IntPtr, X11PlatformThreading.EventHandler>();
         // public XI2Manager XI2;
         public X11Info Info { get; private set; }
         // public IX11Screens X11Screens { get; private set; }
@@ -16,7 +15,7 @@ namespace Avalonia.X11 {
         public X11PlatformOptions? Options { get; private set; }
         public IntPtr OrphanedWindow { get; private set; }
         // public X11Globals Globals { get; private set; }
-        public ManualRawEventGrouperDispatchQueue EventGrouperDispatchQueue { get; } = new();
+        // public ManualRawEventGrouperDispatchQueue EventGrouperDispatchQueue { get; } = new();
 
         public AvaloniaX11Platform(X11PlatformOptions options) {
             Options = options;

@@ -706,11 +706,11 @@ namespace Avalonia.X11 {
             }
         }
 
-        public static IntPtr CreateEventWindow(AvaloniaX11Platform plat, X11PlatformThreading.EventHandler handler) {
-            var win = XCreateSimpleWindow(plat.Display, plat.Info!.DefaultRootWindow,
-                0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);
-            plat.Windows[win] = handler;
-            return win;
-        }
+        // public static IntPtr CreateEventWindow(AvaloniaX11Platform plat, X11PlatformThreading.EventHandler handler) {
+        //     var win = XCreateSimpleWindow(plat.Display, plat.Info!.DefaultRootWindow,
+        //         0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);
+        //     plat.Windows[win] = handler;
+        //     return win;
+        // }
     }
 }
