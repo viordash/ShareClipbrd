@@ -89,7 +89,7 @@ namespace Avalonia.X11
         private IDataObject? _storedDataObject;
         private IntPtr _handle;
         private TaskCompletionSource<bool>? _storeAtomTcs;
-        // private List<IntPtr> _formats;
+        private readonly List<IntPtr> _formats;
         private TaskCompletionSource<object?>? _requestedDataTcs;
         private readonly IntPtr[] _textAtoms;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
@@ -99,6 +99,8 @@ namespace Avalonia.X11
 
         private const int MaxRequestSize = 0x40000;
         private readonly Dictionary<IntPtr, IncrDataReader> _incrDataReaders;
+
+        private readonly CancellationTokenSource _cts;
 
         public X11Clipboard()
         {
@@ -124,6 +126,9 @@ namespace Avalonia.X11
             }.Where(a => a != IntPtr.Zero).ToArray();
 
             _incrDataReaders = new();
+
+            _cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+            _formats = new List<IntPtr>();
         }
 
         public void Dispose()
@@ -148,7 +153,7 @@ namespace Avalonia.X11
                         : null;
         }
 
-        private unsafe void OnEvent(ref XEvent ev, List<IntPtr> formats)
+        private unsafe void OnEvent(ref XEvent ev)
         {
             System.Diagnostics.Debug.WriteLine($"--------- X11Clipboard.OnEvent {ev}");
             if (ev.type == XEventName.SelectionClear)
@@ -207,7 +212,7 @@ namespace Avalonia.X11
                         {
                             var formatsArr = new IntPtr[nitems.ToInt32()];
                             Marshal.Copy(prop, formatsArr, 0, formatsArr.Length);
-                            formats.AddRange(formatsArr);
+                            _formats.AddRange(formatsArr);
                             System.Diagnostics.Debug.WriteLine("----------- _requestedFormatsTcs?.TrySetResult(formats) 0");
                         }
                     }
@@ -351,17 +356,14 @@ namespace Avalonia.X11
             return IntPtr.Zero;
         }
 
-        private async Task<List<IntPtr>> SendFormatRequest()
+        private Task SendFormatRequest()
         {
             System.Diagnostics.Debug.WriteLine("----------- SendFormatRequest 0");
 
             XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle,
                 IntPtr.Zero);
 
-            var formats = new List<IntPtr>();
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            await HandleEvents(cts.Token, formats);
-            return formats;
+            return HandleEvents(_cts.Token);
         }
 
         private Task<object?> SendDataRequest(IntPtr format)
@@ -377,19 +379,22 @@ namespace Avalonia.X11
         public async Task<string?> GetTextAsync()
         {
             if (!HasOwner)
-                return null;
-            var res = await SendFormatRequest();
-            var target = _atoms.UTF8_STRING;
-            if (res != null)
             {
-                var preferredFormats = new[] { _atoms.UTF16_STRING, _atoms.UTF8_STRING, _atoms.XA_STRING };
-                foreach (var pf in preferredFormats)
-                    if (res.Contains(pf))
-                    {
-                        target = pf;
-                        break;
-                    }
+                return null;
             }
+            await SendFormatRequest();
+            var target = _atoms.UTF8_STRING;
+
+            var preferredFormats = new[] { _atoms.UTF16_STRING, _atoms.UTF8_STRING, _atoms.XA_STRING };
+            foreach (var pf in preferredFormats)
+            {
+                if (_formats.Contains(pf))
+                {
+                    target = pf;
+                    break;
+                }
+            }
+
 
             return await SendDataRequest(target) as string;
         }
@@ -477,20 +482,17 @@ namespace Avalonia.X11
             {
                 return Array.Empty<string>();
             }
-            var formats = await SendFormatRequest();
+            await SendFormatRequest();
 
             var rv = new List<string>();
-            if (_textAtoms.Any(formats.Contains))
-                rv.Add(DataFormats.Text);
-            foreach (var t in formats)
+            if (_textAtoms.Any(_formats.Contains))
             {
-                var format = _atoms.GetAtomName(t);
-                if (format != null)
-                {
-                    rv.Add(format);
-                }
+                rv.Add(DataFormats.Text);
             }
-            return rv.ToArray();
+            return _formats
+                .Select(x => _atoms.GetAtomName(x))
+                .Where(x => x != null)
+                .ToArray();
         }
 
         public async Task<object?> GetDataAsync(string format)
@@ -501,14 +503,15 @@ namespace Avalonia.X11
                 return await GetTextAsync();
 
             var formatAtom = _atoms.GetAtom(format);
-            var res = await SendFormatRequest();
-            if (res?.Contains(formatAtom) == false)
+            await SendFormatRequest();
+            if (_formats.Contains(formatAtom) == false){
                 return null;
+            }
 
             return await SendDataRequest(formatAtom);
         }
 
-        unsafe Task HandleEvents(CancellationToken cancellationToken, List<IntPtr> formats)
+        unsafe Task HandleEvents(CancellationToken cancellationToken)
         {
             return Task.Run(() =>
             {
@@ -534,7 +537,7 @@ namespace Avalonia.X11
 
                     if (xev.AnyEvent.window == _handle)
                     {
-                        OnEvent(ref xev, formats);
+                        OnEvent(ref xev);
                     }
 
                     var pending = XPending(_display);
