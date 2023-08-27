@@ -23,10 +23,11 @@ namespace Clipboard.Core {
         }
 
         public static class Format {
-            public const string Text = "Text";
-            public const string UnicodeText = "UnicodeText";
+            public const string Text = "TEXT";
+            public const string UnicodeText = "UNICODETEXT";
+            public const string Utf8String = "UTF8_STRING";
             public const string StringFormat = "System.String";
-            public const string OemText = "OEMText";
+            public const string OemText = "OEMTEXT";
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
             public const string Html = "HTML Format";
@@ -58,6 +59,16 @@ namespace Clipboard.Core {
                 },
                 (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray()),
                 () => Format.UnicodeText
+            )},
+            { Format.Utf8String, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Utf8String);
+                    if (data is string castedValue) {c.Add(Format.Utf8String, new MemoryStream(System.Text.Encoding.Unicode.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Utf8String, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.Utf8String
             )},
             { Format.StringFormat, new Convert(
                 async (c, getDataFunc) => {
@@ -193,7 +204,7 @@ namespace Clipboard.Core {
 
             foreach(var format in formats) {
                 try {
-                    if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
+                    if(!Converters.TryGetValue(format.ToUpper(), out Convert? convertFunc)) {
                         Debug.WriteLine($"not supported format: {format}");
                         // var data = await getDataFunc(format);
                         // if(data is string castedValue) {

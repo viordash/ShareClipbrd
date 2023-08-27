@@ -90,7 +90,7 @@ namespace Avalonia.X11
         private IntPtr _handle;
         private TaskCompletionSource<bool>? _storeAtomTcs;
         private readonly List<IntPtr> _requestedFormats;
-        private TaskCompletionSource<object?>? _requestedDataTcs;
+        private object? _requestedData;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
 
         private readonly IntPtr _display;
@@ -121,6 +121,7 @@ namespace Avalonia.X11
 
             _cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
             _requestedFormats = new List<IntPtr>();
+            _requestedData = null;
         }
 
         public void Dispose()
@@ -181,17 +182,13 @@ namespace Avalonia.X11
                 var sel = ev.SelectionEvent;
                 if (sel.property == IntPtr.Zero)
                 {
-                    _requestedDataTcs?.TrySetResult(null);
                     return;
                 }
                 XGetWindowProperty(_display, _handle, sel.property, IntPtr.Zero, new IntPtr(0x7fffffff), true, (IntPtr)Atom.AnyPropertyType,
                     out var actualTypeAtom, out var actualFormat, out var nitems, out var bytes_after, out var prop);
                 Encoding? textEnc = null;
-                if (nitems == IntPtr.Zero)
-                {
-                    _requestedDataTcs?.TrySetResult(null);
-                }
-                else
+
+                if (nitems != IntPtr.Zero)
                 {
                     if (sel.property == _atoms.TARGETS)
                     {
@@ -206,21 +203,19 @@ namespace Avalonia.X11
                     else if ((textEnc = GetStringEncoding(_atoms, actualTypeAtom)) != null)
                     {
                         var text = textEnc.GetString((byte*)prop.ToPointer(), nitems.ToInt32());
-                        _requestedDataTcs?.TrySetResult(text);
+                        _requestedData = text;
                     }
                     else
                     {
                         if (actualTypeAtom == _atoms.INCR)
                         {
-                            if (actualFormat != 32 || (int)nitems != 1)
-                                _requestedDataTcs?.TrySetResult(null);
-                            else
+                            if (actualFormat == 32 && (int)nitems == 1)
                             {
                                 _incrDataReaders[sel.property] = new IncrDataReader(_atoms, sel.property, *(int*)prop.ToPointer(),
                                     (property, obj) =>
                                     {
                                         _incrDataReaders.Remove(property);
-                                        _requestedDataTcs?.TrySetResult(obj);
+                                        _requestedData = obj;
                                     });
                             }
                         }
@@ -228,7 +223,7 @@ namespace Avalonia.X11
                         {
                             var data = new byte[(int)nitems * (actualFormat / 8)];
                             Marshal.Copy(prop, data, 0, data.Length);
-                            _requestedDataTcs?.TrySetResult(data);
+                            _requestedData = data;
                         }
                     }
                 }
@@ -353,12 +348,12 @@ namespace Avalonia.X11
             return HandleEvents(_cts.Token);
         }
 
-        private Task<object?> SendDataRequest(IntPtr format)
+        private Task SendDataRequest(IntPtr format)
         {
-            if (_requestedDataTcs == null || _requestedDataTcs.Task.IsCompleted)
-                _requestedDataTcs = new TaskCompletionSource<object?>();
+
+            System.Diagnostics.Debug.WriteLine("----------- SendDataRequest 0");
             XConvertSelection(_display, _atoms.CLIPBOARD, format, format, _handle, IntPtr.Zero);
-            return _requestedDataTcs.Task;
+            return HandleEvents(_cts.Token);
         }
 
         private bool HasOwner => XGetSelectionOwner(_display, _atoms.CLIPBOARD) != IntPtr.Zero;
@@ -445,6 +440,7 @@ namespace Avalonia.X11
             return _requestedFormats
                 .Select(x => _atoms.GetAtomName(x))
                 .Where(x => x != null)
+                .Cast<string>()
                 .ToArray();
         }
 
@@ -462,7 +458,8 @@ namespace Avalonia.X11
                 return null;
             }
 
-            return await SendDataRequest(formatAtom);
+            await SendDataRequest(formatAtom);
+            return _requestedData;
         }
 
         unsafe Task HandleEvents(CancellationToken cancellationToken)

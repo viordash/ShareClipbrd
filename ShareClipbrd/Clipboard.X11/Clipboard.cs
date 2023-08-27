@@ -35,7 +35,7 @@ namespace Clipboard.OS
         public async Task<object?> GetData(string format)
         {
             using var clipboard = new X11Clipboard();
-            return await Task.FromResult<object?>(clipboard.GetDataAsync(format));
+            return await clipboard.GetDataAsync(format);
         }
 
         public async Task<string[]> GetFormats()
