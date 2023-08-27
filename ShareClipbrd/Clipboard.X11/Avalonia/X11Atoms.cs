@@ -16,9 +16,9 @@ namespace Avalonia.X11
         public IntPtr AnyPropertyType;
         public IntPtr XA_PRIMARY = (IntPtr)1;
 
-        public IntPtr XA_ATOM;
+        public IntPtr XA_ATOM = (IntPtr)4;
 
-        public IntPtr XA_STRING;
+        public IntPtr XA_STRING = (IntPtr)31;
 
         public IntPtr CLIPBOARD;
         public IntPtr CLIPBOARD_MANAGER;
