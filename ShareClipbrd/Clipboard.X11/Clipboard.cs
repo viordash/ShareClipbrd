@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Avalonia;
 using Avalonia.X11;
+using Avalonia.Input;
 using Clipboard.Core;
 
 namespace Clipboard.OS
@@ -13,9 +14,10 @@ namespace Clipboard.OS
 
         }
 
-        public Task Clear()
+        public async Task Clear()
         {
-            throw new NotImplementedException();
+            using var clipboard = new X11Clipboard();
+            await clipboard.ClearAsync();
         }
 
         public async Task<bool> ContainsFileDropList()
@@ -49,9 +51,12 @@ namespace Clipboard.OS
             throw new NotImplementedException();
         }
 
-        public Task SetDataObject(ClipboardData data)
+        public async Task SetDataObject(ClipboardData data)
         {
-            throw new NotImplementedException();
+            using var clipboard = new X11Clipboard();            
+            var dataObject = new DataObject();
+            data.Deserialize((f, o) => dataObject.Set(f, o));
+            await clipboard.SetDataObjectAsync(dataObject);
         }
 
         public Task SetFileDropList(IList<string> files)

@@ -8,7 +8,6 @@ namespace Avalonia.X11
     {
         private IDataObject? _storedDataObject;
         private IntPtr _handle;
-        private TaskCompletionSource<bool>? _storeAtomTcs;
         private readonly List<IntPtr> _requestedFormats;
         private object? _requestedData;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
@@ -59,7 +58,7 @@ namespace Avalonia.X11
             XCloseDisplay(_display);
         }
 
-        private Encoding GetStringEncoding(IntPtr atom)
+        private Encoding? GetStringEncoding(IntPtr atom)
         {
             return (atom == _atoms.XA_STRING
                     || atom == _atoms.OEMTEXT)
@@ -77,7 +76,6 @@ namespace Avalonia.X11
             if (ev.type == XEventName.SelectionClear)
             {
                 System.Diagnostics.Debug.WriteLine("--- XEventName.SelectionClear");
-                _storeAtomTcs?.TrySetResult(true);
                 return;
             }
 
@@ -216,7 +214,6 @@ namespace Avalonia.X11
                     _incrWriteTargetAtom = IntPtr.Zero;
                     _incrWriteData = null;
                     _incrWriteWindow = IntPtr.Zero;
-                    _storeAtomTcs?.TrySetResult(true);
                 }
             }
         }
@@ -234,7 +231,6 @@ namespace Avalonia.X11
                     if (UseIncrProtocol(_storedDataObject))
                     {
                         System.Diagnostics.Debug.WriteLine("--- _atoms.TARGETS");
-                        _storeAtomTcs?.TrySetResult(true);
                     }
                 }
                 return property;
@@ -282,7 +278,6 @@ namespace Avalonia.X11
                     }
                     else
                     {
-                        _storeAtomTcs?.TrySetResult(true);
                         System.Diagnostics.Debug.WriteLine("--- IntPtr.Zero");
                         return IntPtr.Zero;
                     }
@@ -302,7 +297,6 @@ namespace Avalonia.X11
                 {
                     XChangeProperty(_display, window, property, target, 8, PropertyMode.Replace, bytes, bytes.Length);
                     System.Diagnostics.Debug.WriteLine("--- NORM completed");
-                    _storeAtomTcs?.TrySetResult(true);
                 }
                 return property;
             }
@@ -389,15 +383,16 @@ namespace Avalonia.X11
         public Task SetDataObjectAsync(IDataObject data)
         {
             _storedDataObject = data;
-            if (_storeAtomTcs == null || _storeAtomTcs.Task.IsCompleted)
-                _storeAtomTcs = new TaskCompletionSource<bool>();
 
             XSetSelectionOwner(_display, _atoms.CLIPBOARD, _handle, IntPtr.Zero);
 
             if (!UseIncrProtocol(data))
+            {
                 StoreAtomsInClipboardManager(data);
+            }
 
-            return _storeAtomTcs.Task;
+            return HandleEvents(_cts.Token);
+
         }
 
         public async Task<string[]> GetFormatsAsync()
