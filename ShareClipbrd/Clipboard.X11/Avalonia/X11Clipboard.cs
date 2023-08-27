@@ -136,11 +136,6 @@ namespace Avalonia.X11
             XCloseDisplay(_display);
         }
 
-        private bool IsStringAtom(IntPtr atom)
-        {
-            return _textAtoms.Contains(atom);
-        }
-
         private static Encoding? GetStringEncoding(X11Atoms atoms, IntPtr atom)
         {
             return (atom == atoms.XA_STRING
@@ -312,9 +307,9 @@ namespace Avalonia.X11
                 return property;
             }
 
-            if (_storedDataObject?.Contains(DataFormats.Text) == true || _storedDataObject?.Contains(_atoms.GetAtomName(target)) == true)
+            if (_storedDataObject?.Contains(_atoms.GetAtomName(target)) == true)
             {
-                var objValue = _storedDataObject.Get(DataFormats.Text) ?? _storedDataObject.Get(_atoms.GetAtomName(target));
+                var objValue = _storedDataObject.Get(_atoms.GetAtomName(target));
 
                 if (!(objValue is byte[] bytes))
                 {
@@ -376,29 +371,6 @@ namespace Avalonia.X11
 
         private bool HasOwner => XGetSelectionOwner(_display, _atoms.CLIPBOARD) != IntPtr.Zero;
 
-        public async Task<string?> GetTextAsync()
-        {
-            if (!HasOwner)
-            {
-                return null;
-            }
-            await SendFormatRequest();
-            var target = _atoms.UTF8_STRING;
-
-            var preferredFormats = new[] { _atoms.UTF16_STRING, _atoms.UTF8_STRING, _atoms.XA_STRING };
-            foreach (var pf in preferredFormats)
-            {
-                if (_formats.Contains(pf))
-                {
-                    target = pf;
-                    break;
-                }
-            }
-
-
-            return await SendDataRequest(target) as string;
-        }
-
         private IntPtr[] ConvertDataObject(IDataObject data)
         {
             var atoms = new HashSet<IntPtr> { _atoms.TARGETS, _atoms.MULTIPLE };
@@ -406,11 +378,10 @@ namespace Avalonia.X11
             {
                 foreach (var fmt in data.GetDataFormats())
                 {
-                    if (fmt == DataFormats.Text)
-                        foreach (var ta in _textAtoms)
-                            atoms.Add(ta);
-                    else if (fmt != null)
+                    if (fmt != null)
+                    {
                         atoms.Add(_atoms.GetAtom(fmt));
+                    }
                 }
             }
             return atoms.ToArray();
@@ -450,16 +421,11 @@ namespace Avalonia.X11
             return false;
         }
 
-        public Task SetTextAsync(string? text)
-        {
-            var data = new DataObject();
-            data.Set(DataFormats.Text, text);
-            return SetDataObjectAsync(data);
-        }
-
         public Task ClearAsync()
         {
-            return SetTextAsync(null);
+            var data = new DataObject();
+            data.Set(Clipboard.Core.ClipboardData.Format.Text, null);
+            return SetDataObjectAsync(data);
         }
 
         public Task SetDataObjectAsync(IDataObject data)
@@ -484,11 +450,6 @@ namespace Avalonia.X11
             }
             await SendFormatRequest();
 
-            var rv = new List<string>();
-            if (_textAtoms.Any(_formats.Contains))
-            {
-                rv.Add(DataFormats.Text);
-            }
             return _formats
                 .Select(x => _atoms.GetAtomName(x))
                 .Where(x => x != null)
@@ -498,13 +459,14 @@ namespace Avalonia.X11
         public async Task<object?> GetDataAsync(string format)
         {
             if (!HasOwner)
+            {
                 return null;
-            if (format == DataFormats.Text)
-                return await GetTextAsync();
+            }
 
             var formatAtom = _atoms.GetAtom(format);
             await SendFormatRequest();
-            if (_formats.Contains(formatAtom) == false){
+            if (_formats.Contains(formatAtom) == false)
+            {
                 return null;
             }
 
