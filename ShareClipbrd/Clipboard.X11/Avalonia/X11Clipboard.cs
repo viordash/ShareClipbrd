@@ -6,86 +6,6 @@ namespace Avalonia.X11
 {
     internal class X11Clipboard : IDisposable
     {
-        #region inner classes
-        private class IncrDataReader
-        {
-            private readonly X11Atoms _atoms;
-            public readonly IntPtr Property;
-            private readonly int _total;
-            private readonly Action<IntPtr, object?> _onCompleted;
-            private readonly List<byte> _readData;
-
-            public IncrDataReader(X11Atoms atoms, IntPtr property, int total, Action<IntPtr, object?> onCompleted)
-            {
-                _atoms = atoms;
-                Property = property;
-                _total = total;
-                _onCompleted = onCompleted;
-                _readData = new List<byte>();
-            }
-
-            public void Append(IntPtr data, int size)
-            {
-                if (size > 0)
-                {
-                    var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(size);
-                    Marshal.Copy(data, buffer, 0, size);
-                    _readData.AddRange(buffer.Take(size));
-                    System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
-                    return;
-                }
-
-                if (_readData.Count != _total)
-                {
-                    _onCompleted(Property, null);
-                    return;
-                }
-
-                var textEnc = GetStringEncoding(_atoms, Property);
-                var bytes = _readData.ToArray();
-                if (textEnc != null)
-                {
-                    _onCompleted(Property, textEnc.GetString(bytes));
-                }
-                else
-                {
-                    _onCompleted(Property, bytes);
-                }
-            }
-        }
-
-        private class IncrDataWriter
-        {
-            private readonly IntPtr _target;
-            private readonly Action<IntPtr> _onCompleted;
-            private byte[] _data;
-
-            public IncrDataWriter(IntPtr target, byte[] data, Action<IntPtr> onCompleted)
-            {
-                _target = target;
-                _data = data;
-                _onCompleted = onCompleted;
-            }
-
-            public void OnEvent(ref XEvent ev)
-            {
-                if (ev.type == XEventName.PropertyNotify && (PropertyState)ev.PropertyEvent.state == PropertyState.Delete)
-                {
-                    if (_data?.Length > 0)
-                    {
-                        var bytes = _data.Take(MaxRequestSize).ToArray();
-                        _data = _data.Skip(bytes.Length).ToArray();
-                        XChangeProperty(ev.PropertyEvent.display, ev.PropertyEvent.window, ev.PropertyEvent.atom, _target, 8, PropertyMode.Replace, bytes, bytes.Length);
-                        return;
-                    }
-
-                    XChangeProperty(ev.PropertyEvent.display, ev.PropertyEvent.window, ev.PropertyEvent.atom, _target, 8, PropertyMode.Replace, IntPtr.Zero, 0);
-                    _onCompleted(ev.PropertyEvent.window);
-                }
-            }
-        }
-        #endregion
-
         private IDataObject? _storedDataObject;
         private IntPtr _handle;
         private TaskCompletionSource<bool>? _storeAtomTcs;
@@ -96,8 +16,13 @@ namespace Avalonia.X11
         private readonly IntPtr _display;
         private readonly X11Atoms _atoms;
 
+        private IntPtr _incrReadTargetAtom;
+        private readonly List<byte> _incrReadData;
+        private IntPtr _incrWriteTargetAtom;
+        private IntPtr _incrWriteWindow;
+        private IntPtr _incrWriteProperty;
+        private byte[]? _incrWriteData;
         private const int MaxRequestSize = 0x40000;
-        private readonly Dictionary<IntPtr, IncrDataReader> _incrDataReaders;
 
         private readonly CancellationTokenSource _cts;
 
@@ -117,11 +42,16 @@ namespace Avalonia.X11
 
             _avaloniaSaveTargetsAtom = XInternAtom(_display, "AVALONIA_SAVE_TARGETS_PROPERTY_ATOM", false);
 
-            _incrDataReaders = new();
-
             _cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
             _requestedFormats = new List<IntPtr>();
             _requestedData = null;
+
+            _incrReadTargetAtom = IntPtr.Zero;
+            _incrReadData = new List<byte>();
+            _incrWriteTargetAtom = IntPtr.Zero;
+            _incrWriteWindow = IntPtr.Zero;
+            _incrWriteProperty = IntPtr.Zero;
+            _incrWriteData = null;
         }
 
         public void Dispose()
@@ -129,14 +59,14 @@ namespace Avalonia.X11
             XCloseDisplay(_display);
         }
 
-        private static Encoding? GetStringEncoding(X11Atoms atoms, IntPtr atom)
+        private Encoding GetStringEncoding(IntPtr atom)
         {
-            return (atom == atoms.XA_STRING
-                    || atom == atoms.OEMTEXT)
+            return (atom == _atoms.XA_STRING
+                    || atom == _atoms.OEMTEXT)
                 ? Encoding.ASCII
-                : atom == atoms.UTF8_STRING
+                : atom == _atoms.UTF8_STRING
                     ? Encoding.UTF8
-                    : atom == atoms.UTF16_STRING
+                    : atom == _atoms.UTF16_STRING
                         ? Encoding.Unicode
                         : null;
         }
@@ -200,7 +130,7 @@ namespace Avalonia.X11
                             System.Diagnostics.Debug.WriteLine("----------- _requestedFormatsTcs?.TrySetResult(formats) 0");
                         }
                     }
-                    else if ((textEnc = GetStringEncoding(_atoms, actualTypeAtom)) != null)
+                    else if ((textEnc = GetStringEncoding(actualTypeAtom)) != null)
                     {
                         var text = textEnc.GetString((byte*)prop.ToPointer(), nitems.ToInt32());
                         _requestedData = text;
@@ -211,12 +141,9 @@ namespace Avalonia.X11
                         {
                             if (actualFormat == 32 && (int)nitems == 1)
                             {
-                                _incrDataReaders[sel.property] = new IncrDataReader(_atoms, sel.property, *(int*)prop.ToPointer(),
-                                    (property, obj) =>
-                                    {
-                                        _incrDataReaders.Remove(property);
-                                        _requestedData = obj;
-                                    });
+                                _incrReadTargetAtom = sel.property;
+                                var total = *((int*)prop.ToPointer());
+                                _incrReadData.Capacity = total;
                             }
                         }
                         else
@@ -234,14 +161,62 @@ namespace Avalonia.X11
 
             if (ev.type == XEventName.PropertyNotify)
             {
-                if ((PropertyState)ev.PropertyEvent.state == PropertyState.NewValue && _incrDataReaders.TryGetValue(ev.PropertyEvent.atom, out var incrDataReader))
+                if (_incrReadTargetAtom == ev.PropertyEvent.atom && (PropertyState)ev.PropertyEvent.state == PropertyState.NewValue)
                 {
-                    XGetWindowProperty(_display, _handle, incrDataReader.Property, IntPtr.Zero, new IntPtr(0x7fffffff), true, (IntPtr)Atom.AnyPropertyType,
-                            out var actualTypeAtom, out var actualFormat, out var nitems, out var bytes_after, out var prop);
-                    incrDataReader.Append(prop, (int)nitems * (actualFormat / 8));
+                    XGetWindowProperty(_display, _handle, _incrReadTargetAtom, IntPtr.Zero, new IntPtr(0x7fffffff), true, (IntPtr)Atom.AnyPropertyType,
+                                out var actualTypeAtom, out var actualFormat, out var nitems, out var bytes_after, out var prop);
 
+                    if (_incrReadTargetAtom == actualTypeAtom && (int)nitems > 0)
+                    {
+                        var chunkSize = (int)nitems * (actualFormat / 8);
+                        var buffer = new byte[chunkSize];
+                        Marshal.Copy(prop, buffer, 0, chunkSize);
+                        _incrReadData.AddRange(buffer);
+                    }
+                    else
+                    {
+                        var bytes = _incrReadData.ToArray();
+
+                        if (_incrReadData.Count != 0)
+                        {
+                            var textEnc = GetStringEncoding(_incrReadTargetAtom);
+                            if (textEnc != null)
+                            {
+                                var text = textEnc.GetString(bytes);
+                                _requestedData = text;
+                            }
+                            else
+                            {
+                                _requestedData = bytes;
+                            }
+                        }
+                        _incrReadData.Clear();
+                        _incrReadTargetAtom = IntPtr.Zero;
+
+                    }
                     XFree(prop);
                     return;
+                }
+            }
+        }
+
+        private void OnIncrWritePropertyEvent(ref XEvent ev)
+        {
+            if (ev.type == XEventName.PropertyNotify && (PropertyState)ev.PropertyEvent.state == PropertyState.Delete)
+            {
+                if (_incrWriteData?.Length > 0)
+                {
+                    var bytes = _incrWriteData.Take(MaxRequestSize).ToArray();
+                    _incrWriteData = _incrWriteData.Skip(bytes.Length).ToArray();
+                    XChangeProperty(_display, _incrWriteWindow, _incrWriteProperty, _incrWriteTargetAtom, 8, PropertyMode.Replace, bytes, bytes.Length);
+                }
+                else
+                {
+                    XChangeProperty(_display, _incrWriteWindow, _incrWriteProperty, _incrWriteTargetAtom, 8, PropertyMode.Replace, IntPtr.Zero, 0);
+                    _incrWriteTargetAtom = IntPtr.Zero;
+                    _incrWriteData = null;
+                    _incrWriteWindow = IntPtr.Zero;
+                    _storeAtomTcs?.TrySetResult(true);
                 }
             }
         }
@@ -302,7 +277,7 @@ namespace Avalonia.X11
                 {
                     if (objValue is string s)
                     {
-                        var textEnc = GetStringEncoding(_atoms, target) ?? Encoding.UTF8;
+                        var textEnc = GetStringEncoding(target) ?? Encoding.UTF8;
                         bytes = textEnc.GetBytes(s);
                     }
                     else
@@ -315,17 +290,13 @@ namespace Avalonia.X11
 
                 if (bytes.Length > MaxRequestSize && window != _handle)
                 {
-                    var incrDataWriter = new IncrDataWriter(target, bytes,
-                         (w) =>
-                         {
-                             System.Diagnostics.Debug.WriteLine("--- IncrDataWriter completed");
-                             _storeAtomTcs?.TrySetResult(true);
-
-                         });
-
-                    XSelectInput(_display, window, new IntPtr((int)EventMask.PropertyChangeMask));
+                    _incrWriteTargetAtom = target;
+                    _incrWriteWindow = window;
+                    _incrWriteProperty = property;
+                    _incrWriteData = bytes;
                     var total = new IntPtr[] { (IntPtr)bytes.Length };
                     XChangeProperty(_display, window, property, _atoms.INCR, 32, PropertyMode.Replace, total, total.Length);
+                    XSelectInput(_display, window, new IntPtr((int)EventMask.PropertyChangeMask));
                 }
                 else
                 {
@@ -489,6 +460,10 @@ namespace Avalonia.X11
                     if (xev.AnyEvent.window == _handle)
                     {
                         OnEvent(ref xev);
+                    }
+                    if (xev.AnyEvent.window == _incrWriteWindow)
+                    {
+                        OnIncrWritePropertyEvent(ref xev);
                     }
 
                     var pending = XPending(_display);
