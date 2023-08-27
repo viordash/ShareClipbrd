@@ -1,31 +1,3 @@
-// Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the
-// "Software",, to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to
-// permit persons to whom the Software is furnished to do so, subject to
-// the following conditions:
-// 
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-//
-// Copyright (c) 2004 Novell, Inc.
-//
-// Authors:
-//	Peter Bartok	pbartok@novell.com
-//
-
-
-// NOT COMPLETE
-
 using System;
 using System.ComponentModel;
 using System.Collections;
@@ -35,7 +7,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics.CodeAnalysis;
-
 #pragma warning disable 649
 
 namespace Avalonia.X11
@@ -56,6 +27,360 @@ namespace Avalonia.X11
 		internal IntPtr window;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XKeyEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr root;
+		internal IntPtr subwindow;
+		internal IntPtr time;
+		internal int x;
+		internal int y;
+		internal int x_root;
+		internal int y_root;
+		internal XModifierMask state;
+		internal int keycode;
+		internal int same_screen;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XButtonEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr root;
+		internal IntPtr subwindow;
+		internal IntPtr time;
+		internal int x;
+		internal int y;
+		internal int x_root;
+		internal int y_root;
+		internal XModifierMask state;
+		internal int button;
+		internal int same_screen;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XMotionEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr root;
+		internal IntPtr subwindow;
+		internal IntPtr time;
+		internal int x;
+		internal int y;
+		internal int x_root;
+		internal int y_root;
+		internal XModifierMask state;
+		internal byte is_hint;
+		internal int same_screen;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XCrossingEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr root;
+		internal IntPtr subwindow;
+		internal IntPtr time;
+		internal int x;
+		internal int y;
+		internal int x_root;
+		internal int y_root;
+		internal NotifyMode mode;
+		internal NotifyDetail detail;
+		internal int same_screen;
+		internal int focus;
+		internal XModifierMask state;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XFocusChangeEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal int mode;
+		internal NotifyDetail detail;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XKeymapEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal byte key_vector0;
+		internal byte key_vector1;
+		internal byte key_vector2;
+		internal byte key_vector3;
+		internal byte key_vector4;
+		internal byte key_vector5;
+		internal byte key_vector6;
+		internal byte key_vector7;
+		internal byte key_vector8;
+		internal byte key_vector9;
+		internal byte key_vector10;
+		internal byte key_vector11;
+		internal byte key_vector12;
+		internal byte key_vector13;
+		internal byte key_vector14;
+		internal byte key_vector15;
+		internal byte key_vector16;
+		internal byte key_vector17;
+		internal byte key_vector18;
+		internal byte key_vector19;
+		internal byte key_vector20;
+		internal byte key_vector21;
+		internal byte key_vector22;
+		internal byte key_vector23;
+		internal byte key_vector24;
+		internal byte key_vector25;
+		internal byte key_vector26;
+		internal byte key_vector27;
+		internal byte key_vector28;
+		internal byte key_vector29;
+		internal byte key_vector30;
+		internal byte key_vector31;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XExposeEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal int x;
+		internal int y;
+		internal int width;
+		internal int height;
+		internal int count;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XGraphicsExposeEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr drawable;
+		internal int x;
+		internal int y;
+		internal int width;
+		internal int height;
+		internal int count;
+		internal int major_code;
+		internal int minor_code;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XNoExposeEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr drawable;
+		internal int major_code;
+		internal int minor_code;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XVisibilityEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal int state;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XCreateWindowEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr parent;
+		internal IntPtr window;
+		internal int x;
+		internal int y;
+		internal int width;
+		internal int height;
+		internal int border_width;
+		internal int override_redirect;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XDestroyWindowEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XUnmapEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal int from_configure;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XMapEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal int override_redirect;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XMapRequestEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr parent;
+		internal IntPtr window;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XReparentEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal IntPtr parent;
+		internal int x;
+		internal int y;
+		internal int override_redirect;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XConfigureEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal int x;
+		internal int y;
+		internal int width;
+		internal int height;
+		internal int border_width;
+		internal IntPtr above;
+		internal int override_redirect;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XGravityEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal int x;
+		internal int y;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XResizeRequestEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal int width;
+		internal int height;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XConfigureRequestEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr parent;
+		internal IntPtr window;
+		internal int x;
+		internal int y;
+		internal int width;
+		internal int height;
+		internal int border_width;
+		internal IntPtr above;
+		internal int detail;
+		internal IntPtr value_mask;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XCirculateEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr xevent;
+		internal IntPtr window;
+		internal int place;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XCirculateRequestEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr parent;
+		internal IntPtr window;
+		internal int place;
+	}
 
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XPropertyEvent
@@ -111,6 +436,48 @@ namespace Avalonia.X11
 		internal IntPtr time;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XColormapEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr colormap;
+		internal int c_new;
+		internal int state;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XClientMessageEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal IntPtr message_type;
+		internal int format;
+		internal IntPtr ptr1;
+		internal IntPtr ptr2;
+		internal IntPtr ptr3;
+		internal IntPtr ptr4;
+		internal IntPtr ptr5;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XMappingEvent
+	{
+		internal XEventName type;
+		internal IntPtr serial;
+		internal int send_event;
+		internal IntPtr display;
+		internal IntPtr window;
+		internal int request;
+		internal int first_keycode;
+		internal int count;
+	}
 
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XErrorEvent
@@ -124,30 +491,165 @@ namespace Avalonia.X11
 		internal byte minor_code;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct XEventPad
+	{
+		internal IntPtr pad0;
+		internal IntPtr pad1;
+		internal IntPtr pad2;
+		internal IntPtr pad3;
+		internal IntPtr pad4;
+		internal IntPtr pad5;
+		internal IntPtr pad6;
+		internal IntPtr pad7;
+		internal IntPtr pad8;
+		internal IntPtr pad9;
+		internal IntPtr pad10;
+		internal IntPtr pad11;
+		internal IntPtr pad12;
+		internal IntPtr pad13;
+		internal IntPtr pad14;
+		internal IntPtr pad15;
+		internal IntPtr pad16;
+		internal IntPtr pad17;
+		internal IntPtr pad18;
+		internal IntPtr pad19;
+		internal IntPtr pad20;
+		internal IntPtr pad21;
+		internal IntPtr pad22;
+		internal IntPtr pad23;
+		internal IntPtr pad24;
+		internal IntPtr pad25;
+		internal IntPtr pad26;
+		internal IntPtr pad27;
+		internal IntPtr pad28;
+		internal IntPtr pad29;
+		internal IntPtr pad30;
+		internal IntPtr pad31;
+		internal IntPtr pad32;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	internal unsafe struct XGenericEventCookie
+	{
+		internal int type; /* of event. Always GenericEvent */
+		internal IntPtr serial; /* # of last request processed */
+		internal int send_event; /* true if from SendEvent request */
+		internal IntPtr display; /* Display the event was read from */
+		internal int extension; /* major opcode of extension that caused the event */
+		internal int evtype; /* actual event type. */
+		internal uint cookie;
+		internal void* data;
+
+		public T GetEvent<T>() where T : unmanaged
+		{
+			if (data == null)
+				throw new InvalidOperationException();
+			return Unsafe.ReadUnaligned<T>(data);
+		}
+	}
 
 	[StructLayout(LayoutKind.Explicit)]
 	internal struct XEvent
 	{
 		[FieldOffset(0)] internal XEventName type;
 		[FieldOffset(0)] internal XAnyEvent AnyEvent;
+		[FieldOffset(0)] internal XKeyEvent KeyEvent;
+		[FieldOffset(0)] internal XButtonEvent ButtonEvent;
+		[FieldOffset(0)] internal XMotionEvent MotionEvent;
+		[FieldOffset(0)] internal XCrossingEvent CrossingEvent;
+		[FieldOffset(0)] internal XFocusChangeEvent FocusChangeEvent;
+		[FieldOffset(0)] internal XExposeEvent ExposeEvent;
+		[FieldOffset(0)] internal XGraphicsExposeEvent GraphicsExposeEvent;
+		[FieldOffset(0)] internal XNoExposeEvent NoExposeEvent;
+		[FieldOffset(0)] internal XVisibilityEvent VisibilityEvent;
+		[FieldOffset(0)] internal XCreateWindowEvent CreateWindowEvent;
+		[FieldOffset(0)] internal XDestroyWindowEvent DestroyWindowEvent;
+		[FieldOffset(0)] internal XUnmapEvent UnmapEvent;
+		[FieldOffset(0)] internal XMapEvent MapEvent;
+		[FieldOffset(0)] internal XMapRequestEvent MapRequestEvent;
+		[FieldOffset(0)] internal XReparentEvent ReparentEvent;
+		[FieldOffset(0)] internal XConfigureEvent ConfigureEvent;
+		[FieldOffset(0)] internal XGravityEvent GravityEvent;
+		[FieldOffset(0)] internal XResizeRequestEvent ResizeRequestEvent;
+		[FieldOffset(0)] internal XConfigureRequestEvent ConfigureRequestEvent;
+		[FieldOffset(0)] internal XCirculateEvent CirculateEvent;
+		[FieldOffset(0)] internal XCirculateRequestEvent CirculateRequestEvent;
 		[FieldOffset(0)] internal XPropertyEvent PropertyEvent;
-
 		[FieldOffset(0)] internal XSelectionClearEvent SelectionClearEvent;
 		[FieldOffset(0)] internal XSelectionRequestEvent SelectionRequestEvent;
 		[FieldOffset(0)] internal XSelectionEvent SelectionEvent;
-
+		[FieldOffset(0)] internal XColormapEvent ColormapEvent;
+		[FieldOffset(0)] internal XClientMessageEvent ClientMessageEvent;
+		[FieldOffset(0)] internal XMappingEvent MappingEvent;
 		[FieldOffset(0)] internal XErrorEvent ErrorEvent;
+		[FieldOffset(0)] internal XKeymapEvent KeymapEvent;
+		[FieldOffset(0)] internal XGenericEventCookie GenericEventCookie;
+
+		[FieldOffset(0)] internal XEventPad Pad;
 
 		public override string ToString()
 		{
 			switch (type)
 			{
+				case XEventName.ButtonPress:
+				case XEventName.ButtonRelease:
+					return ToString(ButtonEvent);
+				case XEventName.CirculateNotify:
+				case XEventName.CirculateRequest:
+					return ToString(CirculateEvent);
+				case XEventName.ClientMessage:
+					return ToString(ClientMessageEvent);
+				case XEventName.ColormapNotify:
+					return ToString(ColormapEvent);
+				case XEventName.ConfigureNotify:
+					return ToString(ConfigureEvent);
+				case XEventName.ConfigureRequest:
+					return ToString(ConfigureRequestEvent);
+				case XEventName.CreateNotify:
+					return ToString(CreateWindowEvent);
+				case XEventName.DestroyNotify:
+					return ToString(DestroyWindowEvent);
+				case XEventName.Expose:
+					return ToString(ExposeEvent);
+				case XEventName.FocusIn:
+				case XEventName.FocusOut:
+					return ToString(FocusChangeEvent);
+				case XEventName.GraphicsExpose:
+					return ToString(GraphicsExposeEvent);
+				case XEventName.GravityNotify:
+					return ToString(GravityEvent);
+				case XEventName.KeymapNotify:
+					return ToString(KeymapEvent);
+				case XEventName.MapNotify:
+					return ToString(MapEvent);
+				case XEventName.MappingNotify:
+					return ToString(MappingEvent);
+				case XEventName.MapRequest:
+					return ToString(MapRequestEvent);
+				case XEventName.MotionNotify:
+					return ToString(MotionEvent);
+				case XEventName.NoExpose:
+					return ToString(NoExposeEvent);
+				case XEventName.PropertyNotify:
+					return ToString(PropertyEvent);
+				case XEventName.ReparentNotify:
+					return ToString(ReparentEvent);
+				case XEventName.ResizeRequest:
+					return ToString(ResizeRequestEvent);
 				case XEventName.SelectionClear:
 					return ToString(SelectionClearEvent);
 				case XEventName.SelectionNotify:
 					return ToString(SelectionEvent);
 				case XEventName.SelectionRequest:
 					return ToString(SelectionRequestEvent);
+				case XEventName.UnmapNotify:
+					return ToString(UnmapEvent);
+				case XEventName.VisibilityNotify:
+					return ToString(VisibilityEvent);
+				case XEventName.EnterNotify:
+				case XEventName.LeaveNotify:
+					return ToString(CrossingEvent);
 				default:
 					return type.ToString();
 			}
@@ -171,7 +673,6 @@ namespace Avalonia.X11
 			return type.Name + " (" + result + ")";
 		}
 	}
-
 
 	internal enum XEventName
 	{
@@ -213,19 +714,6 @@ namespace Avalonia.X11
 	}
 
 
-	internal enum SendEventValues
-	{
-		PointerWindow = 0,
-		InputFocus = 1
-	}
-
-	internal enum CreateWindowArgs
-	{
-		CopyFromParent = 0,
-		ParentRelative = 1,
-		InputOutput = 1,
-		InputOnly = 2
-	}
 
 	[Flags]
 	internal enum EventMask
@@ -258,23 +746,98 @@ namespace Avalonia.X11
 		OwnerGrabButtonMask = 1 << 24
 	}
 
-	[StructLayout(LayoutKind.Sequential, Pack = 2)]
-	internal struct XColor
-	{
-		internal IntPtr pixel;
-		internal ushort red;
-		internal ushort green;
-		internal ushort blue;
-		internal byte flags;
-		internal byte pad;
-	}
-
 	internal enum Atom
 	{
 		AnyPropertyType = 0,
-
+		XA_PRIMARY = 1,
+		XA_SECONDARY = 2,
+		XA_ARC = 3,
 		XA_ATOM = 4,
+		XA_BITMAP = 5,
+		XA_CARDINAL = 6,
+		XA_COLORMAP = 7,
+		XA_CURSOR = 8,
+		XA_CUT_BUFFER0 = 9,
+		XA_CUT_BUFFER1 = 10,
+		XA_CUT_BUFFER2 = 11,
+		XA_CUT_BUFFER3 = 12,
+		XA_CUT_BUFFER4 = 13,
+		XA_CUT_BUFFER5 = 14,
+		XA_CUT_BUFFER6 = 15,
+		XA_CUT_BUFFER7 = 16,
+		XA_DRAWABLE = 17,
+		XA_FONT = 18,
+		XA_INTEGER = 19,
+		XA_PIXMAP = 20,
+		XA_POINT = 21,
+		XA_RECTANGLE = 22,
+		XA_RESOURCE_MANAGER = 23,
+		XA_RGB_COLOR_MAP = 24,
+		XA_RGB_BEST_MAP = 25,
+		XA_RGB_BLUE_MAP = 26,
+		XA_RGB_DEFAULT_MAP = 27,
+		XA_RGB_GRAY_MAP = 28,
+		XA_RGB_GREEN_MAP = 29,
+		XA_RGB_RED_MAP = 30,
+		XA_STRING = 31,
+		XA_VISUALID = 32,
+		XA_WINDOW = 33,
+		XA_WM_COMMAND = 34,
+		XA_WM_HINTS = 35,
+		XA_WM_CLIENT_MACHINE = 36,
+		XA_WM_ICON_NAME = 37,
+		XA_WM_ICON_SIZE = 38,
+		XA_WM_NAME = 39,
+		XA_WM_NORMAL_HINTS = 40,
+		XA_WM_SIZE_HINTS = 41,
+		XA_WM_ZOOM_HINTS = 42,
+		XA_MIN_SPACE = 43,
+		XA_NORM_SPACE = 44,
+		XA_MAX_SPACE = 45,
+		XA_END_SPACE = 46,
+		XA_SUPERSCRIPT_X = 47,
+		XA_SUPERSCRIPT_Y = 48,
+		XA_SUBSCRIPT_X = 49,
+		XA_SUBSCRIPT_Y = 50,
+		XA_UNDERLINE_POSITION = 51,
+		XA_UNDERLINE_THICKNESS = 52,
+		XA_STRIKEOUT_ASCENT = 53,
+		XA_STRIKEOUT_DESCENT = 54,
+		XA_ITALIC_ANGLE = 55,
+		XA_X_HEIGHT = 56,
+		XA_QUAD_WIDTH = 57,
+		XA_WEIGHT = 58,
+		XA_POINT_SIZE = 59,
+		XA_RESOLUTION = 60,
+		XA_COPYRIGHT = 61,
+		XA_NOTICE = 62,
+		XA_FONT_NAME = 63,
+		XA_FAMILY_NAME = 64,
+		XA_FULL_NAME = 65,
+		XA_CAP_HEIGHT = 66,
+		XA_WM_CLASS = 67,
+		XA_WM_TRANSIENT_FOR = 68,
 
+		XA_LAST_PREDEFINED = 68
+	}
+
+	internal enum NotifyMode
+	{
+		NotifyNormal = 0,
+		NotifyGrab = 1,
+		NotifyUngrab = 2
+	}
+
+	internal enum NotifyDetail
+	{
+		NotifyAncestor = 0,
+		NotifyVirtual = 1,
+		NotifyInferior = 2,
+		NotifyNonlinear = 3,
+		NotifyNonlinearVirtual = 4,
+		NotifyPointer = 5,
+		NotifyPointerRoot = 6,
+		NotifyDetailNone = 7
 	}
 
 	internal enum PropertyMode
@@ -289,7 +852,6 @@ namespace Avalonia.X11
 		NewValue = 0,
 		Delete = 1
 	}
-
 
 	internal delegate int XErrorHandler(IntPtr DisplayHandle, ref XErrorEvent error_event);
 
@@ -415,262 +977,5 @@ namespace Avalonia.X11
 		X_SetModifierMapping = 118,
 		X_GetModifierMapping = 119,
 		X_NoOperation = 127
-	}
-
-	[Flags]
-	internal enum XIMProperties
-	{
-		XIMPreeditArea = 0x0001,
-		XIMPreeditCallbacks = 0x0002,
-		XIMPreeditPosition = 0x0004,
-		XIMPreeditNothing = 0x0008,
-		XIMPreeditNone = 0x0010,
-		XIMStatusArea = 0x0100,
-		XIMStatusCallbacks = 0x0200,
-		XIMStatusNothing = 0x0400,
-		XIMStatusNone = 0x0800,
-	}
-
-	[Flags]
-	internal enum WindowType
-	{
-		Client = 1,
-		Whole = 2,
-		Both = 3
-	}
-
-	internal enum XEmbedMessage
-	{
-		EmbeddedNotify = 0,
-		WindowActivate = 1,
-		WindowDeactivate = 2,
-		RequestFocus = 3,
-		FocusIn = 4,
-		FocusOut = 5,
-		FocusNext = 6,
-		FocusPrev = 7,
-		/* 8-9 were used for XEMBED_GRAB_KEY/XEMBED_UNGRAB_KEY */
-		ModalityOn = 10,
-		ModalityOff = 11,
-		RegisterAccelerator = 12,
-		UnregisterAccelerator = 13,
-		ActivateAccelerator = 14
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct XcursorImage
-	{
-		public int version;
-		public int size;       /* nominal size for matching */
-		public int width;      /* actual width */
-		public int height;     /* actual height */
-		public int xhot;       /* hot spot x (must be inside image) */
-		public int yhot;       /* hot spot y (must be inside image) */
-		public int delay;       /* hot spot y (must be inside image) */
-		public IntPtr pixels;    /* pointer to pixels */
-
-		public override string ToString()
-		{
-			return $"XCursorImage (version: {version}, size: {size}, width: {width}, height: {height}, xhot: {xhot}, yhot: {yhot}, delay: {delay}, pixels: {pixels}";
-		}
-	};
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct XcursorImages
-	{
-		public int nimage;     /* number of images */
-		public IntPtr images;   /* array of XcursorImage pointers */
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal unsafe struct XIMStyles
-	{
-		public ushort count_styles;
-		public IntPtr* supported_styles;
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	[Serializable]
-	internal struct XPoint
-	{
-		public short X;
-		public short Y;
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	[Serializable]
-	internal struct XRectangle
-	{
-		public short X;
-		public short Y;
-		public short W;
-		public short H;
-	}
-
-
-	[StructLayout(LayoutKind.Sequential)]
-	[Serializable]
-	internal class XIMCallback
-	{
-		public IntPtr client_data;
-		public XIMProc callback;
-		[NonSerialized] private GCHandle gch;
-
-		public XIMCallback(IntPtr clientData, XIMProc proc)
-		{
-			this.client_data = clientData;
-			this.gch = GCHandle.Alloc(proc);
-			this.callback = proc;
-		}
-
-		~XIMCallback()
-		{
-			gch.Free();
-		}
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-	internal unsafe struct XImage
-#pragma warning restore CA1815 // Override equals and operator equals on value types
-	{
-		public int width, height; /* size of image */
-		public int xoffset; /* number of pixels offset in X direction */
-		public int format; /* XYBitmap, XYPixmap, ZPixmap */
-		public IntPtr data; /* pointer to image data */
-		public int byte_order; /* data byte order, LSBFirst, MSBFirst */
-		public int bitmap_unit; /* quant. of scanline 8, 16, 32 */
-		public int bitmap_bit_order; /* LSBFirst, MSBFirst */
-		public int bitmap_pad; /* 8, 16, 32 either XY or ZPixmap */
-		public int depth; /* depth of image */
-		public int bytes_per_line; /* accelerator to next scanline */
-		public int bits_per_pixel; /* bits per pixel (ZPixmap) */
-		public ulong red_mask; /* bits in z arrangement */
-		public ulong green_mask;
-		public ulong blue_mask;
-		private fixed byte funcs[128];
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct XVisualInfo
-	{
-		internal IntPtr visual;
-		internal IntPtr visualid;
-		internal int screen;
-		internal uint depth;
-		internal int klass;
-		internal IntPtr red_mask;
-		internal IntPtr green_mask;
-		internal IntPtr blue_mask;
-		internal int colormap_size;
-		internal int bits_per_rgb;
-	}
-
-	internal enum XIMFeedback
-	{
-		Reverse = 1,
-		Underline = 2,
-		Highlight = 4,
-		Primary = 32,
-		Secondary = 64,
-		Tertiary = 128,
-	}
-
-	internal struct XIMFeedbackStruct
-	{
-		public byte FeedbackMask; // one or more of XIMFeedback enum
-	}
-
-	internal struct XIMText
-	{
-		public ushort Length;
-		public IntPtr Feedback; // to XIMFeedbackStruct
-		public int EncodingIsWChar;
-		public IntPtr String; // it could be either char* or wchar_t*
-	}
-
-	internal struct XIMPreeditDrawCallbackStruct
-	{
-		public int Caret;
-		public int ChangeFirst;
-		public int ChangeLength;
-		public IntPtr Text; // to XIMText
-	}
-
-	internal enum XIMCaretDirection
-	{
-		XIMForwardChar,
-		XIMBackwardChar,
-		XIMForwardWord,
-		XIMBackwardWord,
-		XIMCaretUp,
-		XIMCaretDown,
-		XIMNextLine,
-		XIMPreviousLine,
-		XIMLineStart,
-		XIMLineEnd,
-		XIMAbsolutePosition,
-		XIMDontChange
-	}
-
-	internal enum XIMCaretStyle
-	{
-		IsInvisible,
-		IsPrimary,
-		IsSecondary
-	}
-
-	internal struct XIMPreeditCaretCallbackStruct
-	{
-		public int Position;
-		public XIMCaretDirection Direction;
-		public XIMCaretStyle Style;
-	}
-
-	// only PreeditStartCallback requires return value though.
-	internal delegate int XIMProc(IntPtr xim, IntPtr clientData, IntPtr callData);
-
-	internal static class XNames
-	{
-		public const string XNVaNestedList = "XNVaNestedList";
-		public const string XNQueryInputStyle = "queryInputStyle";
-		public const string XNClientWindow = "clientWindow";
-		public const string XNInputStyle = "inputStyle";
-		public const string XNFocusWindow = "focusWindow";
-		public const string XNResourceName = "resourceName";
-		public const string XNResourceClass = "resourceClass";
-
-		// XIMPreeditCallbacks delegate names.
-		public const string XNPreeditStartCallback = "preeditStartCallback";
-		public const string XNPreeditDoneCallback = "preeditDoneCallback";
-		public const string XNPreeditDrawCallback = "preeditDrawCallback";
-		public const string XNPreeditCaretCallback = "preeditCaretCallback";
-		public const string XNPreeditStateNotifyCallback = "preeditStateNotifyCallback";
-		public const string XNPreeditAttributes = "preeditAttributes";
-		// XIMStatusCallbacks delegate names.
-		public const string XNStatusStartCallback = "statusStartCallback";
-		public const string XNStatusDoneCallback = "statusDoneCallback";
-		public const string XNStatusDrawCallback = "statusDrawCallback";
-		public const string XNStatusAttributes = "statusAttributes";
-
-		public const string XNArea = "area";
-		public const string XNAreaNeeded = "areaNeeded";
-		public const string XNSpotLocation = "spotLocation";
-		public const string XNFontSet = "fontSet";
-	}
-
-	internal unsafe struct XRRMonitorInfo
-	{
-		public IntPtr Name;
-		public int Primary;
-		public int Automatic;
-		public int NOutput;
-		public int X;
-		public int Y;
-		public int Width;
-		public int Height;
-		public int MWidth;
-		public int MHeight;
-		public IntPtr* Outputs;
 	}
 }
