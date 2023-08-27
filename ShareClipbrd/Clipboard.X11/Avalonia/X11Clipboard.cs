@@ -91,7 +91,6 @@ namespace Avalonia.X11
         private TaskCompletionSource<bool>? _storeAtomTcs;
         private readonly List<IntPtr> _requestedFormats;
         private TaskCompletionSource<object?>? _requestedDataTcs;
-        private readonly IntPtr[] _textAtoms;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
 
         private readonly IntPtr _display;
@@ -117,13 +116,6 @@ namespace Avalonia.X11
             XSelectInput(_display, _handle, new IntPtr((int)(EventMask.StructureNotifyMask | EventMask.PropertyChangeMask)));
 
             _avaloniaSaveTargetsAtom = XInternAtom(_display, "AVALONIA_SAVE_TARGETS_PROPERTY_ATOM", false);
-            _textAtoms = new[]
-            {
-                _atoms.XA_STRING,
-                _atoms.OEMTEXT,
-                _atoms.UTF8_STRING,
-                _atoms.UTF16_STRING
-            }.Where(a => a != IntPtr.Zero).ToArray();
 
             _incrDataReaders = new();
 
