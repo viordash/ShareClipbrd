@@ -89,7 +89,7 @@ namespace Avalonia.X11
         private IDataObject? _storedDataObject;
         private IntPtr _handle;
         private TaskCompletionSource<bool>? _storeAtomTcs;
-        private readonly List<IntPtr> _formats;
+        private readonly List<IntPtr> _requestedFormats;
         private TaskCompletionSource<object?>? _requestedDataTcs;
         private readonly IntPtr[] _textAtoms;
         private readonly IntPtr _avaloniaSaveTargetsAtom;
@@ -128,7 +128,7 @@ namespace Avalonia.X11
             _incrDataReaders = new();
 
             _cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-            _formats = new List<IntPtr>();
+            _requestedFormats = new List<IntPtr>();
         }
 
         public void Dispose()
@@ -207,7 +207,7 @@ namespace Avalonia.X11
                         {
                             var formatsArr = new IntPtr[nitems.ToInt32()];
                             Marshal.Copy(prop, formatsArr, 0, formatsArr.Length);
-                            _formats.AddRange(formatsArr);
+                            _requestedFormats.AddRange(formatsArr);
                             System.Diagnostics.Debug.WriteLine("----------- _requestedFormatsTcs?.TrySetResult(formats) 0");
                         }
                     }
@@ -450,7 +450,7 @@ namespace Avalonia.X11
             }
             await SendFormatRequest();
 
-            return _formats
+            return _requestedFormats
                 .Select(x => _atoms.GetAtomName(x))
                 .Where(x => x != null)
                 .ToArray();
@@ -465,7 +465,7 @@ namespace Avalonia.X11
 
             var formatAtom = _atoms.GetAtom(format);
             await SendFormatRequest();
-            if (_formats.Contains(formatAtom) == false)
+            if (_requestedFormats.Contains(formatAtom) == false)
             {
                 return null;
             }
