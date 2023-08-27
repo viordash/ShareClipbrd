@@ -4,7 +4,7 @@ using Avalonia.Input;
 using static Avalonia.X11.XLib;
 namespace Avalonia.X11
 {
-    internal class X11Clipboard
+    internal class X11Clipboard : IDisposable
     {
         #region inner classes
         private class IncrDataReader
@@ -124,6 +124,11 @@ namespace Avalonia.X11
             }.Where(a => a != IntPtr.Zero).ToArray();
 
             _incrDataReaders = new();
+        }
+
+        public void Dispose()
+        {
+            XCloseDisplay(_display);
         }
 
         private bool IsStringAtom(IntPtr atom)
