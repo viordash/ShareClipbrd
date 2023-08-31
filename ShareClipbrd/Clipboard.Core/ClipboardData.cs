@@ -228,16 +228,11 @@ namespace Clipboard.Core {
             }
 
             foreach(var format in Formats) {
-                if(!Converters.TryGetValue(format.Format.ToUpper(), out Convert? convertFunc)) {
-                    convertFunc = new Convert((c, o) => Task.FromResult(false), (stream) => {
-                        if(stream is MemoryStream ms) {
-                            var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
-                            Debug.WriteLine($"--- {format} {str}");
-                        }
-                        return stream;
-                    }, () => format.Format);
+                var formatName = convertFunc.GetFormat();
+                if(string.IsNullOrEmpty(formatName)) {
+                    continue;
                 }
-                setDataFunc(convertFunc.GetFormat(), convertFunc.To(format.Stream));
+                setDataFunc(formatName, convertFunc.To(format.Stream));
             }
         }
 
