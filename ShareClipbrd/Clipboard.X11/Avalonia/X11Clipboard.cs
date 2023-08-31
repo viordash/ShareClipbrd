@@ -361,42 +361,71 @@ namespace Avalonia.X11 {
         }
 
         unsafe Task HandleEvents(CancellationToken cancellationToken) {
+
             return Task.Run(() => {
+                var fd = XConnectionNumber(_display);
+                var ev = new epoll_event() {
+                    events = EPOLLIN,
+                    data = { u32 = (int)EventCodes.X11 }
+                };
+                var _epoll = epoll_create1(0);
+                if(_epoll == -1) {
+                    throw new X11Exception("epoll_create1 failed");
+                }
+
+                if(epoll_ctl(_epoll, EPOLL_CTL_ADD, fd, ref ev) == -1) {
+                    throw new X11Exception("Unable to attach X11 connection handle to epoll");
+                }
+
+                var fds = stackalloc int[2];
+                pipe2(fds, O_NONBLOCK);
+                var _sigread = fds[0];
+                var _sigwrite = fds[1];
+
+                ev = new epoll_event {
+                    events = EPOLLIN,
+                    data = { u32 = (int)EventCodes.Signal }
+                };
+                if(epoll_ctl(_epoll, EPOLL_CTL_ADD, _sigread, ref ev) == -1) {
+                    throw new X11Exception("Unable to attach signal pipe to epoll");
+                }
+
                 System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
                 int counter = 0;
-                // XSetSelectionOwner(_display, _atoms.CLIPBOARD, _handle, IntPtr.Zero);
-                // if (XGetSelectionOwner(_display, _atoms.CLIPBOARD) != _handle)
-                // {
-                //     throw new Exception($"Failed to take ownership of selection");
-                // }
 
                 while(!cancellationToken.IsCancellationRequested) {
                     System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
-                    XNextEvent(_display, out var xev);
-                    if(XFilterEvent(ref xev, IntPtr.Zero)) {
-                        System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1.05 filter {counter++}");
-                        continue;
+                    XFlush(_display);
+
+                    if(XPending(_display) == 0) {
+                        var timeout = 100;
+                        var epoll_res = epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
+
+                        System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.5 epoll_res={epoll_res}");
+                        if(epoll_res == 0) {
+                            break;
+                        }
+                        // Drain the signaled pipe
+                        int buf = 0;
+                        while(read(_sigread, &buf, new IntPtr(4)).ToInt64() > 0) {
+                        }
+
                     }
-                    if(cancellationToken.IsCancellationRequested)
+
+                    if(cancellationToken.IsCancellationRequested) {
                         return;
+                    }
+
+                    XNextEvent(_display, out var xev);
 
                     if(xev.AnyEvent.window == _handle) {
-                        // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1.1 {counter++}");
                         OnEvent(ref xev);
                     }
                     if(xev.AnyEvent.window == _incrWriteWindow) {
-                        // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1.2 {counter++}");
                         OnIncrWritePropertyEvent(ref xev);
                     }
-
-                    var pending = XPending(_display);
-                    if(pending == 0) {
-                        System.Diagnostics.Debug.WriteLine($"----------- RunLoop 2 (pending == 0) {counter++}");
-                        break;
-                    }
                 }
-                // XSetSelectionOwner(_display, _atoms.CLIPBOARD, IntPtr.Zero, IntPtr.Zero);
                 System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++}");
             });
         }
