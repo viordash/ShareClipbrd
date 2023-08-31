@@ -125,7 +125,7 @@ namespace Clipboard.Core {
             { Format.Dib, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Dib);
-                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is MemoryStream castedValue) {c.Add(Format.Dib, castedValue); return true; }
                     if (data is byte[] bytes) {c.Add(Format.Dib, new MemoryStream(bytes)); return true; }
                     return false;
                 },
