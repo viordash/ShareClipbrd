@@ -4,6 +4,7 @@ using Avalonia.Input;
 using static Avalonia.X11.XLib;
 namespace Avalonia.X11 {
     internal class X11Clipboard : IDisposable {
+
         private IDataObject? _storedDataObject;
         private IntPtr _handle;
         private readonly List<IntPtr> _requestedFormats;
@@ -86,10 +87,7 @@ namespace Avalonia.X11 {
                         property = IntPtr.Zero
                     }
                 };
-                if (sel.selection == _atoms.CLIPBOARD)
-                {
-                    resp.SelectionEvent.property = WriteTargetToProperty(sel.target, sel.requestor, sel.property);
-                }
+                resp.SelectionEvent.property = WriteTargetToProperty(sel.target, sel.requestor, sel.property);
 
                 XSendEvent(_display, sel.requestor, false, new IntPtr((int)EventMask.NoEventMask), ref resp);
                 return;
@@ -191,7 +189,7 @@ namespace Avalonia.X11 {
                         _atoms.XA_ATOM, 32, PropertyMode.Replace, atoms, atoms.Length);
 
                     if(UseIncrProtocol(_storedDataObject)) {
-                        System.Diagnostics.Debug.WriteLine("--- _atoms.TARGETS");
+                        System.Diagnostics.Debug.WriteLine("--- WriteTargetToProperty _atoms.TARGETS");
                     }
                 }
                 return property;
@@ -233,7 +231,8 @@ namespace Avalonia.X11 {
                         bytes = textEnc.GetBytes(s);
                     } else {
                         System.Diagnostics.Debug.WriteLine("--- IntPtr.Zero");
-                        return IntPtr.Zero;
+                        return property;
+                        // return IntPtr.Zero;
                     }
                 }
 
@@ -322,6 +321,9 @@ namespace Avalonia.X11 {
             _storedDataObject = data;
 
             XSetSelectionOwner(_display, _atoms.CLIPBOARD, _handle, IntPtr.Zero);
+            if(XGetSelectionOwner(_display, _atoms.CLIPBOARD) != _handle) {
+                throw new Exception($"Failed to take ownership of selection");
+            }
 
             if(!UseIncrProtocol(data)) {
                 StoreAtomsInClipboardManager(data);

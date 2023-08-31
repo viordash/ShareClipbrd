@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Clipboard.Core {
     public class ClipboardData {
@@ -23,8 +23,9 @@ namespace Clipboard.Core {
         }
 
         public static class Format {
-            public const string Text = "TEXT";
-            public const string UnicodeText = "UNICODETEXT";
+            public const string Text_win = "Text";
+            public const string Text_x11 = "TEXT";
+            public const string UnicodeText = "UnicodeText";
             public const string Utf8String = "UTF8_STRING";
             public const string StringFormat = "System.String";
             public const string OemText = "OEMTEXT";
@@ -40,16 +41,45 @@ namespace Clipboard.Core {
         }
 
         public static readonly Dictionary<string, Convert> Converters = new(){
-            { Format.Text, new Convert(
+            { Format.Text_win, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Text);
-                    if (data is string castedValue) {c.Add(Format.Text, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    if (data is byte[] bytes) {c.Add(Format.Text, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(Format.Text_win);
+                    if (data is string castedValue) {c.Add(Format.Text_win, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Text_win, new MemoryStream(bytes)); return true; }
                     return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.Text
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Text_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Text_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
+
+            { Format.Text_x11, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Text_x11);
+                    if (data is string castedValue) {c.Add(Format.Text_x11, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Text_x11, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Text_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Text_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+
             { Format.UnicodeText, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.UnicodeText);
@@ -57,9 +87,35 @@ namespace Clipboard.Core {
                     if (data is byte[] bytes) {c.Add(Format.UnicodeText, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.UnicodeText
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.Unicode.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.Unicode.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.UnicodeText;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Utf8String;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
+
+
             { Format.Utf8String, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Utf8String);
@@ -109,7 +165,15 @@ namespace Clipboard.Core {
                     return false;
                 },
                 (stream) => stream,
-                () => Format.Locale
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Locale;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return string.Empty;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
             { Format.Html, new Convert(
                 async (c, getDataFunc) => {
@@ -204,7 +268,7 @@ namespace Clipboard.Core {
 
             foreach(var format in formats) {
                 try {
-                    if(!Converters.TryGetValue(format.ToUpper(), out Convert? convertFunc)) {
+                    if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
                         Debug.WriteLine($"not supported format: {format}");
                         // var data = await getDataFunc(format);
                         // if(data is string castedValue) {
@@ -228,6 +292,16 @@ namespace Clipboard.Core {
             }
 
             foreach(var format in Formats) {
+                if(!Converters.TryGetValue(format.Format, out Convert? convertFunc)) {
+                    // convertFunc = new Convert((c, o) => Task.FromResult(false), (stream) => {
+                    //     if(stream is MemoryStream ms) {
+                    //         var str = System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray());
+                    //         Debug.WriteLine($"--- {format} {str}");
+                    //     }
+                    //     return stream;
+                    // }, () => format.Format);
+                    continue;
+                }
                 var formatName = convertFunc.GetFormat();
                 if(string.IsNullOrEmpty(formatName)) {
                     continue;

@@ -4,10 +4,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 
-namespace Avalonia.X11
-{
-    internal unsafe static class XLib
-    {
+namespace Avalonia.X11 {
+    internal unsafe static class XLib {
         private const string libX11 = "libX11.so.6";
         private const string libX11Randr = "libXrandr.so.2";
         private const string libX11Ext = "libXext.so.6";
@@ -34,6 +32,9 @@ namespace Avalonia.X11
 
         [DllImport(libX11)]
         public static extern IntPtr XNextEvent(IntPtr display, XEvent* xevent);
+
+        [DllImport(libX11)]
+        public static extern int XConnectionNumber(IntPtr diplay);
 
         [DllImport(libX11)]
         public static extern int XPending(IntPtr diplay);
@@ -68,10 +69,9 @@ namespace Avalonia.X11
         [DllImport(libX11)]
         public static extern IntPtr XGetAtomName(IntPtr display, IntPtr atom);
 
-        public static string? GetAtomName(IntPtr display, IntPtr atom)
-        {
+        public static string? GetAtomName(IntPtr display, IntPtr atom) {
             var ptr = XGetAtomName(display, atom);
-            if (ptr == IntPtr.Zero)
+            if(ptr == IntPtr.Zero)
                 return null;
             var s = Marshal.PtrToStringAnsi(ptr);
             XFree(ptr);
@@ -139,5 +139,50 @@ namespace Avalonia.X11
 
         [DllImport(libX11)]
         public static extern bool XFilterEvent(XEvent* xevent, IntPtr window);
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct epoll_data {
+            [FieldOffset(0)]
+            public IntPtr ptr;
+            [FieldOffset(0)]
+            public int fd;
+            [FieldOffset(0)]
+            public uint u32;
+            [FieldOffset(0)]
+            public ulong u64;
+        }
+
+        public const int EPOLLIN = 1;
+        public const int EPOLL_CTL_ADD = 1;
+        public const int O_NONBLOCK = 2048;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct epoll_event {
+            public uint events;
+            public epoll_data data;
+        }
+
+        [DllImport("libc")]
+        public extern static int epoll_create1(int size);
+
+        [DllImport("libc")]
+        public extern static int epoll_ctl(int epfd, int op, int fd, ref epoll_event __event);
+
+        [DllImport("libc")]
+        public extern static int epoll_wait(int epfd, epoll_event* events, int maxevents, int timeout);
+
+        [DllImport("libc")]
+        public extern static int pipe2(int* fds, int flags);
+        [DllImport("libc")]
+        public extern static IntPtr write(int fd, void* buf, IntPtr count);
+
+        [DllImport("libc")]
+        public extern static IntPtr read(int fd, void* buf, IntPtr count);
+
+        public enum EventCodes {
+            X11 = 1,
+            Signal = 2
+        }
+
     }
 }
