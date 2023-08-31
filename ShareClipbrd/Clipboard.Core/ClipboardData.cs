@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Clipboard.Core {
     public class ClipboardData {
@@ -160,7 +160,7 @@ namespace Clipboard.Core {
             { Format.ImageBmp, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.ImageBmp);
-                    if (data is MemoryStream castedValue) {c.Add(Format.Locale, castedValue); return true; }
+                    if (data is MemoryStream castedValue) {c.Add(Format.ImageBmp, castedValue); return true; }
                     if (data is byte[] bytes) {c.Add(Format.ImageBmp, new MemoryStream(bytes)); return true; }
                     return false;
                 },
