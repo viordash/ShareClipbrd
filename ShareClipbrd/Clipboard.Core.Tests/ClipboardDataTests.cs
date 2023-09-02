@@ -40,21 +40,12 @@ namespace Clipboard.Core.Tests {
         }
 
         [Test]
-        public async Task DataFormats_StringFormat_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.StringFormat, $"{ClipboardData.Format.StringFormat} ��������", System.Text.Encoding.UTF8));
-        }
-        [Test]
-        public void DataFormats_StringFormat_When_NoStringData_Test() {
-            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => Task.FromResult<object?>(new object())));
-        }
-
-        [Test]
         public async Task DataFormats_OemText_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.OemText, $"{ClipboardData.Format.OemText} ��������", System.Text.Encoding.ASCII));
+            Assert.That(await DataFormats_Test(ClipboardData.Format.OemText_win, $"{ClipboardData.Format.OemText_win} ��������", System.Text.Encoding.ASCII));
         }
         [Test]
         public void DataFormats_OemText_When_NoStringData_Test() {
-            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => Task.FromResult<object?>(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText_win }, (f) => Task.FromResult<object?>(new object())));
         }
 
         [Test]
