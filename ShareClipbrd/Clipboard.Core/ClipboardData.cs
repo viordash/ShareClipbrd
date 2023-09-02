@@ -49,7 +49,22 @@ namespace Clipboard.Core {
                     if (data is byte[] bytes) {c.Add(Format.Text_win, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
                 () => {
                     if(OperatingSystem.IsWindows()) {
                         return Format.Text_win;
@@ -68,7 +83,23 @@ namespace Clipboard.Core {
                     if (data is byte[] bytes) {c.Add(Format.Text_x11, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+
                 () => {
                     if(OperatingSystem.IsWindows()) {
                         return Format.Text_win;
