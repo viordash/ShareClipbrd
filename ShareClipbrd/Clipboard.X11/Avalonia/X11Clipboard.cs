@@ -235,7 +235,6 @@ namespace Avalonia.X11 {
                     } else {
                         System.Diagnostics.Debug.WriteLine("--- IntPtr.Zero");
                         return property;
-                        // return IntPtr.Zero;
                     }
                 }
 
