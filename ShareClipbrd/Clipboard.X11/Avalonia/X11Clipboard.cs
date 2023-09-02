@@ -256,22 +256,6 @@ namespace Avalonia.X11 {
             return IntPtr.Zero;
         }
 
-        private Task SendFormatRequest() {
-            System.Diagnostics.Debug.WriteLine("----------- SendFormatRequest 0");
-
-            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle,
-                IntPtr.Zero);
-
-            return HandleEvents(_cts.Token);
-        }
-
-        private Task SendDataRequest(IntPtr format) {
-
-            System.Diagnostics.Debug.WriteLine("----------- SendDataRequest 0");
-            XConvertSelection(_display, _atoms.CLIPBOARD, format, format, _handle, IntPtr.Zero);
-            return HandleEvents(_cts.Token);
-        }
-
         private bool HasOwner => XGetSelectionOwner(_display, _atoms.CLIPBOARD) != IntPtr.Zero;
 
         private IntPtr[] ConvertDataObject(IDataObject data) {
@@ -333,8 +317,15 @@ namespace Avalonia.X11 {
             }
 
             await HandleEvents(_cts.Token);
+        }
 
-            // XSetSelectionOwner(_display, _atoms.CLIPBOARD, IntPtr.Zero, IntPtr.Zero);
+        private Task SendFormatRequest() {
+            System.Diagnostics.Debug.WriteLine("----------- SendFormatRequest 0");
+
+            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle,
+                IntPtr.Zero);
+
+            return HandleEvents(_cts.Token);
         }
 
         public async Task<string[]> GetFormatsAsync() {
@@ -361,7 +352,9 @@ namespace Avalonia.X11 {
                 return null;
             }
 
-            await SendDataRequest(formatAtom);
+            XConvertSelection(_display, _atoms.CLIPBOARD, formatAtom, formatAtom, _handle, IntPtr.Zero);
+            await HandleEvents(_cts.Token);
+
             return _requestedData;
         }
 
@@ -401,6 +394,14 @@ namespace Avalonia.X11 {
                 while(!cancellationToken.IsCancellationRequested) {
                     // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
+                    XNextEvent(_display, out var xev);
+
+                    if(xev.AnyEvent.window == _handle) {
+                        OnEvent(ref xev);
+                    }
+                    if(xev.AnyEvent.window == _incrWriteWindow) {
+                        OnIncrWritePropertyEvent(ref xev);
+                    }
                     XFlush(_display);
 
                     if(XPending(_display) == 0) {
@@ -417,21 +418,8 @@ namespace Avalonia.X11 {
                         }
 
                     }
-
-                    if(cancellationToken.IsCancellationRequested) {
-                        return;
-                    }
-
-                    XNextEvent(_display, out var xev);
-
-                    if(xev.AnyEvent.window == _handle) {
-                        OnEvent(ref xev);
-                    }
-                    if(xev.AnyEvent.window == _incrWriteWindow) {
-                        OnIncrWritePropertyEvent(ref xev);
-                    }
                 }
-                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++}");
+                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++} cancel:{cancellationToken.IsCancellationRequested}");
             });
         }
     }
