@@ -27,8 +27,8 @@ namespace Clipboard.Core {
             public const string Text_x11 = "TEXT";
             public const string UnicodeText = "UnicodeText";
             public const string Utf8String = "UTF8_STRING";
-            public const string StringFormat = "System.String";
-            public const string OemText = "OEMTEXT";
+            public const string OemText_win = "OEMText";
+            public const string OemText_x11 = "OEMTEXT";
             public const string String_x11 = "STRING";
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
@@ -123,29 +123,69 @@ namespace Clipboard.Core {
                     if (data is byte[] bytes) {c.Add(Format.Utf8String, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.Unicode.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.Utf8String
-            )},
-            { Format.StringFormat, new Convert(
-                async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.StringFormat);
-                    if (data is string castedValue) {c.Add(Format.StringFormat, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    if (data is byte[] bytes) {c.Add(Format.StringFormat, new MemoryStream(bytes)); return true; }
-                    if (data == null) { return true; }
-                    return false;
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.Unicode.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.Unicode.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.StringFormat
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.UnicodeText;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Utf8String;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
-            { Format.OemText, new Convert(
+
+            { Format.OemText_win, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.OemText);
-                    if (data is string castedValue) {c.Add(Format.OemText, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
-                    if (data is byte[] bytes) {c.Add(Format.OemText, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(Format.OemText_win);
+                    if (data is string castedValue) {c.Add(Format.OemText_win, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.OemText_win, new MemoryStream(bytes)); return true; }
                     return false;
                 },
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.OemText
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.OemText_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.OemText_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.OemText_x11, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.OemText_x11);
+                    if (data is string castedValue) {c.Add(Format.OemText_x11, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.OemText_x11, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.OemText_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.OemText_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
 
             { Format.String_x11, new Convert(
@@ -155,7 +195,15 @@ namespace Clipboard.Core {
                     return false;
                 },
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
-                () => Format.String_x11
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return string.Empty;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.String_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
 
             { Format.Rtf, new Convert(
