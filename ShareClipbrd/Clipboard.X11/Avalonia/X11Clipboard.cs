@@ -66,7 +66,7 @@ namespace Avalonia.X11 {
         }
 
         private unsafe void OnEvent(ref XEvent ev) {
-            System.Diagnostics.Debug.WriteLine($"--------- X11Clipboard.OnEvent {ev}");
+            // System.Diagnostics.Debug.WriteLine($"--------- X11Clipboard.OnEvent {ev}");
             if(ev.type == XEventName.SelectionClear) {
                 System.Diagnostics.Debug.WriteLine("--- XEventName.SelectionClear");
                 return;
@@ -137,7 +137,10 @@ namespace Avalonia.X11 {
                     XGetWindowProperty(_display, _handle, _incrReadTargetAtom, IntPtr.Zero, new IntPtr(0x7fffffff), true, (IntPtr)Atom.AnyPropertyType,
                                 out var actualTypeAtom, out var actualFormat, out var nitems, out var bytes_after, out var prop);
 
-                    if(_incrReadTargetAtom == actualTypeAtom && (int)nitems > 0) {
+                    System.Diagnostics.Debug.WriteLine($"--------- INCR get 0 _incrReadTargetAtom:{_atoms.GetAtomName(_incrReadTargetAtom)}(0x{_incrReadTargetAtom:X}), "
+                    + $"actualTypeAtom:{_atoms.GetAtomName(actualTypeAtom)}(0x{actualTypeAtom:X}), nitems:{nitems}");
+
+                    if(nitems > 0) {
                         var chunkSize = (int)nitems * (actualFormat / 8);
                         var buffer = new byte[chunkSize];
                         Marshal.Copy(prop, buffer, 0, chunkSize);
@@ -392,11 +395,11 @@ namespace Avalonia.X11 {
                     throw new X11Exception("Unable to attach signal pipe to epoll");
                 }
 
-                System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
-                int counter = 0;
+                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
+                // int counter = 0;
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
+                    // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
                     XFlush(_display);
 
@@ -404,7 +407,7 @@ namespace Avalonia.X11 {
                         var timeout = 100;
                         var epoll_res = epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
 
-                        System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.5 epoll_res={epoll_res}");
+                        // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.5 epoll_res={epoll_res}");
                         if(epoll_res == 0) {
                             break;
                         }
@@ -428,7 +431,7 @@ namespace Avalonia.X11 {
                         OnIncrWritePropertyEvent(ref xev);
                     }
                 }
-                System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++}");
+                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++}");
             });
         }
     }
