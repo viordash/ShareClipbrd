@@ -29,6 +29,7 @@ namespace Clipboard.Core {
             public const string Utf8String = "UTF8_STRING";
             public const string StringFormat = "System.String";
             public const string OemText = "OEMTEXT";
+            public const string String_x11 = "STRING";
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
             public const string Html = "HTML Format";
@@ -78,7 +79,6 @@ namespace Clipboard.Core {
                     throw new NotSupportedException($"OS: {Environment.OSVersion}");
                 }
             )},
-
 
             { Format.UnicodeText, new Convert(
                 async (c, getDataFunc) => {
@@ -147,6 +147,17 @@ namespace Clipboard.Core {
                 (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
                 () => Format.OemText
             )},
+
+            { Format.String_x11, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.String_x11);
+                    if (data is string castedValue) {c.Add(Format.String_x11, new MemoryStream(System.Text.Encoding.ASCII.GetBytes(castedValue))); return true; }
+                    return false;
+                },
+                (stream) => System.Text.Encoding.ASCII.GetString(((MemoryStream)stream).ToArray()),
+                () => Format.String_x11
+            )},
+
             { Format.Rtf, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Rtf);
