@@ -1,23 +1,21 @@
 ﻿using System.Diagnostics;
-using Avalonia;
 using Avalonia.X11;
 using Avalonia.Input;
 using Clipboard.Core;
 
 namespace Clipboard.OS {
     internal class Clipboard : IClipboard {
+        readonly X11Clipboard clipboard;
 
         public Clipboard(object? parent) {
-
+            clipboard = new X11Clipboard();
         }
 
         public async Task Clear() {
-            using var clipboard = new X11Clipboard();
             await clipboard.ClearAsync();
         }
 
         public async Task<bool> ContainsFileDropList() {
-            using var clipboard = new X11Clipboard();
             var formats = await clipboard.GetFormatsAsync();
 
             Debug.WriteLine($"----------- ContainsFileDropList 0 {formats?.Length}");
@@ -29,12 +27,10 @@ namespace Clipboard.OS {
         }
 
         public async Task<object?> GetData(string format) {
-            using var clipboard = new X11Clipboard();
             return await clipboard.GetDataAsync(format);
         }
 
         public async Task<string[]> GetFormats() {
-            using var clipboard = new X11Clipboard();
             return await clipboard.GetFormatsAsync();
         }
 
@@ -43,7 +39,6 @@ namespace Clipboard.OS {
         }
 
         public async Task SetDataObject(ClipboardData data) {
-            using var clipboard = new X11Clipboard();
             var dataObject = new DataObject();
             data.Deserialize((f, o) => dataObject.Set(f, o));
             await clipboard.SetDataObjectAsync(dataObject);
