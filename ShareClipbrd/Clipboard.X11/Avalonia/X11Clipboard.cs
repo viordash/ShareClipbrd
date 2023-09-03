@@ -269,20 +269,6 @@ namespace Avalonia.X11 {
             return atoms.ToArray();
         }
 
-        private void StoreAtomsInClipboardManager(IDataObject data) {
-            if(_atoms.CLIPBOARD_MANAGER != IntPtr.Zero && _atoms.SAVE_TARGETS != IntPtr.Zero) {
-                var clipboardManager = XGetSelectionOwner(_display, _atoms.CLIPBOARD_MANAGER);
-                if(clipboardManager != IntPtr.Zero) {
-                    var atoms = ConvertDataObject(data);
-                    XChangeProperty(_display, _handle, _avaloniaSaveTargetsAtom, _atoms.XA_ATOM, 32,
-                        PropertyMode.Replace,
-                        atoms, atoms.Length);
-                    XConvertSelection(_display, _atoms.CLIPBOARD_MANAGER, _atoms.SAVE_TARGETS,
-                        _avaloniaSaveTargetsAtom, _handle, IntPtr.Zero);
-                }
-            }
-        }
-
         private bool UseIncrProtocol(IDataObject data) {
             foreach(var fmt in data.GetDataFormats()) {
                 var objValue = _storedDataObject?.Get(fmt);
@@ -301,6 +287,21 @@ namespace Avalonia.X11 {
             var data = new DataObject();
             data.Set(Clipboard.Core.ClipboardData.Format.Text_x11, null);
             return SetDataObjectAsync(data);
+        }
+
+
+        private void StoreAtomsInClipboardManager(IDataObject data) {
+            if(_atoms.CLIPBOARD_MANAGER != IntPtr.Zero && _atoms.SAVE_TARGETS != IntPtr.Zero) {
+                var clipboardManager = XGetSelectionOwner(_display, _atoms.CLIPBOARD_MANAGER);
+                if(clipboardManager != IntPtr.Zero) {
+                    var atoms = ConvertDataObject(data);
+                    XChangeProperty(_display, _handle, _avaloniaSaveTargetsAtom, _atoms.XA_ATOM, 32,
+                        PropertyMode.Replace,
+                        atoms, atoms.Length);
+                    XConvertSelection(_display, _atoms.CLIPBOARD_MANAGER, _atoms.SAVE_TARGETS,
+                        _avaloniaSaveTargetsAtom, _handle, IntPtr.Zero);
+                }
+            }
         }
 
         public async Task SetDataObjectAsync(IDataObject data) {
