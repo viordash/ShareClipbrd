@@ -94,7 +94,7 @@ namespace Avalonia.X11 {
             }
             _atoms = new X11Atoms(_display);
 
-            System.Diagnostics.Debug.WriteLine($"---- X11Clipboard {_display:X}");
+            // System.Diagnostics.Debug.WriteLine($"---- X11Clipboard {_display:X}");
 
             _handle = XCreateSimpleWindow(_display, XDefaultRootWindow(_display),
                     0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);

@@ -32,7 +32,14 @@ namespace Clipboard.Core {
             public const string String_x11 = "STRING";
             public const string Rtf = "Rich Text Format";
             public const string Locale = "Locale";
-            public const string Html = "HTML Format";
+            public const string Html_win = "HTML Format";
+            public const string Html_x11 = "text/html";
+            public const string GtkRichText = "application/x-gtk-text-buffer-rich-text";
+            public const string GtkTextBufferContents = "GTK_TEXT_BUFFER_CONTENTS";
+            public const string TexPlain = "text/plain";
+            public const string TexPlainUtf8 = "text/plain;charset=utf-8";
+
+
             public const string WaveAudio = "WaveAudio";
 
             public const string Bitmap = "Bitmap";
@@ -265,15 +272,113 @@ namespace Clipboard.Core {
                     throw new NotSupportedException($"OS: {Environment.OSVersion}");
                 }
             )},
-            { Format.Html, new Convert(
+            { Format.Html_win, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Html);
-                    if (data is string castedValue) {c.Add(Format.Html, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    if (data is byte[] bytes) {c.Add(Format.Html, new MemoryStream(bytes)); return true; }
+                    var data = await getDataFunc(Format.Html_win);
+                    if (data is string castedValue) {c.Add(Format.Html_win, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Html_win, new MemoryStream(bytes)); return true; }
                     return false;
                 },
                 (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
-                () => Format.Html
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Html_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Html_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+            { Format.Html_x11, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Html_x11);
+                    if (data is string castedValue) {c.Add(Format.Html_x11, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Html_x11, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Html_win;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.Html_x11;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.GtkRichText, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.GtkRichText);
+                    if (data is byte[] bytes) {c.Add(Format.GtkRichText, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => stream,
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return string.Empty;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.GtkRichText;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.GtkTextBufferContents, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.GtkTextBufferContents);
+                    if (data is byte[] bytes) {c.Add(Format.GtkTextBufferContents, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => stream,
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return string.Empty;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.GtkTextBufferContents;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.TexPlain, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.TexPlain);
+                    if (data is byte[] bytes) {c.Add(Format.TexPlain, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => stream,
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return string.Empty;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.TexPlain;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.TexPlainUtf8, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.TexPlainUtf8);
+                    if (data is byte[] bytes) {c.Add(Format.TexPlainUtf8, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => stream,
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return string.Empty;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.TexPlainUtf8;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
             )},
 
             { Format.Dib, new Convert(
