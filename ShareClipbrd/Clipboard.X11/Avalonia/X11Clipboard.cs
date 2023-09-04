@@ -233,6 +233,7 @@ namespace Avalonia.X11 {
                     if(UseIncrProtocol(_storedDataObject)) {
                         System.Diagnostics.Debug.WriteLine("--- WriteTargetToProperty _atoms.TARGETS");
                     }
+                    _storeAtomTcs?.TrySetResult(true);
                 }
                 return property;
             }
@@ -282,7 +283,6 @@ namespace Avalonia.X11 {
                          (w) => {
                              _incrDataWriters.Remove(w);
                              System.Diagnostics.Debug.WriteLine("--- IncrDataWriter completed");
-                             _storeAtomTcs?.TrySetResult(true);
                          });
 
                     XSelectInput(_display, window, new IntPtr((int)EventMask.PropertyChangeMask));
@@ -291,7 +291,6 @@ namespace Avalonia.X11 {
                 } else {
                     XChangeProperty(_display, window, property, target, 8, PropertyMode.Replace, bytes, bytes.Length);
                     System.Diagnostics.Debug.WriteLine("--- NORM completed");
-                    _storeAtomTcs?.TrySetResult(true);
                 }
                 return property;
             }
