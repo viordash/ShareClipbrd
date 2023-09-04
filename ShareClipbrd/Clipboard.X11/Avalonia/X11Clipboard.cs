@@ -223,16 +223,13 @@ namespace Avalonia.X11 {
 
         private unsafe IntPtr WriteTargetToProperty(IntPtr target, IntPtr window, IntPtr property) {
 
-            System.Diagnostics.Debug.WriteLine($"--------- WriteTargetToProperty 0 {target}");
+            // System.Diagnostics.Debug.WriteLine($"--------- WriteTargetToProperty 0 {target}");
             if(target == _atoms.TARGETS) {
                 if(_storedDataObject != null) {
                     var atoms = ConvertDataObject(_storedDataObject);
                     XChangeProperty(_display, window, property,
                         _atoms.XA_ATOM, 32, PropertyMode.Replace, atoms, atoms.Length);
 
-                    if(UseIncrProtocol(_storedDataObject)) {
-                        System.Diagnostics.Debug.WriteLine("--- WriteTargetToProperty _atoms.TARGETS");
-                    }
                     _storeAtomTcs?.TrySetResult(true);
                 }
                 return property;
@@ -265,7 +262,7 @@ namespace Avalonia.X11 {
 
             if(_storedDataObject?.Contains(_atoms.GetAtomName(target)) == true) {
 
-                System.Diagnostics.Debug.WriteLine($"----------- WriteTargetToProperty 5 {_atoms.GetAtomName(target)}");
+                // System.Diagnostics.Debug.WriteLine($"----------- WriteTargetToProperty 5 {_atoms.GetAtomName(target)}");
                 var objValue = _storedDataObject.Get(_atoms.GetAtomName(target));
 
                 if(!(objValue is byte[] bytes)) {
@@ -273,7 +270,6 @@ namespace Avalonia.X11 {
                         var textEnc = GetStringEncoding(_atoms, target) ?? Encoding.UTF8;
                         bytes = textEnc.GetBytes(s);
                     } else {
-                        System.Diagnostics.Debug.WriteLine("--- IntPtr.Zero");
                         return property;
                     }
                 }
@@ -311,20 +307,6 @@ namespace Avalonia.X11 {
             return atoms.ToArray();
         }
 
-        private bool UseIncrProtocol(IDataObject data) {
-            foreach(var fmt in data.GetDataFormats()) {
-                var objValue = _storedDataObject?.Get(fmt);
-                var dataSize = objValue switch {
-                    byte[] bytes => bytes.Length,
-                    string str => str.Length,
-                    _ => 0
-                };
-                if(dataSize > MaxRequestSize)
-                    return true;
-            }
-            return false;
-        }
-
         public Task ClearAsync() {
             var data = new DataObject();
             data.Set(Clipboard.Core.ClipboardData.Format.Text_x11, null);
@@ -347,11 +329,11 @@ namespace Avalonia.X11 {
 
         void StartRequestWorkaround() {
             var ddd = XGetSelectionOwner(_display, _atoms.CLIPBOARD);
-            System.Diagnostics.Debug.WriteLine($"----------- StartRequest 0 {ddd}");
+            // System.Diagnostics.Debug.WriteLine($"----------- StartRequest 0 {ddd}");
         }
 
         private Task<IntPtr[]?> SendFormatRequest() {
-            System.Diagnostics.Debug.WriteLine($"----------- SendFormatRequest 0 {_requestedFormatsTcs}");
+            // System.Diagnostics.Debug.WriteLine($"----------- SendFormatRequest 0 {_requestedFormatsTcs}");
 
             if(_requestedFormatsTcs == null || _requestedFormatsTcs.Task.IsCompleted) {
                 _requestedFormatsTcs = new();
@@ -406,55 +388,10 @@ namespace Avalonia.X11 {
         unsafe void HandleEvents(CancellationToken cancellationToken) {
 
             _ = Task.Run(() => {
-                // var fd = XConnectionNumber(_display);
-                // var ev = new epoll_event() {
-                //     events = EPOLLIN,
-                //     data = { u32 = (int)EventCodes.X11 }
-                // };
-                // var _epoll = epoll_create1(0);
-                // if(_epoll == -1) {
-                //     throw new X11Exception("epoll_create1 failed");
-                // }
-
-                // if(epoll_ctl(_epoll, EPOLL_CTL_ADD, fd, ref ev) == -1) {
-                //     throw new X11Exception("Unable to attach X11 connection handle to epoll");
-                // }
-
-                // var fds = stackalloc int[2];
-                // pipe2(fds, O_NONBLOCK);
-                // var _sigread = fds[0];
-                // var _sigwrite = fds[1];
-
-                // ev = new epoll_event {
-                //     events = EPOLLIN,
-                //     data = { u32 = (int)EventCodes.Signal }
-                // };
-                // if(epoll_ctl(_epoll, EPOLL_CTL_ADD, _sigread, ref ev) == -1) {
-                //     throw new X11Exception("Unable to attach signal pipe to epoll");
-                // }
-
-
-                System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
-                int counter = 0;
+                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
+                // int counter = 0;
                 while(!cancellationToken.IsCancellationRequested) {
-                    System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
-
-                    // XFlush(_display);
-
-                    // if(XPending(_display) == 0) {
-                    //     var timeout = -1;
-                    //     System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.3");
-                    //     var epoll_res = epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
-
-                    //     System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.5 epoll_res={epoll_res}");
-                    //     // if(epoll_res == 0) {
-                    //     //     break;
-                    //     // }
-                    //     // Drain the signaled pipe
-                    //     int buf = 0;
-                    //     while(read(_sigread, &buf, new IntPtr(4)).ToInt64() > 0) {
-                    //     }
-                    // }
+                    // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
                     // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 2");
                     XNextEvent(_display, out var xev);
@@ -467,7 +404,7 @@ namespace Avalonia.X11 {
                         incrDataWriter.OnEvent(ref xev);
                     }
                 }
-                System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++} cancel:{cancellationToken.IsCancellationRequested}");
+                // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 3 {counter++} cancel:{cancellationToken.IsCancellationRequested}");
             });
         }
     }
