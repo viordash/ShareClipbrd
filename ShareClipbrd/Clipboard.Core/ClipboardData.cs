@@ -288,7 +288,7 @@ namespace Clipboard.Core {
 
                     if(OperatingSystem.IsLinux()) {
                         return stream switch {
-                            MemoryStream memoryStream => memoryStream,
+                            MemoryStream memoryStream => memoryStream.ToArray(),
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
