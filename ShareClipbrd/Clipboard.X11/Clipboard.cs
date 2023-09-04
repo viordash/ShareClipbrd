@@ -45,7 +45,13 @@ namespace Clipboard.OS {
         }
 
         public Task SetFileDropList(IList<string> files) {
-            throw new NotImplementedException();
+            ClipboardFile.SetFileDropList(async (f, o) => {
+                var dataObject = new DataObject();
+                dataObject.Set(f, o);
+                await clipboard.SetDataObjectAsync(dataObject);
+            }, files);
+
+            return Task.CompletedTask;
         }
     }
 }
