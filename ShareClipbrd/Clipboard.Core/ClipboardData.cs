@@ -276,10 +276,24 @@ namespace Clipboard.Core {
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Html_win);
                     if (data is string castedValue) {c.Add(Format.Html_win, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
-                    if (data is byte[] bytes) {c.Add(Format.Html_win, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.UTF8.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream,
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
                 () => {
                     if(OperatingSystem.IsWindows()) {
                         return Format.Html_win;
@@ -293,11 +307,25 @@ namespace Clipboard.Core {
             { Format.Html_x11, new Convert(
                 async (c, getDataFunc) => {
                     var data = await getDataFunc(Format.Html_x11);
-                    if (data is string castedValue) {c.Add(Format.Html_x11, new MemoryStream(System.Text.Encoding.UTF8.GetBytes(castedValue))); return true; }
                     if (data is byte[] bytes) {c.Add(Format.Html_x11, new MemoryStream(bytes)); return true; }
                     return false;
                 },
-                (stream) => System.Text.Encoding.UTF8.GetString(((MemoryStream) stream).ToArray()),
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => System.Text.Encoding.UTF8.GetString(memoryStream.ToArray()),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream,
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
                 () => {
                     if(OperatingSystem.IsWindows()) {
                         return Format.Html_win;
