@@ -78,8 +78,6 @@ namespace Avalonia.X11 {
         private TaskCompletionSource<IntPtr[]?>? _requestedFormatsTcs;
         private TaskCompletionSource<object?>? _requestedDataTcs;
 
-        private readonly IntPtr _avaloniaSaveTargetsAtom;
-
         private readonly IntPtr _display;
         private readonly X11Atoms _atoms;
 
@@ -103,8 +101,6 @@ namespace Avalonia.X11 {
 
             XSelectInput(_display, _handle, new IntPtr((int)(EventMask.StructureNotifyMask | EventMask.PropertyChangeMask)));
 
-            _avaloniaSaveTargetsAtom = XInternAtom(_display, "AVALONIA_SAVE_TARGETS_PROPERTY_ATOM", false);
-
             _cts = new CancellationTokenSource();
 
             _incrDataReaders = new();
@@ -114,8 +110,9 @@ namespace Avalonia.X11 {
         }
 
         public void Dispose() {
-            XCloseDisplay(_display);
             _cts.Dispose();
+            XDestroyWindow(_display, _handle);
+            XCloseDisplay(_display);
         }
 
         private static Encoding? GetStringEncoding(X11Atoms atoms, IntPtr atom) {
@@ -335,20 +332,6 @@ namespace Avalonia.X11 {
             return SetDataObjectAsync(data);
         }
 
-        private void StoreAtomsInClipboardManager(IDataObject data) {
-            if(_atoms.CLIPBOARD_MANAGER != IntPtr.Zero && _atoms.SAVE_TARGETS != IntPtr.Zero) {
-                var clipboardManager = XGetSelectionOwner(_display, _atoms.CLIPBOARD_MANAGER);
-                if(clipboardManager != IntPtr.Zero) {
-                    var atoms = ConvertDataObject(data);
-                    XChangeProperty(_display, _handle, _avaloniaSaveTargetsAtom, _atoms.XA_ATOM, 32,
-                        PropertyMode.Replace,
-                        atoms, atoms.Length);
-                    XConvertSelection(_display, _atoms.CLIPBOARD_MANAGER, _atoms.SAVE_TARGETS,
-                        _avaloniaSaveTargetsAtom, _handle, IntPtr.Zero);
-                }
-            }
-        }
-
         public Task SetDataObjectAsync(IDataObject data) {
             _storedDataObject = data;
             if(_storeAtomTcs == null || _storeAtomTcs.Task.IsCompleted) {
@@ -360,11 +343,12 @@ namespace Avalonia.X11 {
                 throw new Exception($"Failed to take ownership of selection");
             }
 
-            if(!UseIncrProtocol(data)) {
-                StoreAtomsInClipboardManager(data);
-            }
-
             return _storeAtomTcs.Task;
+        }
+
+        void StartRequestWorkaround() {
+            var ddd = XGetSelectionOwner(_display, _atoms.CLIPBOARD);
+            System.Diagnostics.Debug.WriteLine($"----------- StartRequest 0 {ddd}");
         }
 
         private Task<IntPtr[]?> SendFormatRequest() {
@@ -374,8 +358,9 @@ namespace Avalonia.X11 {
                 _requestedFormatsTcs = new();
             }
 
-            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle, IntPtr.Zero);
 
+            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle, IntPtr.Zero);
+            StartRequestWorkaround();
             return _requestedFormatsTcs.Task;
 
         }
@@ -384,23 +369,10 @@ namespace Avalonia.X11 {
             if(!HasOwner) {
                 return Array.Empty<string>();
             }
-            System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 0");
+            // System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 0");
 
-            // XSetSelectionOwner(_display, _atoms.CLIPBOARD, _handle, IntPtr.Zero);
-            var ff = XGetSelectionOwner(_display, _atoms.CLIPBOARD);
-            if(ff != _handle) {
-                System.Diagnostics.Debug.WriteLine($"Failed to take ownership of selection {ff:X} {_handle:X}");
-            }
-            await Task.Delay(500);
-
-            System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 1");
-            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, ff, IntPtr.Zero);
-            await Task.Delay(500);
-            System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 2");
-            XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle, IntPtr.Zero);
-            await Task.Delay(500);
-            System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 3");
             var formats = await SendFormatRequest();
+            // System.Diagnostics.Debug.WriteLine($"----------- GetFormatsAsync 1");
             if(formats == null) {
                 return Array.Empty<string>();
             }
@@ -412,6 +384,7 @@ namespace Avalonia.X11 {
         }
 
         public async Task<object?> GetDataAsync(string format) {
+            // System.Diagnostics.Debug.WriteLine($"----------- GetDataAsync 0 {format} {_requestedDataTcs}");
             if(!HasOwner) {
                 return null;
             }
@@ -427,7 +400,8 @@ namespace Avalonia.X11 {
                 _requestedDataTcs = new();
             }
             XConvertSelection(_display, _atoms.CLIPBOARD, formatAtom, formatAtom, _handle, IntPtr.Zero);
-            return _requestedDataTcs.Task;
+            StartRequestWorkaround();
+            return await _requestedDataTcs.Task;
         }
 
         unsafe void HandleEvents(CancellationToken cancellationToken) {
@@ -463,7 +437,6 @@ namespace Avalonia.X11 {
 
                 System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
                 int counter = 0;
-                // Thread.Sleep(1000);
                 while(!cancellationToken.IsCancellationRequested) {
                     System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
@@ -484,9 +457,9 @@ namespace Avalonia.X11 {
                     //     }
                     // }
 
-                    System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 2");
+                    // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 2");
                     XNextEvent(_display, out var xev);
-                    System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 2.2");
+                    // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 2.2");
 
                     if(xev.AnyEvent.window == _handle) {
                         OnEvent(ref xev);
