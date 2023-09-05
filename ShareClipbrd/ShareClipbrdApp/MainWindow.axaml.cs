@@ -188,9 +188,6 @@ namespace ShareClipbrdApp {
                         return filesData;
                     });
                     await dataClient!.SendFileDropList(fileDropList);
-
-                } else if(await clipboard.ContainsImage()) {
-                    Debug.WriteLine("ContainsImage");
                 } else {
                     var formats = await clipboard.GetFormats();
                     var clipboardData = new ClipboardData();

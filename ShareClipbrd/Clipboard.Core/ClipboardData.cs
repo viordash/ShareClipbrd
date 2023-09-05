@@ -42,8 +42,7 @@ namespace Clipboard.Core {
 
             public const string WaveAudio = "WaveAudio";
 
-            public const string Bitmap = "Bitmap";
-            public const string Dib = "Dib";
+            public const string Dib = "DeviceIndependentBitmap";
 
             public const string ImageBmp = "image/bmp";
         }
