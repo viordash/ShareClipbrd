@@ -1,6 +1,5 @@
-﻿using Clipboard.Core;
-
-namespace Clipboard.OS {
+﻿namespace Clipboard.OS
+{
     internal class Clipboard : IClipboard {
         public Clipboard(object? parent) {
             
@@ -14,10 +13,6 @@ namespace Clipboard.OS {
             return Task.FromResult(System.Windows.Clipboard.ContainsFileDropList());
         }
 
-        public Task<bool> ContainsImage() {
-            return Task.FromResult(System.Windows.Clipboard.ContainsImage());
-        }
-
         public Task<object?> GetData(string format) {
             return Task.FromResult<object?>(System.Windows.Clipboard.GetData(format));
         }
@@ -26,11 +21,6 @@ namespace Clipboard.OS {
             var dataObject = System.Windows.Clipboard.GetDataObject();
             var formats = dataObject?.GetFormats() ?? Array.Empty<string>();
             return Task.FromResult(formats);
-        }
-
-        public Task SetAudio(byte[] audioBytes) {
-            System.Windows.Clipboard.SetAudio(audioBytes);
-            return Task.CompletedTask;
         }
 
         public Task SetDataObject(ClipboardData data) {

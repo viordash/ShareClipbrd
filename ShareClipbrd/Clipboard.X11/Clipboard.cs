@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Avalonia.X11;
+﻿using Avalonia.X11;
 using Avalonia.Input;
 using Clipboard.Core;
 
@@ -17,13 +16,7 @@ namespace Clipboard.OS {
 
         public async Task<bool> ContainsFileDropList() {
             var formats = await clipboard.GetFormatsAsync();
-
-            Debug.WriteLine($"----------- ContainsFileDropList 0 {formats?.Length}");
             return formats?.Any(x => ClipboardFile.ContainsFileDropList(x)) ?? false;
-        }
-
-        public Task<bool> ContainsImage() {
-            return Task.FromResult(false);
         }
 
         public async Task<object?> GetData(string format) {
@@ -32,10 +25,6 @@ namespace Clipboard.OS {
 
         public async Task<string[]> GetFormats() {
             return await clipboard.GetFormatsAsync();
-        }
-
-        public Task SetAudio(byte[] audioBytes) {
-            throw new NotImplementedException();
         }
 
         public async Task SetDataObject(ClipboardData data) {
