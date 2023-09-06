@@ -46,11 +46,11 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         [Test]
         public async Task Send_CommonData_Test() {
-            ClipboardData? receivedClipboard = null;
+            var receivedClipboard = new List<ClipboardData?>();
 
             dispatchServiceMock
                 .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
-                .Callback<ClipboardData>(x => receivedClipboard = x);
+                .Callback<ClipboardData>(x => receivedClipboard.Add(x));
 
             server.Start();
             await Task.Delay(1000);
@@ -68,8 +68,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
             Assert.IsNotNull(receivedClipboard);
-            Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText", "Text" }));
-            Assert.That(receivedClipboard.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] {
+            Assert.That(receivedClipboard.SelectMany(x => x.Formats).Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText", "Text" }));
+            Assert.That(receivedClipboard.SelectMany(x => x.Formats).Select(x => x.Stream), Is.EquivalentTo(new[] {
                 new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")),
                 new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789"))
             }));
