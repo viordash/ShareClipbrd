@@ -65,6 +65,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             await client.SendData(clipboardData);
             client.Stop();
             await server.Stop();
+            await Task.Delay(500);
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
             Assert.IsNotNull(receivedClipboard);
