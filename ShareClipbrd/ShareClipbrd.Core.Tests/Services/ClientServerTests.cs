@@ -96,6 +96,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
+            await Task.Delay(1000);
             client.Stop();
             await server.Stop();
 
