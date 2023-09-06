@@ -1,7 +1,6 @@
 using System.Text;
-using ShareClipbrd.Core.Clipboard;
 
-namespace ShareClipbrd.Core.Tests.Clipboard {
+namespace Clipboard.Core.Tests {
     public class ClipboardDataTests {
 
         ClipboardData testable;
@@ -18,22 +17,22 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         async Task<bool> DataFormats_Test(string dataFormat, object? data, Encoding encoding) {
             await testable.Serialize(new[] { dataFormat }, (f) => { if(f == dataFormat) return Task.FromResult(data); else return Task.FromResult<object?>(new object()); });
             Assert.That(testable.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { dataFormat }));
-            Assert.That(testable.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(encoding.GetBytes($"{dataFormat} Кирилица")) }));
+            Assert.That(testable.Formats.Select(x => x.Stream), Is.EquivalentTo(new[] { new MemoryStream(encoding.GetBytes($"{dataFormat} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")) }));
             return true;
         }
 
         [Test]
         public async Task DataFormats_Text_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.Text, $"{ClipboardData.Format.Text} Кирилица", System.Text.Encoding.UTF8));
+            Assert.That(await DataFormats_Test(ClipboardData.Format.Text_win, $"{ClipboardData.Format.Text_win} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", System.Text.Encoding.UTF8));
         }
         [Test]
         public void DataFormats_Text_When_NoStringData_Test() {
-            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.Text }, (f) => Task.FromResult<object?>(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.Text_win }, (f) => Task.FromResult<object?>(new object())));
         }
 
         [Test]
         public async Task DataFormats_UnicodeText_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.UnicodeText, $"{ClipboardData.Format.UnicodeText} Кирилица", System.Text.Encoding.Unicode));
+            Assert.That(await DataFormats_Test(ClipboardData.Format.UnicodeText, $"{ClipboardData.Format.UnicodeText} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", System.Text.Encoding.Unicode));
         }
         [Test]
         public void DataFormats_UnicodeText_When_NoStringData_Test() {
@@ -41,26 +40,17 @@ namespace ShareClipbrd.Core.Tests.Clipboard {
         }
 
         [Test]
-        public async Task DataFormats_StringFormat_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.StringFormat, $"{ClipboardData.Format.StringFormat} Кирилица", System.Text.Encoding.UTF8));
-        }
-        [Test]
-        public void DataFormats_StringFormat_When_NoStringData_Test() {
-            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.StringFormat }, (f) => Task.FromResult<object?>(new object())));
-        }
-
-        [Test]
         public async Task DataFormats_OemText_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.OemText, $"{ClipboardData.Format.OemText} Кирилица", System.Text.Encoding.ASCII));
+            Assert.That(await DataFormats_Test(ClipboardData.Format.OemText_win, $"{ClipboardData.Format.OemText_win} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", System.Text.Encoding.ASCII));
         }
         [Test]
         public void DataFormats_OemText_When_NoStringData_Test() {
-            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText }, (f) => Task.FromResult<object?>(new object())));
+            Assert.ThrowsAsync<InvalidDataException>(() => testable.Serialize(new[] { ClipboardData.Format.OemText_win }, (f) => Task.FromResult<object?>(new object())));
         }
 
         [Test]
         public async Task DataFormats_Rtf_Test() {
-            Assert.That(await DataFormats_Test(ClipboardData.Format.Rtf, $"{ClipboardData.Format.Rtf} Кирилица", System.Text.Encoding.UTF8));
+            Assert.That(await DataFormats_Test(ClipboardData.Format.Rtf, $"{ClipboardData.Format.Rtf} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", System.Text.Encoding.UTF8));
         }
         [Test]
         public void DataFormats_Rtf_When_NoStringData_Test() {

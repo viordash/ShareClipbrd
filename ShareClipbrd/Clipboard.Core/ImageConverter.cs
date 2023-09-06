@@ -1,6 +1,4 @@
-﻿using ShareClipbrd.Core.Helpers;
-
-namespace ShareClipbrd.Core.Clipboard {
+﻿namespace Clipboard.Core {
     public class ImageConverter {
 
         public static byte[] FromDibToBmpFileData(MemoryStream memoryStream) {

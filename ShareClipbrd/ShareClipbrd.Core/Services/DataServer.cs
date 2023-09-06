@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Clipboard.Core;
 using GuardNet;
-using Makaretu.Dns;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
@@ -97,7 +97,6 @@ namespace ShareClipbrd.Core.Services {
         }
 
         async ValueTask HandleClient(TcpClient tcpClient, CancellationToken cancellationToken) {
-            var clipboardData = new ClipboardData();
 
             connectStatusService.Online();
 
@@ -135,6 +134,7 @@ namespace ShareClipbrd.Core.Services {
                     } else if(format == ClipboardData.Format.WaveAudio) {
 
                     } else {
+                        var clipboardData = new ClipboardData();
                         progressService.SetMaxTick(total);
                         while(!string.IsNullOrEmpty(format) && !cancellationToken.IsCancellationRequested) {
                             var size = await ReceiveSize(stream, cancellationToken);

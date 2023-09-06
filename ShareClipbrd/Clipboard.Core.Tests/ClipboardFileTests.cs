@@ -1,6 +1,4 @@
-﻿using ShareClipbrd.Core.Clipboard;
-
-namespace ShareClipbrd.Core.Tests.Clipboard {
+﻿namespace Clipboard.Core.Tests {
     public class ClipboardFileTests {
 
         static Func<string, Task<object?>> getDataFunc(string format, object? obj) {

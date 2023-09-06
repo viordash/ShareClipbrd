@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup Label="InternalsVisibleTo">
+    <InternalsVisibleTo Include="Clipboard.Core.Tests" />
+    <InternalsVisibleTo Include="Clipboard.Win" />
+    <InternalsVisibleTo Include="Clipboard.X11" />
+    <InternalsVisibleTo Include="Clipboard" />
+    <InternalsVisibleTo Include="ShareClipbrdApp" />
+  </ItemGroup>
+</Project>

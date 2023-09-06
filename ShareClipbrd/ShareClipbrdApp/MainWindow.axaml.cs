@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,10 +10,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform.Storage;
-using ColorTextBlock.Avalonia;
+using Clipboard;
+using Clipboard.Core;
 using GuardNet;
-using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Services;
 using ShareClipbrdApp.Components;
@@ -179,31 +177,25 @@ namespace ShareClipbrdApp {
 
         async void TransmitClipboard() {
             try {
-                var clipboard = GetTopLevel(this)!.Clipboard!;
-                var formats = await clipboard.GetFormatsAsync();
+                var clipboard = ClipboardProvider.Get(this);
 
-                var fileDropList = await ClipboardFile.GetList(formats, async (format) => {
-                    var filesData = await clipboard.GetDataAsync(format);
+                if(await clipboard.ContainsFileDropList()) {
+                    Debug.WriteLine("ContainsFileDropList");
 
-                    if(filesData is IEnumerable<IStorageItem> bclStorageItems) {
-                        return bclStorageItems
-                            .Select(x => x.Path.LocalPath)
-                            .ToList();
-                    }
-
-                    return filesData;
-                });
-
-                if(fileDropList.Count > 0) {
+                    var formats = await clipboard.GetFormats();
+                    var fileDropList = await ClipboardFile.GetList(formats, async (format) => {
+                        var filesData = await clipboard.GetData(format);
+                        return filesData;
+                    });
                     await dataClient!.SendFileDropList(fileDropList);
-                    return;
-                }
-
-                var clipboardData = new ClipboardData();
-                await clipboardData.Serialize(formats, clipboard.GetDataAsync);
-                if(clipboardData.Formats.Any()) {
-                    await dataClient!.SendData(clipboardData);
-                    return;
+                } else {
+                    var formats = await clipboard.GetFormats();
+                    var clipboardData = new ClipboardData();
+                    await clipboardData.Serialize(formats, clipboard.GetData);
+                    if(clipboardData.Formats.Any()) {
+                        await dataClient!.SendData(clipboardData);
+                        return;
+                    }
                 }
 
                 await using(progressService!.Begin(ProgressMode.Error)) {

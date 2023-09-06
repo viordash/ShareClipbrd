@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ShareClipbrd.Core.Clipboard {
+namespace Clipboard.Core {
     public class ClipboardFile {
         public class Convert {
             public Func<StringCollection, Func<string, Task<object?>>, Task<bool>> From { get; set; }
@@ -14,7 +14,6 @@ namespace ShareClipbrd.Core.Clipboard {
         public static class Format {
             public const string FileDrop = "FileDrop";
             public const string FileNames = "FileNames";
-            public const string Files = "Files";
             public const string XMateFileNames = "x-special/mate-copied-files";
             public const string XKdeFileNames = "x-special/KDE-copied-files";
             public const string XGnomeFileNames = "x-special/gnome-copied-files";
@@ -65,9 +64,9 @@ namespace ShareClipbrd.Core.Clipboard {
                 })
             },
 
-            { Format.Files, new Convert(
+            { Format.FileDrop, new Convert(
                 async (c, getDataFunc) => {
-                    var data = await getDataFunc(Format.Files);
+                    var data = await getDataFunc(Format.FileDrop);
                     if (data is IList<string> list) {
                         c.AddRange(list.ToArray());
                         return true;
@@ -117,10 +116,6 @@ namespace ShareClipbrd.Core.Clipboard {
             foreach(var format in formats) {
                 if(!Converters.TryGetValue(format, out Convert? convertFunc)) {
                     Debug.WriteLine($"not supported format: {format}");
-                    // var data = await getDataFunc(format);
-                    // if(data is string castedValue) {
-                    //     Debug.WriteLine($"      val: {castedValue}");
-                    // }
                     continue;
                 }
 
@@ -164,5 +159,10 @@ namespace ShareClipbrd.Core.Clipboard {
 
             throw new NotSupportedException($"OS: {Environment.OSVersion}");
         }
+
+        public static bool ContainsFileDropList(string format) {
+            return Converters.ContainsKey(format);
+        }
+
     }
 }
