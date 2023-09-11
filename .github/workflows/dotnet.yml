@@ -28,20 +28,20 @@ jobs:
 
     - name: Publish
       run: |
-        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/win/TutoProxy.Server --os win -p:PublishProfile=FolderProfile -p:DebugType=None -p:DebugSymbols=false
-        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/linux/TutoProxy.Server --os linux -p:PublishProfile=FolderProfile -p:DebugType=None 
+        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/win --os win -p:PublishProfile=FolderProfile -p:DebugType=None -p:DebugSymbols=false
+        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/linux --os linux -p:PublishProfile=FolderProfile -p:DebugType=None 
 
     - name: Deploy Win
       uses: actions/upload-artifact@v3
       with:
         name: win
-        path: ./out/win/ShareClipbrdApp/ShareClipbrdApp.exe
-        retention-days: 30
+        path: ./out/win/ShareClipbrdApp.exe
+        retention-days: 90
       
     - name: Deploy Linux
       uses: actions/upload-artifact@v3
       with:
         name: linux
-        path: ./out/linux/ShareClipbrdApp/ShareClipbrdApp
-        retention-days: 30  
+        path: ./out/linux/ShareClipbrdApp
+        retention-days: 90  
         
