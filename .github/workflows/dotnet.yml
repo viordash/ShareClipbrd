@@ -35,13 +35,13 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: win
-        path: ./out/win64/ShareClipbrdApp.exe
+        path: ./out/win64/
         retention-days: 90
       
     - name: Deploy Linux
       uses: actions/upload-artifact@v3
       with:
         name: linux
-        path: ./out/linux64/ShareClipbrdApp
+        path: ./out/linux64/
         retention-days: 90  
         
