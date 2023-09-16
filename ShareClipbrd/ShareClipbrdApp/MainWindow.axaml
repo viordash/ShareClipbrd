@@ -28,6 +28,7 @@
         PointerReleased="OnPointerReleasedEvent"
         PointerMoved="OnPointerMoved"
         KeyDown="OnKeyDown"
+        ShowInTaskbar="False"
         >
 
   <Window.ContextMenu>
