@@ -10,7 +10,7 @@
 
   <TrayIcon.Icons>
     <TrayIcons>
-      <TrayIcon Icon="/Assets/app.ico" ToolTipText="Avalonia Tray Icon ToolTip">
+      <TrayIcon Icon="/Assets/app.ico" ToolTipText="ShareClipbrd">
         <TrayIcon.Menu>
           <NativeMenu>
             <NativeMenuItem Header="Paste" Click="MenuItemPaste_Click"/>
