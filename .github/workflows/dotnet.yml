@@ -10,8 +10,8 @@ on:
     types: [opened, reopened, edited]
 
 jobs:
-  build-publish-deploy:
-    runs-on: ubuntu-latest
+  build-publish-deploy-win:
+    runs-on: windows-2019
 
     steps:
     - uses: actions/checkout@v3
@@ -28,20 +28,42 @@ jobs:
 
     - name: Publish
       run: |
-        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/win/TutoProxy.Server --os win -p:PublishProfile=FolderProfile -p:DebugType=None -p:DebugSymbols=false
-        dotnet publish ./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj -c PublishRelease --no-self-contained --use-current-runtime -o ./out/linux/TutoProxy.Server --os linux -p:PublishProfile=FolderProfile -p:DebugType=None 
+        dotnet publish "./ShareClipbrd\ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r win-x64 -f net7.0-windows -p:PublishSingleFile=true --self-contained false -o "./out/win64" -p:DebugType=None
 
-    - name: Deploy Win
+    - name: Deploy Win64
       uses: actions/upload-artifact@v3
       with:
-        name: win
-        path: ./out/win/ShareClipbrdApp/ShareClipbrdApp.exe
-        retention-days: 30
-      
-    - name: Deploy Linux
+        name: win64
+        path: ./out/win64/
+        retention-days: 90
+
+  build-publish-deploy-linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+    - name: Restore dependencies
+      run: dotnet restore ./ShareClipbrd/ShareClipbrd.sln
+    - name: Build
+      run: dotnet build ./ShareClipbrd/ShareClipbrd.sln --no-restore 
+    - name: Test
+      run: dotnet test ./ShareClipbrd/ShareClipbrd.sln --no-build --verbosity normal       
+
+    - name: Publish
+      run: |
+        dotnet publish "./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r linux-x64 -f net7.0 -p:PublishSingleFile=true --self-contained false -o "./out/_linux64" -p:DebugType=None
+
+    - name: Tar Linux64 files 
+      run: mkdir -p ./out/linux64 && tar -cjvf ./out/linux64/ShareClipbrd.tar -C ./out/_linux64/ . && rm -rf ./out/_linux64
+       
+    - name: Deploy Linux64
       uses: actions/upload-artifact@v3
       with:
-        name: linux
-        path: ./out/linux/ShareClipbrdApp/ShareClipbrdApp
-        retention-days: 30  
+        name: linux64
+        path: ./out/linux64/ShareClipbrd.tar
+        retention-days: 90  
         

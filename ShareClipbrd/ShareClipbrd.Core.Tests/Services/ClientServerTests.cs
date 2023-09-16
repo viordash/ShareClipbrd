@@ -53,7 +53,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard.Add(x));
 
             server.Start();
-            await Task.Delay(1000);
+            await Task.Delay(500);
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -63,6 +63,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
 
             await client.SendData(clipboardData);
+            await Task.Delay(500);
             client.Stop();
             await server.Stop();
 
@@ -95,6 +96,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
+            await Task.Delay(1000);
             client.Stop();
             await server.Stop();
 
