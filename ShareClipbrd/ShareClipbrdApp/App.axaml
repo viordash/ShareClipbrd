@@ -7,4 +7,18 @@
   <Application.Styles>
     <FluentTheme />
   </Application.Styles>
+
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <TrayIcon Icon="/Assets/app.ico" ToolTipText="Avalonia Tray Icon ToolTip">
+        <TrayIcon.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Paste" Click="MenuItemPaste_Click"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Exit" Click="MenuItemExit_Click"></NativeMenuItem>
+          </NativeMenu>
+        </TrayIcon.Menu>
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
 </Application>

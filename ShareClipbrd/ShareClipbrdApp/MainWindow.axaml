@@ -50,7 +50,7 @@
         </MenuItem>
       </MenuItem>
       <Separator />
-      <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
+      <MenuItem Header="Exit" Click="MenuItemExit_Click"></MenuItem>
     </ContextMenu>
   </Window.ContextMenu>
 

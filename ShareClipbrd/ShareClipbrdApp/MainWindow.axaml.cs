@@ -120,7 +120,7 @@ namespace ShareClipbrdApp {
             TransmitClipboard();
         }
 
-        void MenuItemClose_Click(object sender, RoutedEventArgs e) {
+        void MenuItemExit_Click(object sender, RoutedEventArgs e) {
             this.Close();
         }
 
@@ -175,7 +175,7 @@ namespace ShareClipbrdApp {
             }
         }
 
-        async void TransmitClipboard() {
+        public async void TransmitClipboard() {
             try {
                 var clipboard = ClipboardProvider.Get(this);
 
