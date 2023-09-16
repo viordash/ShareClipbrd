@@ -2,9 +2,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ShareClipbrdApp.App"
              RequestedThemeVariant="Default">
-  <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
   <Application.Styles>
     <FluentTheme />
   </Application.Styles>
+
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <TrayIcon Icon="/Assets/app.ico" ToolTipText="Sharing the clipboard between two computers">
+        <TrayIcon.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Paste" Click="MenuItemPaste_Click"/>
+            <NativeMenuItemSeparator/>
+            <NativeMenuItem Header="Exit" Click="MenuItemExit_Click"></NativeMenuItem>
+          </NativeMenu>
+        </TrayIcon.Menu>
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
 </Application>

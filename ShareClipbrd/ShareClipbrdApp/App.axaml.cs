@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using ShareClipbrd.Core.Services;
@@ -40,6 +42,18 @@ namespace ShareClipbrdApp {
             var ex = e.Exception;
             var dialogService = serviceProvider?.GetRequiredService<IDialogService>();
             dialogService?.ShowError(ex);
+        }
+
+        void MenuItemPaste_Click(object sender, EventArgs args) {
+            if(ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                serviceProvider?.GetRequiredService<MainWindow>().TransmitClipboard();
+            }
+        }
+
+        void MenuItemExit_Click(object sender, EventArgs args) {
+            if(ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                serviceProvider?.GetRequiredService<MainWindow>().Close();
+            }
         }
     }
 }

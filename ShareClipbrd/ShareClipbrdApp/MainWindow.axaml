@@ -5,6 +5,7 @@
         mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="40"
         x:Class="ShareClipbrdApp.MainWindow"
         Title="ShareClipbrd"
+        Icon="/Assets/app.ico"
         
         Height="40" Width="64"
         Topmost="True"
@@ -27,6 +28,7 @@
         PointerReleased="OnPointerReleasedEvent"
         PointerMoved="OnPointerMoved"
         KeyDown="OnKeyDown"
+        ShowInTaskbar="False"
         >
 
   <Window.ContextMenu>
@@ -49,7 +51,7 @@
         </MenuItem>
       </MenuItem>
       <Separator />
-      <MenuItem Header="Close" Click="MenuItemClose_Click"></MenuItem>
+      <MenuItem Header="Exit" Click="MenuItemExit_Click"></MenuItem>
     </ContextMenu>
   </Window.ContextMenu>
 
