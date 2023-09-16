@@ -5,6 +5,7 @@
         mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="40"
         x:Class="ShareClipbrdApp.MainWindow"
         Title="ShareClipbrd"
+        Icon="/Assets/app.ico"
         
         Height="40" Width="64"
         Topmost="True"
