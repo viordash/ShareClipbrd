@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net7.0-windows</TargetFrameworks>
@@ -6,14 +6,11 @@
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>search-filter_3528.ico</ApplicationIcon>
+    <ApplicationIcon>.\Assets\app.ico</ApplicationIcon>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="search-filter_3528.ico" />
   </ItemGroup>
 
   <ItemGroup>
