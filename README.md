@@ -3,6 +3,7 @@
 [![.NET](https://github.com/viordash/ShareClipbrd/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/viordash/ShareClipbrd/actions/workflows/dotnet.yml)
 
 ShareClipbrdApp - кросс-платформенная утилита, Windows/Linux(X11). 
+
 ShareClipbrdApp позволяет отправлять содержимое буфера обмена с одного компьютера на другой. 
 
 > первоначальная цель создания утилиты, была в том чтобы в целях безопасности, отказаться
