@@ -8,6 +8,15 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>.\Assets\app.ico</ApplicationIcon>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Authors>Viordash</Authors>
+    <Company>Viordash</Company>
+    <Description>Sharing the clipboard between two computers</Description>
+    <Copyright>2023</Copyright>
+    <PackageProjectUrl>https://github.com/viordash/ShareClipbrd</PackageProjectUrl>
+    <PackageIcon>app.png</PackageIcon>
+    <RepositoryUrl>https://github.com/viordash/ShareClipbrd</RepositoryUrl>
+    <Title>Sharing the clipboard between two computers</Title>
+    <Product>Share clipboard</Product>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
@@ -43,6 +52,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\app.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="Assets\msg6016052075-227186_t.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

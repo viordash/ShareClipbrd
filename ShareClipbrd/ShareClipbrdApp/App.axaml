@@ -8,7 +8,7 @@
 
   <TrayIcon.Icons>
     <TrayIcons>
-      <TrayIcon Icon="/Assets/app.ico" ToolTipText="ShareClipbrd">
+      <TrayIcon Icon="/Assets/app.ico" ToolTipText="Sharing the clipboard between two computers">
         <TrayIcon.Menu>
           <NativeMenu>
             <NativeMenuItem Header="Paste" Click="MenuItemPaste_Click"/>
