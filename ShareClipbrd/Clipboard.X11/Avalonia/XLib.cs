@@ -125,6 +125,9 @@ namespace Avalonia.X11 {
         public static extern IntPtr XGetErrorText(IntPtr display, byte code, StringBuilder buffer, int length);
 
         [DllImport(libX11)]
+        public static extern int XInitThreads();
+
+        [DllImport(libX11)]
         public static extern int XConvertSelection(IntPtr display, IntPtr selection, IntPtr target, IntPtr property,
             IntPtr requestor, IntPtr time);
 
@@ -183,6 +186,5 @@ namespace Avalonia.X11 {
             X11 = 1,
             Signal = 2
         }
-
     }
 }
