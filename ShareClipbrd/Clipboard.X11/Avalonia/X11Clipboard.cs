@@ -86,6 +86,9 @@ namespace Avalonia.X11 {
         private readonly Dictionary<IntPtr, IncrDataWriter> _incrDataWriters;
 
         private readonly CancellationTokenSource _cts;
+        private int _epoll;
+        private int _sigread;
+        private int _sigwrite;
 
         public X11Clipboard() {
             XInitThreads();
@@ -105,6 +108,7 @@ namespace Avalonia.X11 {
             _incrDataReaders = new();
             _incrDataWriters = new();
 
+            CreatePoll();
             HandleEvents(_cts.Token);
         }
 
@@ -112,6 +116,35 @@ namespace Avalonia.X11 {
             _cts.Dispose();
             XDestroyWindow(_display, _handle);
             XCloseDisplay(_display);
+        }
+
+        unsafe void CreatePoll() {
+            var fd = XConnectionNumber(_display);
+            var ev = new epoll_event() {
+                events = EPOLLIN,
+                data = { u32 = (int)EventCodes.X11 }
+            };
+            _epoll = epoll_create1(0);
+            if(_epoll == -1) {
+                throw new X11Exception("epoll_create1 failed");
+            }
+
+            if(epoll_ctl(_epoll, EPOLL_CTL_ADD, fd, ref ev) == -1) {
+                throw new X11Exception("Unable to attach X11 connection handle to epoll");
+            }
+
+            var fds = stackalloc int[2];
+            pipe2(fds, O_NONBLOCK);
+            _sigread = fds[0];
+            _sigwrite = fds[1];
+
+            ev = new epoll_event {
+                events = EPOLLIN,
+                data = { u32 = (int)EventCodes.Signal }
+            };
+            if(epoll_ctl(_epoll, EPOLL_CTL_ADD, _sigread, ref ev) == -1) {
+                throw new X11Exception("Unable to attach signal pipe to epoll");
+            }
         }
 
         private static Encoding? GetStringEncoding(X11Atoms atoms, IntPtr atom) {
@@ -326,9 +359,9 @@ namespace Avalonia.X11 {
             return _storeAtomTcs.Task;
         }
 
-        void StartRequestWorkaround() {
-            var ddd = XGetSelectionOwner(_display, _atoms.CLIPBOARD);
-            // System.Diagnostics.Debug.WriteLine($"----------- StartRequest 0 {ddd}");
+        unsafe void StartRequest() {
+            int buf = 0;
+            write(_sigwrite, &buf, new IntPtr(1));
         }
 
         private Task<IntPtr[]?> SendFormatRequest() {
@@ -340,7 +373,7 @@ namespace Avalonia.X11 {
 
 
             XConvertSelection(_display, _atoms.CLIPBOARD, _atoms.TARGETS, _atoms.TARGETS, _handle, IntPtr.Zero);
-            StartRequestWorkaround();
+            StartRequest();
             return _requestedFormatsTcs.Task;
 
         }
@@ -380,56 +413,25 @@ namespace Avalonia.X11 {
                 _requestedDataTcs = new();
             }
             XConvertSelection(_display, _atoms.CLIPBOARD, formatAtom, formatAtom, _handle, IntPtr.Zero);
-            StartRequestWorkaround();
+            StartRequest();
             return await _requestedDataTcs.Task;
         }
 
         unsafe void HandleEvents(CancellationToken cancellationToken) {
-
             _ = Task.Run(() => {
-                var fd = XConnectionNumber(_display);
-                var ev = new epoll_event() {
-                    events = EPOLLIN,
-                    data = { u32 = (int)EventCodes.X11 }
-                };
-                var _epoll = epoll_create1(0);
-                if(_epoll == -1) {
-                    throw new X11Exception("epoll_create1 failed");
-                }
-
-                if(epoll_ctl(_epoll, EPOLL_CTL_ADD, fd, ref ev) == -1) {
-                    throw new X11Exception("Unable to attach X11 connection handle to epoll");
-                }
-
-                var fds = stackalloc int[2];
-                pipe2(fds, O_NONBLOCK);
-                var _sigread = fds[0];
-                var _sigwrite = fds[1];
-
-                ev = new epoll_event {
-                    events = EPOLLIN,
-                    data = { u32 = (int)EventCodes.Signal }
-                };
-                if(epoll_ctl(_epoll, EPOLL_CTL_ADD, _sigread, ref ev) == -1) {
-                    throw new X11Exception("Unable to attach signal pipe to epoll");
-                }
-
                 // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 0");
                 // int counter = 0;
                 while(!cancellationToken.IsCancellationRequested) {
                     // System.Diagnostics.Debug.WriteLine($"----------- RunLoop 1 {counter++}");
 
                     XFlush(_display);
-
+                    epoll_event ev;
                     if(XPending(_display) == 0) {
                         var timeout = -1;
                         // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.3");
-                        var epoll_res = epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
+                        epoll_wait(_epoll, &ev, 1, (int)Math.Min(int.MaxValue, timeout));
 
                         // System.Diagnostics.Debug.WriteLine($"----------------------- RunLoop 1.5 epoll_res={epoll_res}");
-                        if(epoll_res == 0) {
-                            break;
-                        }
                         // Drain the signaled pipe
                         int buf = 0;
                         while(read(_sigread, &buf, new IntPtr(4)).ToInt64() > 0) {
