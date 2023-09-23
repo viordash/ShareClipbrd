@@ -166,6 +166,7 @@ namespace ShareClipbrdApp {
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
             await (dataServer?.Stop() ?? Task.CompletedTask);
             dataServer?.Start();
+            dataClient?.Stop();
             dataClient?.Start();
         }
 

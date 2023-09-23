@@ -162,6 +162,11 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
+                    if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                        connectStatusService.Offline();
+                        break;
+                    }
+
                     try {
                         IPEndPoint ipEndPoint;
                         bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id, out int? mandatoryPort);

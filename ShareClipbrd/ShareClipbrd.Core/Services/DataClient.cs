@@ -179,6 +179,9 @@ namespace ShareClipbrd.Core.Services {
             if(!connected) {
                 connectStatusService.ClientOffline();
                 client.Close();
+                if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                    return;
+                }
                 client = new();
 
                 IPEndPoint ipEndPoint;
@@ -237,6 +240,7 @@ namespace ShareClipbrd.Core.Services {
 
         public void Stop() {
             cts.Cancel();
+            client.Close();
             pingTimer.Enabled = false;
         }
     }
