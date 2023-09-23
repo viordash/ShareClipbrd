@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Timers;
 using Clipboard.Core;
 using GuardNet;
@@ -80,7 +81,7 @@ namespace ShareClipbrd.Core.Services {
             cts = new();
             var cancellationToken = cts.Token;
             try {
-                await Connect();
+                await Connect(cancellationToken);
                 var stream = await Handshake();
                 var fileTransmitter = new FileTransmitter(progressService, stream);
                 await fileTransmitter.Send(fileDropList, cancellationToken);
@@ -123,7 +124,7 @@ namespace ShareClipbrd.Core.Services {
             cts = new();
             var cancellationToken = cts.Token;
             try {
-                await Connect();
+                await Connect(cancellationToken);
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
                     progressService.SetMaxTick(totalLenght);
@@ -173,7 +174,7 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        async Task Connect() {
+        async Task Connect(CancellationToken cancellationToken) {
             pingTimer.Enabled = false;
             var connected = IsSocketConnected(client.Client);
             if(!connected) {
@@ -194,7 +195,7 @@ namespace ShareClipbrd.Core.Services {
                     ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
                 }
 
-                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cts.Token);
+                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cancellationToken);
             }
         }
 
@@ -212,7 +213,7 @@ namespace ShareClipbrd.Core.Services {
         async Task Ping() {
             var cancellationToken = cts.Token;
             try {
-                await Connect();
+                await Connect(cancellationToken);
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
@@ -240,6 +241,7 @@ namespace ShareClipbrd.Core.Services {
 
         public void Stop() {
             cts.Cancel();
+            cts = new();
             client.Close();
             pingTimer.Enabled = false;
         }
