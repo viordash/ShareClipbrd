@@ -189,7 +189,10 @@ namespace ShareClipbrdApp {
                         var filesData = await clipboard.GetData(format);
                         return filesData;
                     });
-                    await dataClient!.SendFileDropList(fileDropList);
+                    if(fileDropList.Count > 0) {
+                        await dataClient!.SendFileDropList(fileDropList);
+                        return;
+                    }
                 } else {
                     var formats = await clipboard.GetFormats();
                     var clipboardData = new ClipboardData();
