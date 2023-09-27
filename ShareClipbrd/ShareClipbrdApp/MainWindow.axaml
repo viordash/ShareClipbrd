@@ -32,7 +32,7 @@
         >
 
   <Window.ContextMenu>
-    <ContextMenu>
+    <ContextMenu x:Name="mainContextMenu" Closing="ContextMenu_Closing">
       <MenuItem Header="Paste" Click="MenuItemPaste_Click"></MenuItem>
       <Separator />
       <MenuItem Header="Settings" >
@@ -44,10 +44,18 @@
         </ComboBox>
 
         <MenuItem Header="Host address">
-          <TextBox x:Name="edHostAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edHostAddress_PropertyChanged" />
+          <MenuItem>
+            <MenuItem.Header>
+              <TextBox x:Name="edHostAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edHostAddress_PropertyChanged" />
+            </MenuItem.Header>
+          </MenuItem>
         </MenuItem>
         <MenuItem Header="Partner address" >
-          <TextBox x:Name="edPartnerAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edPartnerAddress_PropertyChanged"/>
+          <MenuItem>
+            <MenuItem.Header>
+              <TextBox x:Name="edPartnerAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edPartnerAddress_PropertyChanged"/>
+            </MenuItem.Header>
+          </MenuItem>
         </MenuItem>
       </MenuItem>
       <Separator />

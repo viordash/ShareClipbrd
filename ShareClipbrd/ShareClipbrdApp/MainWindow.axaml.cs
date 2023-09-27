@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -248,6 +249,10 @@ namespace ShareClipbrdApp {
 
         public void ShowClientConnectStatus(bool online) {
             crClientOnline.IsVisible = online;
+        }
+
+        void ContextMenu_Closing(object? sender, CancelEventArgs e) {
+            e.Cancel = edHostAddress.IsFocused || edPartnerAddress.IsFocused;
         }
     }
 }
