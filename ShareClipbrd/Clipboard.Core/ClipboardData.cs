@@ -418,7 +418,7 @@ namespace Clipboard.Core {
                 (stream) => {
                     if(OperatingSystem.IsWindows()) {
                         return stream switch {
-                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            MemoryStream memoryStream => memoryStream,
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
