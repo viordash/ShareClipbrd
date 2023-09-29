@@ -76,7 +76,7 @@ namespace ShareClipbrdApp {
         async void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
 
-            var appName = Path.GetFullPath(System.Reflection.Assembly.GetExecutingAssembly().Location).Replace(System.IO.Path.DirectorySeparatorChar, '_');
+            var appName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AppDomain.CurrentDomain.FriendlyName).Replace(System.IO.Path.DirectorySeparatorChar, '_');
             bool createdNew;
             mxSingleInstance = new Mutex(true, appName, out createdNew);
             if(!createdNew) {
