@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -28,6 +29,7 @@ namespace ShareClipbrdApp {
         readonly IDialogService? dialogService;
         readonly IProgressService? progressService;
         readonly ISystemConfiguration? systemConfiguration;
+        private static Mutex? mxSingleInstance = null;
 
         WriteableBitmap? progressBarBitmap;
         public WriteableBitmap? ProgressBarBitmap {
@@ -63,14 +65,26 @@ namespace ShareClipbrdApp {
             this.systemConfiguration = systemConfiguration;
             SetProgressMode(ProgressMode.None);
             SetProgress(100.0);
+            ShowConnectStatus(false);
+            ShowClientConnectStatus(false);
         }
 
         public MainWindow() {
             InitializeComponent();
         }
 
-        void OnOpened(object sender, System.EventArgs e) {
+        async void OnOpened(object sender, System.EventArgs e) {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
+
+            var appName = Path.GetFullPath(System.Reflection.Assembly.GetExecutingAssembly().Location).Replace(System.IO.Path.DirectorySeparatorChar, '_');
+            bool createdNew;
+            mxSingleInstance = new Mutex(true, appName, out createdNew);
+            if(!createdNew) {
+                await dialogService!.ShowMessage("Already running!");
+                this.Close();
+                return;
+            }
+
             edSettingsProfile.SelectedIndex = systemConfiguration!.SettingsProfile;
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
