@@ -42,6 +42,7 @@ namespace Clipboard.Core {
 
             public const string WaveAudio = "WaveAudio";
 
+            public const string PNG = "PNG";
             public const string Dib = "DeviceIndependentBitmap";
 
             public const string ImageBmp = "image/bmp";
@@ -418,7 +419,42 @@ namespace Clipboard.Core {
                 (stream) => {
                     if(OperatingSystem.IsWindows()) {
                         return stream switch {
-                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            MemoryStream memoryStream => memoryStream,
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    if(OperatingSystem.IsLinux()) {
+                        return stream switch {
+                            MemoryStream memoryStream => ImageConverter.FromDibToBmpFileData(memoryStream),
+                            _ => throw new ArgumentException(nameof(stream))
+                        };
+                    }
+
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                },
+                () => {
+                    if(OperatingSystem.IsWindows()) {
+                        return Format.Dib;
+                    }
+                    if(OperatingSystem.IsLinux()) {
+                        return Format.ImageBmp;
+                    }
+                    throw new NotSupportedException($"OS: {Environment.OSVersion}");
+                }
+            )},
+
+            { Format.PNG, new Convert(
+                async (c, getDataFunc) => {
+                    var data = await getDataFunc(Format.Dib);
+                    if (data is MemoryStream castedValue) {c.Add(Format.Dib, castedValue); return true; }
+                    if (data is byte[] bytes) {c.Add(Format.Dib, new MemoryStream(bytes)); return true; }
+                    return false;
+                },
+                (stream) => {
+                    if(OperatingSystem.IsWindows()) {
+                        return stream switch {
+                            MemoryStream memoryStream => memoryStream,
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
