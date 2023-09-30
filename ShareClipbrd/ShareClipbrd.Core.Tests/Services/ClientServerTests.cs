@@ -62,6 +62,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
 
             await client.SendData(clipboardData);
+            await Task.Delay(500);
             await server.Stop();
             client.Stop();
 
