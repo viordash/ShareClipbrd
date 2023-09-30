@@ -53,7 +53,6 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard.Add(x));
 
             server.Start();
-            await Task.Delay(500);
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -63,7 +62,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
 
             await client.SendData(clipboardData);
-            await Task.Delay(500);
             client.Stop();
             await server.Stop();
 
@@ -85,7 +83,6 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
             server.Start();
-            await Task.Delay(1000);
 
             var clipboardData = new ClipboardData();
 
@@ -96,7 +93,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
-            await Task.Delay(1000);
             client.Stop();
             await server.Stop();
 
@@ -139,7 +135,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             server.Start();
-            await Task.Delay(1000);
 
             try {
                 await client.SendFileDropList(files);
@@ -199,7 +194,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename);
 
             server.Start();
-            await Task.Delay(1000);
 
             try {
                 await client.SendFileDropList(files);
@@ -273,7 +267,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1_empty0);
 
             server.Start();
-            await Task.Delay(1000);
             try {
                 await client.SendFileDropList(files);
             } finally {
@@ -358,7 +351,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename0);
 
             server.Start();
-            await Task.Delay(1000);
             try {
                 await client.SendFileDropList(files);
             } finally {
