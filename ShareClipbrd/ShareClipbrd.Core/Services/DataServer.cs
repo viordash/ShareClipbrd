@@ -11,7 +11,7 @@ using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public interface IDataServer {
-        void Start();
+        Task<int> Start();
         Task Stop();
     }
 
@@ -23,6 +23,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IConnectStatusService connectStatusService;
         readonly IAddressDiscoveryService addressDiscoveryService;
         CancellationTokenSource? cts;
+        TaskCompletionSource<int> tcsStarted;
         TaskCompletionSource<bool> tcsStopped;
 
         public DataServer(
@@ -46,6 +47,8 @@ namespace ShareClipbrd.Core.Services {
             this.connectStatusService = connectStatusService;
             this.addressDiscoveryService = addressDiscoveryService;
 
+            tcsStarted = new TaskCompletionSource<int>();
+            tcsStarted.TrySetResult(-1);
             tcsStopped = new TaskCompletionSource<bool>();
             tcsStopped.TrySetResult(true);
         }
@@ -154,15 +157,16 @@ namespace ShareClipbrd.Core.Services {
             }
         }
 
-        public void Start() {
+        public Task<int> Start() {
             cts?.Cancel();
             cts = new CancellationTokenSource();
+            tcsStarted = new TaskCompletionSource<int>();
             tcsStopped = new TaskCompletionSource<bool>();
             var cancellationToken = cts.Token;
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                    if(string.IsNullOrEmpty(systemConfiguration.HostAddress)) {
                         connectStatusService.Offline();
                         break;
                     }
@@ -184,6 +188,8 @@ namespace ShareClipbrd.Core.Services {
                         var tcpServer = new TcpListener(ipEndPoint.Address, ipEndPoint.Port);
                         try {
                             tcpServer.Start();
+                            tcsStarted.TrySetResult(((IPEndPoint)tcpServer.LocalEndpoint).Port);
+
                             Debug.WriteLine($"start tcpServer: {((IPEndPoint)tcpServer.LocalEndpoint)}");
 
                             if(useAddressDiscoveryService) {
@@ -217,8 +223,11 @@ namespace ShareClipbrd.Core.Services {
                     }
                     connectStatusService.Offline();
                 }
+                tcsStarted.TrySetResult(-1);
                 tcsStopped.TrySetResult(true);
             }, cancellationToken);
+
+            return tcsStarted.Task;
         }
 
         public Task Stop() {

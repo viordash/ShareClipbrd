@@ -180,7 +180,7 @@ namespace ShareClipbrdApp {
             edHostAddress.Text = systemConfiguration!.HostAddress;
             edPartnerAddress.Text = systemConfiguration!.PartnerAddress;
             await (dataServer?.Stop() ?? Task.CompletedTask);
-            dataServer?.Start();
+            await (dataServer?.Start() ?? Task.CompletedTask);
             dataClient?.Stop();
             dataClient?.Start();
         }
