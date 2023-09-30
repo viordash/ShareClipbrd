@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -162,7 +162,7 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                    if(string.IsNullOrEmpty(systemConfiguration.HostAddress)) {
                         connectStatusService.Offline();
                         break;
                     }
