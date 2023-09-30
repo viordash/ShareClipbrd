@@ -11,12 +11,15 @@
     <Authors>Viordash</Authors>
     <Company>Viordash</Company>
     <Description>Sharing the clipboard between two computers</Description>
-    <Copyright>2023</Copyright>
+    <Copyright>viordash, 2023</Copyright>
     <PackageProjectUrl>https://github.com/viordash/ShareClipbrd</PackageProjectUrl>
     <PackageIcon>app.png</PackageIcon>
     <RepositoryUrl>https://github.com/viordash/ShareClipbrd</RepositoryUrl>
     <Title>Sharing the clipboard between two computers</Title>
     <Product>Share clipboard</Product>
+    <FileVersion>1.0.2</FileVersion>
+    <AssemblyVersion>1.0.2</AssemblyVersion>
+    <Version>1.0.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
