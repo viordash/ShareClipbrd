@@ -30,8 +30,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             addressDiscoveryServiceMock = new();
             timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
 
-            systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:55542");
-            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("127.0.0.1:55542");
+            systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:0");
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
                 progressServiceMock.Object, connectStatusServiceMock.Object, addressDiscoveryServiceMock.Object);
@@ -52,7 +51,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
                 .Callback<ClipboardData>(x => receivedClipboard.Add(x));
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
 
             var clipboardData = new ClipboardData();
             clipboardData.Add("UnicodeText", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")));
@@ -82,7 +82,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 .Setup(x => x.ReceiveData(It.IsAny<ClipboardData>()))
                 .Callback<ClipboardData>(x => receivedClipboard = x);
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
 
             var clipboardData = new ClipboardData();
 
@@ -134,8 +135,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 files.Add(filename);
             }
 
-            server.Start();
-
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
             try {
                 await client.SendFileDropList(files);
                 await client.SendFileDropList(files);
@@ -193,7 +194,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             files.Add(filename);
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
 
             try {
                 await client.SendFileDropList(files);
@@ -266,7 +268,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(directory0_child1);
             files.Add(directory0_child1_empty0);
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
             try {
                 await client.SendFileDropList(files);
             } finally {
@@ -350,7 +353,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             files.Add(filename0);
             files.Add(filename0);
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
             try {
                 await client.SendFileDropList(files);
             } finally {
@@ -410,7 +414,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                     Debug.WriteLine("clientConnected = false");
                 });
 
-            server.Start();
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
             client.Start();
 
             await AwaitClientConnectStatus(true);
