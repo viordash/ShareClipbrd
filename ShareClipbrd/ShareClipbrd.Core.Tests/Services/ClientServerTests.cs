@@ -62,8 +62,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(System.Text.Encoding.Unicode.GetBytes("Text 0123456789")));
 
             await client.SendData(clipboardData);
-            client.Stop();
             await server.Stop();
+            client.Stop();
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
             Assert.IsNotNull(receivedClipboard);
@@ -93,8 +93,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
-            client.Stop();
             await server.Stop();
+            client.Stop();
 
             dispatchServiceMock.VerifyAll();
             Assert.IsNotNull(receivedClipboard);
@@ -143,8 +143,8 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Stop();
                 await server.Stop();
+                client.Stop();
             }
 
             dispatchServiceMock.Verify(x => x.ReceiveFiles(It.IsAny<IList<string>>()), Times.Exactly(3));
@@ -199,8 +199,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Stop();
                 await server.Stop();
+                client.Stop();
             }
 
             dispatchServiceMock.VerifyAll();
@@ -271,8 +271,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Stop();
                 await server.Stop();
+                client.Stop();
             }
 
             dispatchServiceMock.VerifyAll();
@@ -355,8 +355,8 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
-                client.Stop();
                 await server.Stop();
+                client.Stop();
             }
 
             dispatchServiceMock.VerifyAll();
@@ -411,7 +411,6 @@ namespace ShareClipbrd.Core.Tests.Services {
                 });
 
             server.Start();
-            await Task.Delay(1000);
             client.Start();
 
             await AwaitClientConnectStatus(true);
@@ -424,8 +423,8 @@ namespace ShareClipbrd.Core.Tests.Services {
             connectStatusServiceMock.Verify(x => x.ClientOffline(), Times.Once());
             connectStatusServiceMock.Verify(x => x.ClientOnline(), Times.AtLeast(3));
 
-            client.Stop();
             await server.Stop();
+            client.Stop();
         }
     }
 }
