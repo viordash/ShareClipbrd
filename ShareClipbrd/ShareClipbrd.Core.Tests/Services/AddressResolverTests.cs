@@ -52,12 +52,13 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void UseAddressDiscoveryService_When_Invalid_Ports_Throws_ArgumentException() {
             string id;
             int? mandatoryPort;
-            Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde:", out id, out mandatoryPort));
-            Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde: ", out id, out mandatoryPort));
+            Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde: 1", out id, out mandatoryPort));
+            Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde: 65535", out id, out mandatoryPort));
+
             Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde:-1", out id, out mandatoryPort));
             Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde:65536", out id, out mandatoryPort));
 
-            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns::1", out id, out mandatoryPort));
+            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns::", out id, out mandatoryPort));
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
         }
@@ -67,9 +68,17 @@ namespace ShareClipbrd.Core.Tests.Services {
             string id;
             int? mandatoryPort;
 
+            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns:abcde:", out id, out mandatoryPort));
+            Assert.That(id, Is.EqualTo("abcde"));
+            Assert.That(mandatoryPort, Is.Null);
+
             Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns:", out id, out mandatoryPort));
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
+
+            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns::1", out id, out mandatoryPort));
+            Assert.That(id, Is.Empty);
+            Assert.That(mandatoryPort, Is.EqualTo(1));
         }
 
         [Test]
@@ -83,9 +92,6 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(id, Is.EqualTo("abcde 12345"));
             Assert.That(mandatoryPort, Is.EqualTo(1));
             Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns:abcde:65535", out id, out mandatoryPort));
-            Assert.That(id, Is.EqualTo("abcde"));
-            Assert.That(mandatoryPort, Is.EqualTo(65535));
-            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns:abcde: 65535", out id, out mandatoryPort));
             Assert.That(id, Is.EqualTo("abcde"));
             Assert.That(mandatoryPort, Is.EqualTo(65535));
         }
