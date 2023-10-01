@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 
 namespace ShareClipbrd.Core.Services {
     public class AddressResolver {
@@ -11,17 +12,23 @@ namespace ShareClipbrd.Core.Services {
                 mandatoryPort = null;
                 return;
             }
-
-            if(int.TryParse(id[(portStart + 1)..], out port)) {
-                try {
-                    _ = new IPEndPoint(IPAddress.Any, port);
-                    id = id[..portStart];
-                    mandatoryPort = port;
-                    return;
-                } catch(ArgumentOutOfRangeException) {
-                }
+            if(portStart == id.Length - 1) {
+                id = id[..portStart];
+                mandatoryPort = null;
+                return;
             }
-            throw new ArgumentException("mdns port for the partner address is not needed");
+
+            try {
+                port = int.Parse(id[(portStart + 1)..], NumberStyles.None, CultureInfo.InvariantCulture);
+                _ = new IPEndPoint(IPAddress.Any, port);
+                id = id[..portStart];
+                mandatoryPort = port;
+                return;
+            } catch(ArgumentOutOfRangeException) {
+                throw new ArgumentException($"Port not valid");
+            } catch(FormatException) {
+                throw new ArgumentException($"Port not valid");
+            }
         }
 
         public static bool UseAddressDiscoveryService(string address, out string id, out int? mandatoryPort) {
@@ -35,10 +42,6 @@ namespace ShareClipbrd.Core.Services {
 
             MandatoryPort(ref s, out mandatoryPort);
             s = s.Trim();
-            if(string.IsNullOrEmpty(s)) {
-                id = string.Empty;
-                mandatoryPort = null;
-            }
             id = s;
             return true;
         }
