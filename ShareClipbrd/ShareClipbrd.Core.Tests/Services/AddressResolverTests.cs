@@ -1,5 +1,4 @@
-﻿using ShareClipbrd.Core.Helpers;
-using ShareClipbrd.Core.Services;
+﻿using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrd.Core.Tests.Services {
     public class AddressResolverTests {
@@ -23,11 +22,11 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
 
-            Assert.IsFalse(AddressResolver.UseAddressDiscoveryService("mdns:", out id, out mandatoryPort));
+            Assert.IsFalse(AddressResolver.UseAddressDiscoveryService("mdns :", out id, out mandatoryPort));
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
 
-            Assert.IsFalse(AddressResolver.UseAddressDiscoveryService("mdns:   ", out id, out mandatoryPort));
+            Assert.IsFalse(AddressResolver.UseAddressDiscoveryService("mdns :   ", out id, out mandatoryPort));
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
         }
@@ -58,7 +57,17 @@ namespace ShareClipbrd.Core.Tests.Services {
             Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde:-1", out id, out mandatoryPort));
             Assert.Throws<ArgumentException>(() => AddressResolver.UseAddressDiscoveryService("mdns:abcde:65536", out id, out mandatoryPort));
 
-            Assert.IsFalse(AddressResolver.UseAddressDiscoveryService("mdns::1", out id, out mandatoryPort));
+            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns::1", out id, out mandatoryPort));
+            Assert.That(id, Is.Empty);
+            Assert.That(mandatoryPort, Is.Null);
+        }
+
+        [Test]
+        public void UseAddressDiscoveryService_Returns_True_And_Empty_Id_If_Address_Is_Not_Fully_Filled() {
+            string id;
+            int? mandatoryPort;
+
+            Assert.IsTrue(AddressResolver.UseAddressDiscoveryService("mdns:", out id, out mandatoryPort));
             Assert.That(id, Is.Empty);
             Assert.That(mandatoryPort, Is.Null);
         }

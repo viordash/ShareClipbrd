@@ -38,7 +38,6 @@ namespace ShareClipbrd.Core.Services {
             if(string.IsNullOrEmpty(s)) {
                 id = string.Empty;
                 mandatoryPort = null;
-                return false;
             }
             id = s;
             return true;
