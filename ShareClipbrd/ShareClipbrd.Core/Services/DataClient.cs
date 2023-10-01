@@ -82,6 +82,9 @@ namespace ShareClipbrd.Core.Services {
             var cancellationToken = cts.Token;
             try {
                 await Connect(cancellationToken);
+                if(!IsSocketConnected(client.Client)) {
+                    return;
+                }
                 var stream = await Handshake();
                 var fileTransmitter = new FileTransmitter(progressService, stream);
                 await fileTransmitter.Send(fileDropList, cancellationToken);
@@ -125,6 +128,9 @@ namespace ShareClipbrd.Core.Services {
             var cancellationToken = cts.Token;
             try {
                 await Connect(cancellationToken);
+                if(!IsSocketConnected(client.Client)) {
+                    return;
+                }
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
                     progressService.SetMaxTick(totalLenght);
@@ -189,6 +195,9 @@ namespace ShareClipbrd.Core.Services {
                 if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
                     if(mandatoryPort.HasValue) {
                         throw new ArgumentException("mdns port for the partner address is not needed");
+                    }
+                    if(string.IsNullOrEmpty(id)) {
+                        return;
                     }
                     ipEndPoint = await addressDiscoveryService.Discover(id);
                 } else {
