@@ -95,6 +95,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             clipboardData.Add("Text", new MemoryStream(bytes));
 
             await client.SendData(clipboardData);
+            await Task.Delay(3000);
             await server.Stop();
             client.Stop();
 
@@ -145,6 +146,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
             } finally {
                 Directory.Delete(testsPath, true);
+                await Task.Delay(1000);
                 await server.Stop();
                 client.Stop();
             }
@@ -202,6 +204,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
+                await Task.Delay(3000);
                 await server.Stop();
                 client.Stop();
             }
@@ -275,6 +278,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
+                await Task.Delay(1000);
                 await server.Stop();
                 client.Stop();
             }
@@ -360,6 +364,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 await client.SendFileDropList(files);
             } finally {
                 Directory.Delete(testsPath, true);
+                await Task.Delay(500);
                 await server.Stop();
                 client.Stop();
             }
