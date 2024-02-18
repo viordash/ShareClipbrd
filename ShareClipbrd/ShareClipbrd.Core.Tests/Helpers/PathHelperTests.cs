@@ -5,33 +5,33 @@ namespace ShareClipbrd.Core.Tests.Helpers {
         [Test]
         public void IsAbsolute_Test() {
             if(OperatingSystem.IsWindows()) {
-                Assert.True(PathHelper.IsAbsolute("C:\\ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs"));
-                Assert.True(PathHelper.IsAbsolute("C:\\ShareClipbrd//ClipboardFile.cs"));
-                Assert.True(PathHelper.IsAbsolute("\\tsclient\\Documents.zip"));
-                Assert.False(PathHelper.IsAbsolute("//"));
-                Assert.False(PathHelper.IsAbsolute("//tsclient/Documents.zip"));
-                Assert.False(PathHelper.IsAbsolute("//file/1"));
-                Assert.False(PathHelper.IsAbsolute("//file"));
+                Assert.That(PathHelper.IsAbsolute("C:\\ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("C:\\ShareClipbrd//ClipboardFile.cs"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("\\tsclient\\Documents.zip"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("//"), Is.False);
+                Assert.That(PathHelper.IsAbsolute("//tsclient/Documents.zip"), Is.False);
+                Assert.That(PathHelper.IsAbsolute("//file/1"), Is.False);
+                Assert.That(PathHelper.IsAbsolute("//file"), Is.False);
             }
 
             if(OperatingSystem.IsLinux()) {
-                Assert.True(PathHelper.IsAbsolute("/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs"));
-                Assert.True(PathHelper.IsAbsolute("/ShareClipbrd//ClipboardFile.cs"));
-                Assert.True(PathHelper.IsAbsolute("/tsclient/Documents.zip"));
-                Assert.True(PathHelper.IsAbsolute("//"));
-                Assert.True(PathHelper.IsAbsolute("//tsclient/Documents.zip"));
-                Assert.True(PathHelper.IsAbsolute("//file/1"));
-                Assert.True(PathHelper.IsAbsolute("//file"));
+                Assert.That(PathHelper.IsAbsolute("/ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("/ShareClipbrd//ClipboardFile.cs"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("/tsclient/Documents.zip"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("//"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("//tsclient/Documents.zip"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("//file/1"), Is.True);
+                Assert.That(PathHelper.IsAbsolute("//file"), Is.True);
             }
-            Assert.True(PathHelper.IsAbsolute("/home/Documents.zip"));
+            Assert.That(PathHelper.IsAbsolute("/home/Documents.zip"), Is.True);
 
-            Assert.False(PathHelper.IsAbsolute("ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs"));
-            Assert.False(PathHelper.IsAbsolute("ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs"));
-            Assert.False(PathHelper.IsAbsolute("Documents"));
-            Assert.False(PathHelper.IsAbsolute("   "));
-            Assert.False(PathHelper.IsAbsolute("/"));
-            Assert.False(PathHelper.IsAbsolute("\\"));
-            Assert.False(PathHelper.IsAbsolute("\\\\"));
+            Assert.That(PathHelper.IsAbsolute("ShareClipbrd\\ShareClipbrd.Core\\Clipboard\\ClipboardFile.cs"), Is.False);
+            Assert.That(PathHelper.IsAbsolute("ShareClipbrd/ShareClipbrd.Core/Clipboard/ClipboardFile.cs"), Is.False);
+            Assert.That(PathHelper.IsAbsolute("Documents"), Is.False);
+            Assert.That(PathHelper.IsAbsolute("   "), Is.False);
+            Assert.That(PathHelper.IsAbsolute("/"), Is.False);
+            Assert.That(PathHelper.IsAbsolute("\\"), Is.False);
+            Assert.That(PathHelper.IsAbsolute("\\\\"), Is.False);
         }
     }
 }
