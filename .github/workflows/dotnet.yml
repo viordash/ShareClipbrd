@@ -28,7 +28,7 @@ jobs:
 
     - name: Publish
       run: |
-        dotnet publish "./ShareClipbrd\ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r win-x64 -f net8.0-windows -p:PublishSingleFile=true --self-contained false -o "./out/win64" -p:DebugType=None
+        dotnet publish "./ShareClipbrd\ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r win-x64 -f net8.0-windows -p:PublishSingleFile=true --self-contained true -o "./out/win64" -p:DebugType=None
 
     - name: Deploy Win64
       uses: actions/upload-artifact@v3
@@ -55,7 +55,7 @@ jobs:
 
     - name: Publish
       run: |
-        dotnet publish "./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r linux-x64 -f net8.0 -p:PublishSingleFile=true --self-contained false -o "./out/_linux64" -p:DebugType=None
+        dotnet publish "./ShareClipbrd/ShareClipbrdApp/ShareClipbrdApp.csproj" -c PublishRelease -r linux-x64 -f net8.0 -p:PublishSingleFile=true --self-contained true -o "./out/_linux64" -p:DebugType=None
 
     - name: Tar Linux64 files 
       run: mkdir -p ./out/linux64 && tar -cjvf ./out/linux64/ShareClipbrd.tar -C ./out/_linux64/ . && rm -rf ./out/_linux64
