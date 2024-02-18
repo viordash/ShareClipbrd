@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net7.0-windows</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('linux'))">net7.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net8.0-windows</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('linux'))">net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
