@@ -67,7 +67,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             client.Stop();
 
             dispatchServiceMock.Verify(x => x.ReceiveData(It.IsAny<ClipboardData>()), Times.Exactly(2));
-            Assert.IsNotNull(receivedClipboard);
+            Assert.That(receivedClipboard, Is.Not.Null);
             Assert.That(receivedClipboard.SelectMany(x => x!.Formats).Select(x => x.Format), Is.EquivalentTo(new[] { "UnicodeText", "Text" }));
             Assert.That(receivedClipboard.SelectMany(x => x!.Formats).Select(x => x.Stream), Is.EquivalentTo(new[] {
                 new MemoryStream(System.Text.Encoding.Unicode.GetBytes("UnicodeText юникод Œ")),
@@ -100,7 +100,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             client.Stop();
 
             dispatchServiceMock.VerifyAll();
-            Assert.IsNotNull(receivedClipboard);
+            Assert.That(receivedClipboard, Is.Not.Null);
             Assert.That(receivedClipboard.Formats.Select(x => x.Format), Is.EquivalentTo(new[] { "Text" }));
             Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream, Has.Length.EqualTo(1_000_000_003));
             Assert.That(receivedClipboard.Formats.First(x => x.Format == "Text").Stream.ToArray().Take(1_000_000), Is.EquivalentTo(bytes.Take(1_000_000)));
@@ -152,7 +152,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             dispatchServiceMock.Verify(x => x.ReceiveFiles(It.IsAny<IList<string>>()), Times.Exactly(3));
-            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList, Is.Not.Null);
             Assert.That(fileDropList.Count, Is.EqualTo(100));
 
 
@@ -210,7 +210,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             dispatchServiceMock.VerifyAll();
-            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList, Is.Not.Null);
             var otherFilename = fileDropList[0];
 
             Assert.That(otherFilename, Does.Exist);
@@ -284,7 +284,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             dispatchServiceMock.VerifyAll();
-            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList, Is.Not.Null);
 
             Assert.That(fileDropList.Count, Is.EqualTo(5));
 
@@ -370,7 +370,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             }
 
             dispatchServiceMock.VerifyAll();
-            Assert.IsNotNull(fileDropList);
+            Assert.That(fileDropList, Is.Not.Null);
             Assert.That(fileDropList.Count, Is.EqualTo(1));
 
             var otherFilename = fileDropList[0];
