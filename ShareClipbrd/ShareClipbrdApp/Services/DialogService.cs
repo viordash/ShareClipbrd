@@ -16,7 +16,8 @@ namespace ShareClipbrdApp.Services {
             return Dispatcher.UIThread.InvokeAsync(new Func<Task<ButtonResult>>(async () => {
                 var msgbox = MessageBoxManager
                             .GetMessageBoxStandard(string.Empty, message, ButtonEnum.Ok, Icon.Info);
-                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                    && desktop.MainWindow != null) {
                     return await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
                 }
                 return await msgbox.ShowWindowAsync();
@@ -57,7 +58,8 @@ namespace ShareClipbrdApp.Services {
                 ButtonResult buttonResult;
                 var msgbox = MessageBoxManager
                         .GetMessageBoxStandard(string.Empty, messageBoxText, ButtonEnum.Ok, Icon.Error);
-                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                        && desktop.MainWindow != null) {
                     buttonResult = await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
                 } else {
                     buttonResult = await msgbox.ShowWindowAsync();
