@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
+﻿using Makaretu.Dns;
+using System.Diagnostics;
 using System.IO.Hashing;
 using System.Net;
 using System.Text;
-using Makaretu.Dns;
 
 namespace ShareClipbrd.Core.Services {
     public interface IAddressDiscoveryService {
-        Task<IPEndPoint> Discover(string id);
+        Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses);
         void Advertise(string id, int port);
     }
 
@@ -30,7 +30,7 @@ namespace ShareClipbrd.Core.Services {
             sd.Advertise(service);
         }
 
-        public async Task<IPEndPoint> Discover(string id) {
+        public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
             Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id}");
             var hashId = HashId(id);
             var tcs = new TaskCompletionSource<IPEndPoint>();
@@ -42,13 +42,17 @@ namespace ShareClipbrd.Core.Services {
             })) {
                 using var sd = new ServiceDiscovery();
                 sd.ServiceInstanceDiscovered += (s, e) => {
-                    Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
+                    Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
 
                     if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
-                        var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
-                        var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
+                        var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>()
+                            .FirstOrDefault();
+                        var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
+                            .Select(x => x.Address.MapToIPv6())
+                            .Except(badIpAdresses)
+                            .FirstOrDefault();
                         if(srvRecord != null && aRecord != null) {
-                            var ipEndPoint = new IPEndPoint(aRecord.Address, srvRecord.Port);
+                            var ipEndPoint = new IPEndPoint(aRecord, srvRecord.Port);
                             Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover client: {ipEndPoint}");
                             tcs.TrySetResult(ipEndPoint);
                         }
