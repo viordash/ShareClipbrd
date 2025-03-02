@@ -1,15 +1,14 @@
-﻿using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.Timers;
-using Clipboard.Core;
+﻿using Clipboard.Core;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Timers;
 
 
 namespace ShareClipbrd.Core.Services {
@@ -173,29 +172,32 @@ namespace ShareClipbrd.Core.Services {
         async Task Connect(CancellationToken cancellationToken) {
             pingTimer.Enabled = false;
             var connected = IsSocketConnected(client.Client);
-            if(!connected) {
-                connectStatusService.ClientOffline();
-                client.Close();
-                if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+            if(connected) {
+                return;
+            }
+            connectStatusService.ClientOffline();
+            client.Close();
+            if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                return;
+            }
+            client = new();
+
+            IPEndPoint ipEndPoint;
+            if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
+                if(mandatoryPort.HasValue) {
+                    throw new ArgumentException("mdns port for the partner address is not needed");
+                }
+                if(string.IsNullOrEmpty(id)) {
                     return;
                 }
-                client = new();
-
-                IPEndPoint ipEndPoint;
-                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
-                    if(mandatoryPort.HasValue) {
-                        throw new ArgumentException("mdns port for the partner address is not needed");
-                    }
-                    if(string.IsNullOrEmpty(id)) {
-                        return;
-                    }
-                    ipEndPoint = await addressDiscoveryService.Discover(id);
-                } else {
-                    ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                }
-
-                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cancellationToken);
+                ipEndPoint = await addressDiscoveryService.Discover(id);
+            } else {
+                ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             }
+
+            using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
+            using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
+            await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
         }
 
         static bool IsSocketConnected(Socket s) {
