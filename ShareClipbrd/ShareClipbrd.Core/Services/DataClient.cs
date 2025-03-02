@@ -29,6 +29,7 @@ namespace ShareClipbrd.Core.Services {
         readonly IAddressDiscoveryService addressDiscoveryService;
         TcpClient client;
         CancellationTokenSource cts;
+        readonly SemaphoreSlim semaphore = new(1);
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
@@ -58,8 +59,7 @@ namespace ShareClipbrd.Core.Services {
             pingTimer.Elapsed += OnPingTimerEvent;
         }
 
-        async ValueTask<NetworkStream> Handshake() {
-            var cancellationToken = cts.Token;
+        async ValueTask<NetworkStream> Handshake(CancellationToken cancellationToken) {
             var stream = client.GetStream();
             await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
@@ -79,7 +79,7 @@ namespace ShareClipbrd.Core.Services {
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
-                var stream = await Handshake();
+                var stream = await Handshake(cancellationToken);
                 var fileTransmitter = new FileTransmitter(progressService, stream);
                 await fileTransmitter.Send(fileDropList, cancellationToken);
             } catch(SocketException ex) {
@@ -123,7 +123,7 @@ namespace ShareClipbrd.Core.Services {
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
                     progressService.SetMaxTick(totalLenght);
-                    var stream = await Handshake();
+                    var stream = await Handshake(cancellationToken);
 
 
                     await stream.WriteAsync(totalLenght, cancellationToken);
@@ -176,12 +176,6 @@ namespace ShareClipbrd.Core.Services {
                 return;
             }
             connectStatusService.ClientOffline();
-            client.Close();
-            if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
-                return;
-            }
-            client = new();
-
             IPEndPoint ipEndPoint;
             if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
                 if(mandatoryPort.HasValue) {
@@ -195,9 +189,20 @@ namespace ShareClipbrd.Core.Services {
                 ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             }
 
-            using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
-            using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
-            await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
+            await semaphore.WaitAsync();
+            try {
+                client.Close();
+                if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
+                    return;
+                }
+                client = new();
+
+                using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
+                using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
+                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
+            } finally {
+                semaphore.Release();
+            }
         }
 
         static bool IsSocketConnected(Socket s) {
@@ -218,7 +223,7 @@ namespace ShareClipbrd.Core.Services {
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
-                var stream = await Handshake();
+                var stream = await Handshake(cancellationToken);
 
                 await stream.WriteAsync((Int64)0, cancellationToken);
                 await stream.ReadUInt16Async(cancellationToken);
