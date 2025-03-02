@@ -77,8 +77,7 @@ namespace ShareClipbrdApp {
             WindowsHelper.LoadLocation(Settings.Default.MainFormLocation, this);
 
             var appName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AppDomain.CurrentDomain.FriendlyName).Replace(System.IO.Path.DirectorySeparatorChar, '_');
-            bool createdNew;
-            mxSingleInstance = new Mutex(true, appName, out createdNew);
+            mxSingleInstance = new Mutex(true, appName, out bool createdNew);
             if(!createdNew) {
                 await dialogService!.ShowMessage("Already running!");
                 this.Close();
