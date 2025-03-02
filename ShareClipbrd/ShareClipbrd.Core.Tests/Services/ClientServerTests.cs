@@ -31,6 +31,7 @@ namespace ShareClipbrd.Core.Tests.Services {
             timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:0");
+            systemConfigurationMock.SetupGet(x => x.ClientTimeout).Returns(TimeSpan.FromMilliseconds(5000));
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
                 progressServiceMock.Object, connectStatusServiceMock.Object, addressDiscoveryServiceMock.Object);

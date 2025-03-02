@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
+﻿using Makaretu.Dns;
+using System.Diagnostics;
 using System.IO.Hashing;
 using System.Net;
 using System.Text;
-using Makaretu.Dns;
 
 namespace ShareClipbrd.Core.Services {
     public interface IAddressDiscoveryService {
-        Task<IPEndPoint> Discover(string id);
+        Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses);
         void Advertise(string id, int port);
     }
 
@@ -30,33 +30,40 @@ namespace ShareClipbrd.Core.Services {
             sd.Advertise(service);
         }
 
-        public async Task<IPEndPoint> Discover(string id) {
-            Debug.WriteLine($"Discover id:{id}");
+        public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
+            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id}");
             var hashId = HashId(id);
             var tcs = new TaskCompletionSource<IPEndPoint>();
-            using var sd = new ServiceDiscovery();
 
-            sd.ServiceInstanceDiscovered += (s, e) => {
-                Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
+            using var timed_cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(5000));
+            using(timed_cts.Token.Register(() => {
+                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover timeout");
+                tcs.TrySetCanceled();
+            })) {
+                using var sd = new ServiceDiscovery();
+                sd.ServiceInstanceDiscovered += (s, e) => {
+                    Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
 
-                if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
-                    var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
-                    var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
-                    if(srvRecord != null && aRecord != null) {
-                        var ipEndPoint = new IPEndPoint(aRecord.Address, srvRecord.Port);
-                        Debug.WriteLine($"Discover client: {ipEndPoint}");
-                        tcs.TrySetResult(ipEndPoint);
+                    if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
+                        var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>()
+                            .FirstOrDefault();
+                        var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
+                            .Select(x => x.Address.MapToIPv6())
+                            .Except(badIpAdresses)
+                            .FirstOrDefault();
+                        if(srvRecord != null && aRecord != null) {
+                            var ipEndPoint = new IPEndPoint(aRecord, srvRecord.Port);
+                            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover client: {ipEndPoint}");
+                            tcs.TrySetResult(ipEndPoint);
+                        }
                     }
-                }
-            };
-            sd.QueryUnicastServiceInstances(serviceName);
+                };
+                sd.QueryUnicastServiceInstances(serviceName);
 
-            var delayTask = Task.Run(async () => {
-                await Task.Delay(2000);
-                return await Task.FromException<IPEndPoint>(new OperationCanceledException());
-            });
-            var res = await Task.WhenAny(delayTask, tcs.Task).Unwrap();
-            return res;
+                var res = await tcs.Task;
+                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover return res: {res}");
+                return res;
+            }
         }
     }
 }

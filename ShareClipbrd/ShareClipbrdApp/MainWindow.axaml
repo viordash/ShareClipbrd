@@ -7,7 +7,8 @@
         Title="ShareClipbrd"
         Icon="/Assets/app.ico"
         
-        Height="40" Width="64"
+        Height="40" MaxHeight="40" MinHeight="40"
+        Width="64" MaxWidth="64" MinWidth="64"
         Topmost="True"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"

@@ -29,5 +29,8 @@
     <Setting Name="SettingsProfile" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
+    <Setting Name="ClientTimeout" Type="System.TimeSpan" Scope="User">
+      <Value Profile="(Default)">00:00:05</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

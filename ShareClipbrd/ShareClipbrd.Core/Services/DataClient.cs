@@ -1,15 +1,14 @@
-﻿using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.Timers;
-using Clipboard.Core;
+﻿using Clipboard.Core;
 using GuardNet;
 using ShareClipbrd.Core.Clipboard;
 using ShareClipbrd.Core.Configuration;
 using ShareClipbrd.Core.Extensions;
 using ShareClipbrd.Core.Helpers;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Timers;
 
 
 namespace ShareClipbrd.Core.Services {
@@ -30,6 +29,8 @@ namespace ShareClipbrd.Core.Services {
         readonly IAddressDiscoveryService addressDiscoveryService;
         TcpClient client;
         CancellationTokenSource cts;
+        readonly SemaphoreSlim semaphore = new(1);
+        readonly HashSet<IPAddress> badIpAdresses = new();
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
@@ -59,8 +60,7 @@ namespace ShareClipbrd.Core.Services {
             pingTimer.Elapsed += OnPingTimerEvent;
         }
 
-        async ValueTask<NetworkStream> Handshake() {
-            var cancellationToken = cts.Token;
+        async ValueTask<NetworkStream> Handshake(CancellationToken cancellationToken) {
             var stream = client.GetStream();
             await stream.WriteAsync(CommunProtocol.Version, cancellationToken);
             if(await stream.ReadUInt16Async(cancellationToken) != CommunProtocol.SuccessVersion) {
@@ -80,7 +80,8 @@ namespace ShareClipbrd.Core.Services {
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
-                var stream = await Handshake();
+                MarkAsGoodAddress();
+                var stream = await Handshake(cancellationToken);
                 var fileTransmitter = new FileTransmitter(progressService, stream);
                 await fileTransmitter.Send(fileDropList, cancellationToken);
             } catch(SocketException ex) {
@@ -121,10 +122,11 @@ namespace ShareClipbrd.Core.Services {
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
+                MarkAsGoodAddress();
                 await using(progressService.Begin(ProgressMode.Send)) {
                     var totalLenght = clipboardData.GetTotalLenght();
                     progressService.SetMaxTick(totalLenght);
-                    var stream = await Handshake();
+                    var stream = await Handshake(cancellationToken);
 
 
                     await stream.WriteAsync(totalLenght, cancellationToken);
@@ -173,28 +175,44 @@ namespace ShareClipbrd.Core.Services {
         async Task Connect(CancellationToken cancellationToken) {
             pingTimer.Enabled = false;
             var connected = IsSocketConnected(client.Client);
-            if(!connected) {
-                connectStatusService.ClientOffline();
+            if(connected) {
+                return;
+            }
+            connectStatusService.ClientOffline();
+            IPEndPoint ipEndPoint;
+            if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
+                if(mandatoryPort.HasValue) {
+                    throw new ArgumentException("mdns port for the partner address is not needed");
+                }
+                if(string.IsNullOrEmpty(id)) {
+                    return;
+                }
+
+                try {
+                    ipEndPoint = await addressDiscoveryService.Discover(id, badIpAdresses.ToList());
+                } catch(OperationCanceledException) {
+                    badIpAdresses.Clear();
+                    Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: badIpAdresses cleared");
+                    throw;
+                }
+            } else {
+                ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
+            }
+
+            await semaphore.WaitAsync();
+            try {
                 client.Close();
                 if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
                     return;
                 }
                 client = new();
 
-                IPEndPoint ipEndPoint;
-                if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
-                    if(mandatoryPort.HasValue) {
-                        throw new ArgumentException("mdns port for the partner address is not needed");
-                    }
-                    if(string.IsNullOrEmpty(id)) {
-                        return;
-                    }
-                    ipEndPoint = await addressDiscoveryService.Discover(id);
-                } else {
-                    ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
-                }
-
-                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, cancellationToken);
+                using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
+                using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
+                badIpAdresses.Add(ipEndPoint.Address.MapToIPv6());
+                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
+            } finally {
+                semaphore.Release();
             }
         }
 
@@ -216,12 +234,14 @@ namespace ShareClipbrd.Core.Services {
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
-                var stream = await Handshake();
-
+                MarkAsGoodAddress();
+                var stream = await Handshake(cancellationToken);
                 await stream.WriteAsync((Int64)0, cancellationToken);
                 await stream.ReadUInt16Async(cancellationToken);
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
+            } catch(OperationCanceledException) {
+                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Ping canceled");
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
@@ -239,10 +259,18 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public void Stop() {
+            pingTimer.Enabled = false;
             cts.Cancel();
             cts = new();
             client.Close();
-            pingTimer.Enabled = false;
+            badIpAdresses.Clear();
+        }
+
+        void MarkAsGoodAddress() {
+            if(client.Client?.RemoteEndPoint is IPEndPoint iPEndPoint) {
+                badIpAdresses.Remove(iPEndPoint.Address.MapToIPv6());
+                Debug.WriteLine($"MarkAsGoodAddress IpAdress:{iPEndPoint.Address}");
+            }
         }
     }
 }
