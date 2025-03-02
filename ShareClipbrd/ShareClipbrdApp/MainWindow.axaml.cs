@@ -211,7 +211,7 @@ namespace ShareClipbrdApp {
                     var formats = await clipboard.GetFormats();
                     var clipboardData = new ClipboardData();
                     await clipboardData.Serialize(formats, clipboard.GetData);
-                    if(clipboardData.Formats.Any()) {
+                    if(clipboardData.Formats.Count > 0) {
                         await dataClient!.SendData(clipboardData);
                         return;
                     }
