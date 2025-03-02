@@ -1,16 +1,30 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using System.Linq;
 
 namespace ShareClipbrdApp.Helpers {
     public class WindowsHelper {
         public static void LoadLocation(System.Drawing.Point point, Window window) {
-            if(!point.IsEmpty
-                && point.X + window.Width >= 0
-                && point.Y + window.Height >= 0
-                && window.Screens.Primary?.WorkingArea.Width > point.X
-                && window.Screens.Primary?.WorkingArea.Height > point.Y) {
-                window.Position = new PixelPoint(point.X, point.Y);
+            if(point.IsEmpty) {
+                return;
             }
+            if(point.X + window.Width < 0) {
+                return;
+            }
+            if(point.Y + window.Height < 0) {
+                return;
+            }
+
+            var screensMaxWidth = window.Screens.All.Select(x => x.Bounds.X + x.Bounds.Width).Max();
+            if(point.X + window.Width / 2 > screensMaxWidth) {
+                return;
+            }
+
+            var screensMaxHeight = window.Screens.All.Select(y => y.Bounds.Y + y.Bounds.Height).Max();
+            if(point.Y + window.Height / 2 > screensMaxHeight) {
+                return;
+            }
+            window.Position = new PixelPoint(point.X, point.Y);
         }
 
         public static void LoadSize(System.Drawing.Size size, Window window) {
