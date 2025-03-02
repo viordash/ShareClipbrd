@@ -31,32 +31,35 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task<IPEndPoint> Discover(string id) {
-            Debug.WriteLine($"Discover id:{id}");
+            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id}");
             var hashId = HashId(id);
             var tcs = new TaskCompletionSource<IPEndPoint>();
-            using var sd = new ServiceDiscovery();
 
-            sd.ServiceInstanceDiscovered += (s, e) => {
-                Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
+            using var timed_cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(5000));
+            using(timed_cts.Token.Register(() => {
+                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover timeout");
+                tcs.TrySetCanceled();
+            })) {
+                using var sd = new ServiceDiscovery();
+                sd.ServiceInstanceDiscovered += (s, e) => {
+                    Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}");
 
-                if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
-                    var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
-                    var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
-                    if(srvRecord != null && aRecord != null) {
-                        var ipEndPoint = new IPEndPoint(aRecord.Address, srvRecord.Port);
-                        Debug.WriteLine($"Discover client: {ipEndPoint}");
-                        tcs.TrySetResult(ipEndPoint);
+                    if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
+                        var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>().FirstOrDefault();
+                        var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>().FirstOrDefault();
+                        if(srvRecord != null && aRecord != null) {
+                            var ipEndPoint = new IPEndPoint(aRecord.Address, srvRecord.Port);
+                            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover client: {ipEndPoint}");
+                            tcs.TrySetResult(ipEndPoint);
+                        }
                     }
-                }
-            };
-            sd.QueryUnicastServiceInstances(serviceName);
+                };
+                sd.QueryUnicastServiceInstances(serviceName);
 
-            var delayTask = Task.Run(async () => {
-                await Task.Delay(2000);
-                return await Task.FromException<IPEndPoint>(new OperationCanceledException());
-            });
-            var res = await Task.WhenAny(delayTask, tcs.Task).Unwrap();
-            return res;
+                var res = await tcs.Task;
+                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover return res: {res}");
+                return res;
+            }
         }
     }
 }
