@@ -46,12 +46,12 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
             var hashId = HashId(id);
-            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id} ({hashId})");
+            Debug.WriteLine($"Discover id:{id} ({hashId})");
             var tcs = new TaskCompletionSource<IPEndPoint>();
 
             using var timed_cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(5000));
             using(timed_cts.Token.Register(() => {
-                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover timeout");
+                Debug.WriteLine($"Discover timeout");
                 tcs.TrySetCanceled();
             })) {
                 using var sd = new ServiceDiscovery();
@@ -70,17 +70,17 @@ namespace ShareClipbrd.Core.Services {
 
                         if(srvRecord != null && aRecord != null && externalRecord) {
                             var ipEndPoint = new IPEndPoint(aRecord, srvRecord.Port);
-                            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover client: {ipEndPoint}");
+                            Debug.WriteLine($"Discover client: {ipEndPoint}");
                             tcs.TrySetResult(ipEndPoint);
                         } else {
-                            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover wrong client, ext:{externalRecord}, srv:'{srvRecord}', a:'{aRecord}'");
+                            Debug.WriteLine($"Discover wrong client, ext:{externalRecord}, srv:'{srvRecord}', a:'{aRecord}'");
                         }
                     }
                 };
                 sd.QueryUnicastServiceInstances(serviceName);
 
                 var res = await tcs.Task;
-                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover return res: {res}");
+                Debug.WriteLine($"Discover return res: {res}");
                 return res;
             }
         }

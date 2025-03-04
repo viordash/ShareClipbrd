@@ -202,7 +202,7 @@ namespace ShareClipbrd.Core.Services {
                     ipEndPoint = await addressDiscoveryService.Discover(id, badIpAdresses.ToList());
                 } catch(OperationCanceledException) {
                     badIpAdresses.Clear();
-                    Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: badIpAdresses cleared");
+                    Debug.WriteLine($"badIpAdresses cleared");
                     throw;
                 }
             } else {
@@ -251,7 +251,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
-                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Ping canceled");
+                Debug.WriteLine($"Ping canceled");
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
