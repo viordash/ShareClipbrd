@@ -20,7 +20,6 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataClient : IDataClient {
-        public const string OnFlyPrefix = "on-fly";
         readonly ISystemConfiguration systemConfiguration;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
@@ -181,10 +180,11 @@ namespace ShareClipbrd.Core.Services {
             }
             connectStatusService.ClientOffline();
             IPEndPoint ipEndPoint;
+
             var partnerId = string.Empty;
             var hostId = string.Empty;
             if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out partnerId, out int? mandatoryPort)
-                    || AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out hostId, out mandatoryPort)) {
+                    || AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddressOrDefault(), out hostId, out mandatoryPort)) {
                 if(string.IsNullOrEmpty(partnerId) && string.IsNullOrEmpty(hostId)) {
                     return;
                 }
