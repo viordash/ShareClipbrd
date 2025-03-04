@@ -27,7 +27,7 @@ namespace ShareClipbrd.Core.Services {
         public void Advertise(string id, int port) {
             var hashId = HashId(id);
             var service = new ServiceProfile(hashId, serviceName, (ushort)port);
-            Debug.WriteLine($"Advertise id:{id}, service:{service.FullyQualifiedName}");
+            Debug.WriteLine($"Advertise id:{id}, port:{port}, service:{service.FullyQualifiedName}");
             var sd = new ServiceDiscovery();
             service.AddProperty(selfIdPropertyName, selfIdProperty);
 
