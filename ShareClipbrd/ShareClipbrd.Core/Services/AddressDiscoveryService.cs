@@ -12,6 +12,8 @@ namespace ShareClipbrd.Core.Services {
 
     public class AddressDiscoveryService : IAddressDiscoveryService {
         const string serviceName = "_shareclipbrd28CBA1._tcp";
+        protected const string selfIdPropertyName = "selfId";
+        protected readonly string selfIdProperty = Guid.NewGuid().ToString();
 
         public AddressDiscoveryService() { }
 
@@ -27,7 +29,19 @@ namespace ShareClipbrd.Core.Services {
             var service = new ServiceProfile(hashId, serviceName, (ushort)port);
             Debug.WriteLine($"Advertise id:{id}, service:{service.FullyQualifiedName}");
             var sd = new ServiceDiscovery();
+            service.AddProperty(selfIdPropertyName, selfIdProperty);
+
             sd.Advertise(service);
+        }
+
+        protected bool HasExternalSign(IEnumerable<Makaretu.Dns.TXTRecord> txtRecords) {
+            return txtRecords
+                    .SelectMany(x => x.Strings)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .Select(x => x.Split('='))
+                    .Where(x => x.Length == 2)
+                    .Where(x => x.First().Equals(selfIdPropertyName) && Guid.TryParse(x.Last(), out _) && !x.Last().Equals(selfIdProperty))
+                    .Any();
         }
 
         public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
@@ -51,10 +65,15 @@ namespace ShareClipbrd.Core.Services {
                             .Select(x => x.Address.MapToIPv6())
                             .Except(badIpAdresses)
                             .FirstOrDefault();
-                        if(srvRecord != null && aRecord != null) {
+
+                        var externalRecord = HasExternalSign(e.Message.AdditionalRecords.OfType<Makaretu.Dns.TXTRecord>());
+
+                        if(srvRecord != null && aRecord != null && externalRecord) {
                             var ipEndPoint = new IPEndPoint(aRecord, srvRecord.Port);
                             Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover client: {ipEndPoint}");
                             tcs.TrySetResult(ipEndPoint);
+                        } else {
+                            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover wrong client, ext:{externalRecord}, srv:'{srvRecord}', a:'{aRecord}'");
                         }
                     }
                 };
