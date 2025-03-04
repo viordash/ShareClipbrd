@@ -45,8 +45,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
-            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id}");
             var hashId = HashId(id);
+            Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Discover id:{id} ({hashId})");
             var tcs = new TaskCompletionSource<IPEndPoint>();
 
             using var timed_cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(5000));
