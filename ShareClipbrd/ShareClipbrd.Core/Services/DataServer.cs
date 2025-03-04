@@ -166,7 +166,7 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    if(string.IsNullOrEmpty(systemConfiguration.HostAddress)) {
+                    if(string.IsNullOrEmpty(systemConfiguration.HostAddressOrDefault())) {
                         connectStatusService.Offline();
                         break;
                     }
