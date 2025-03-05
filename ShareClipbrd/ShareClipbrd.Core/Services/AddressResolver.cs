@@ -1,50 +1,25 @@
-﻿using System.Globalization;
-using System.Net;
+﻿using ShareClipbrd.Core.Helpers;
 
 namespace ShareClipbrd.Core.Services {
     public class AddressResolver {
+        public const string DefaultId = "ShareClipbrd_60D54950";
         public const string TagDiscoveryService = "mdns:";
 
-        static void MandatoryPort(ref string id, out int? mandatoryPort) {
-            int portStart = id.LastIndexOf(':');
-            int port;
-            if(portStart < 0) {
-                mandatoryPort = null;
-                return;
-            }
-            if(portStart == id.Length - 1) {
-                id = id[..portStart];
-                mandatoryPort = null;
-                return;
-            }
-
-            try {
-                port = int.Parse(id[(portStart + 1)..], NumberStyles.None, CultureInfo.InvariantCulture);
-                _ = new IPEndPoint(IPAddress.Any, port);
-                id = id[..portStart];
-                mandatoryPort = port;
-                return;
-            } catch(ArgumentOutOfRangeException) {
-                throw new ArgumentException($"Port not valid");
-            } catch(FormatException) {
-                throw new ArgumentException($"Port not valid");
-            }
-        }
-
-        public static bool UseAddressDiscoveryService(string address, out string id, out int? mandatoryPort) {
+        public static bool UseAddressDiscoveryService(string address, out string id, out int port) {
             if(!address.StartsWith(TagDiscoveryService)) {
                 id = string.Empty;
-                mandatoryPort = null;
+                port = 0;
                 return false;
             }
 
-            var s = address.Replace(TagDiscoveryService, string.Empty);
+            var s = address.Replace(AddressResolver.TagDiscoveryService, string.Empty);
 
-            MandatoryPort(ref s, out mandatoryPort);
-            s = s.Trim();
-            id = s;
+            port = NetworkHelper.ExtractPort(s, out int portStart);
+            id = s[..portStart].Trim();
+            if(string.IsNullOrEmpty(id)) {
+                id = AddressResolver.DefaultId;
+            }
             return true;
         }
-
     }
 }
