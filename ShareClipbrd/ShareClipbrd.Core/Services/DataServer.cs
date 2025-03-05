@@ -16,7 +16,6 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataServer : IDataServer {
-        public const string DefaultId = "ShareClipbrd_60D54950";
         readonly ISystemConfiguration systemConfiguration;
         readonly IDialogService dialogService;
         readonly IDispatchService dispatchService;
@@ -74,7 +73,8 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static string RecreateTempDirectory() {
-            var tempDir = Path.Combine(Path.GetTempPath(), DefaultId);
+            const string path = "ShareClipbrd_60D54950";
+            var tempDir = Path.Combine(Path.GetTempPath(), path);
             if(Directory.Exists(tempDir)) {
                 try {
                     Directory.Delete(tempDir, true);
@@ -173,7 +173,7 @@ namespace ShareClipbrd.Core.Services {
 
                     try {
                         IPEndPoint ipEndPoint;
-                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddressOrDefault(), out string id, out int? mandatoryPort);
+                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id, out int? mandatoryPort);
                         if(useAddressDiscoveryService) {
                             if(mandatoryPort.HasValue) {
                                 ipEndPoint = new IPEndPoint(IPAddress.Any, mandatoryPort.Value);
