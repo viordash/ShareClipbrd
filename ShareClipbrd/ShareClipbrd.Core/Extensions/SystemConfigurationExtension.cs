@@ -8,7 +8,7 @@ namespace ShareClipbrd.Core.Extensions {
                 return systemConfiguration.HostAddress;
             }
             if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
-                return AddressResolver.TagDiscoveryService + DataServer.DefaultId;
+                return DataServer.DefaultId;
             }
             return string.Empty;
         }

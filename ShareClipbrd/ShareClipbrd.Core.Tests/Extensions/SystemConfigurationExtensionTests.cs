@@ -30,7 +30,7 @@ namespace ShareClipbrd.Core.Tests.Extensions {
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("");
             systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns("");
 
-            Assert.That(systemConfigurationMock.Object.HostAddressOrDefault(), Is.EqualTo("mdns:ShareClipbrd_60D54950"));
+            Assert.That(systemConfigurationMock.Object.HostAddressOrDefault(), Is.EqualTo("ShareClipbrd_60D54950"));
         }
 
         [Test]
