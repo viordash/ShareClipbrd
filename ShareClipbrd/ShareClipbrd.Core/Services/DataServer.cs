@@ -73,7 +73,7 @@ namespace ShareClipbrd.Core.Services {
         }
 
         static string RecreateTempDirectory() {
-            const string path = "ShareClipbrd_60D54950";
+            const string path = AddressResolver.DefaultId;
             var tempDir = Path.Combine(Path.GetTempPath(), path);
             if(Directory.Exists(tempDir)) {
                 try {
@@ -166,20 +166,11 @@ namespace ShareClipbrd.Core.Services {
             Task.Run(async () => {
 
                 while(!cancellationToken.IsCancellationRequested) {
-                    if(string.IsNullOrEmpty(systemConfiguration.HostAddress)) {
-                        connectStatusService.Offline();
-                        break;
-                    }
-
                     try {
                         IPEndPoint ipEndPoint;
-                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id, out int? mandatoryPort);
+                        bool useAddressDiscoveryService = AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out string id, out int mandatoryPort);
                         if(useAddressDiscoveryService) {
-                            if(mandatoryPort.HasValue) {
-                                ipEndPoint = new IPEndPoint(IPAddress.Any, mandatoryPort.Value);
-                            } else {
-                                ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
-                            }
+                            ipEndPoint = new IPEndPoint(IPAddress.Any, mandatoryPort);
                         } else {
                             ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.HostAddress);
                         }

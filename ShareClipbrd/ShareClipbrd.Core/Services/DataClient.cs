@@ -20,6 +20,7 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataClient : IDataClient {
+        public const string OnFlyPrefix = "on-fly";
         readonly ISystemConfiguration systemConfiguration;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
@@ -180,11 +181,21 @@ namespace ShareClipbrd.Core.Services {
             }
             connectStatusService.ClientOffline();
             IPEndPoint ipEndPoint;
-            if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out string id, out int? mandatoryPort)) {
-                if(mandatoryPort.HasValue) {
-                    throw new ArgumentException("mdns port for the partner address is not needed");
+            var partnerId = string.Empty;
+            var hostId = string.Empty;
+            bool useHostAddressOrDefaulId = string.IsNullOrEmpty(systemConfiguration.PartnerAddress);
+            if((!useHostAddressOrDefaulId && AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out partnerId, out var mandatoryPort))
+                    || AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out hostId, out mandatoryPort)) {
+                if(string.IsNullOrEmpty(partnerId) && string.IsNullOrEmpty(hostId)) {
+                    return;
                 }
-                if(string.IsNullOrEmpty(id)) {
+                string id;
+
+                if(!string.IsNullOrEmpty(partnerId)) {
+                    id = partnerId;
+                } else if(!string.IsNullOrEmpty(hostId)) {
+                    id = hostId;
+                } else {
                     return;
                 }
 
@@ -192,7 +203,7 @@ namespace ShareClipbrd.Core.Services {
                     ipEndPoint = await addressDiscoveryService.Discover(id, badIpAdresses.ToList());
                 } catch(OperationCanceledException) {
                     badIpAdresses.Clear();
-                    Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: badIpAdresses cleared");
+                    Debug.WriteLine($"badIpAdresses cleared");
                     throw;
                 }
             } else {
@@ -202,9 +213,6 @@ namespace ShareClipbrd.Core.Services {
             await semaphore.WaitAsync();
             try {
                 client.Close();
-                if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress)) {
-                    return;
-                }
                 client = new();
 
                 using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
@@ -241,7 +249,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
-                Debug.WriteLine($"{DateTime.Now.TimeOfDay.TotalSeconds}: Ping canceled");
+                Debug.WriteLine($"Ping canceled");
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
