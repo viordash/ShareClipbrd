@@ -6,7 +6,7 @@ namespace ShareClipbrd.Core.Services {
         public const string TagDiscoveryService = "mdns:";
 
         public static bool UseAddressDiscoveryService(string address, out string id, out int port) {
-            if(!address.StartsWith(TagDiscoveryService)) {
+            if(!address.StartsWith(TagDiscoveryService) && !string.IsNullOrEmpty(address)) {
                 id = string.Empty;
                 port = 0;
                 return false;

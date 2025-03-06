@@ -6,27 +6,23 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void UseAddressDiscoveryService_When_Invalid_Address_Return_False() {
             string id;
             int port;
-           Assert.That(AddressResolver.UseAddressDiscoveryService(":55542", out id, out port), Is.False);
+            Assert.That(AddressResolver.UseAddressDiscoveryService(":55542", out id, out port), Is.False);
             Assert.That(id, Is.Empty);
             Assert.That(port, Is.Zero);
 
-           Assert.That(AddressResolver.UseAddressDiscoveryService(string.Empty, out id, out port), Is.False);
+            Assert.That(AddressResolver.UseAddressDiscoveryService("mdns 1234", out id, out port), Is.False);
             Assert.That(id, Is.Empty);
             Assert.That(port, Is.Zero);
 
-           Assert.That(AddressResolver.UseAddressDiscoveryService("mdns 1234", out id, out port), Is.False);
+            Assert.That(AddressResolver.UseAddressDiscoveryService("mdns", out id, out port), Is.False);
             Assert.That(id, Is.Empty);
             Assert.That(port, Is.Zero);
 
-           Assert.That(AddressResolver.UseAddressDiscoveryService("mdns", out id, out port), Is.False);
+            Assert.That(AddressResolver.UseAddressDiscoveryService("mdns :", out id, out port), Is.False);
             Assert.That(id, Is.Empty);
             Assert.That(port, Is.Zero);
 
-           Assert.That(AddressResolver.UseAddressDiscoveryService("mdns :", out id, out port), Is.False);
-            Assert.That(id, Is.Empty);
-            Assert.That(port, Is.Zero);
-
-           Assert.That(AddressResolver.UseAddressDiscoveryService("mdns :   ", out id, out port), Is.False);
+            Assert.That(AddressResolver.UseAddressDiscoveryService("mdns :   ", out id, out port), Is.False);
             Assert.That(id, Is.Empty);
             Assert.That(port, Is.Zero);
         }
@@ -71,6 +67,10 @@ namespace ShareClipbrd.Core.Tests.Services {
         public void UseAddressDiscoveryService_Returns_True_And_Default_Id_If_Address_Is_Empty() {
             string id;
             int port;
+
+            Assert.That(AddressResolver.UseAddressDiscoveryService(string.Empty, out id, out port), Is.True);
+            Assert.That(id, Is.EqualTo("ShareClipbrd_60D54950"));
+            Assert.That(port, Is.Zero);
 
             Assert.That(AddressResolver.UseAddressDiscoveryService("mdns::1", out id, out port), Is.True);
             Assert.That(id, Is.EqualTo("ShareClipbrd_60D54950"));
