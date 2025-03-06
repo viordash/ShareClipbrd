@@ -35,15 +35,13 @@ namespace ShareClipbrd.Core.Helpers {
                 return new IPEndPoint(ipAdress, port); ;
             }
 
-            var ipString = hostname[..portStart].Trim();   
-            var addresses = Dns.GetHostAddresses(ipString);
-            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork
-                    && !IPAddress.IsLoopback(x));
-            if(adr != null) {
-                return new IPEndPoint(adr, port);
+            var ipString = hostname[..portStart].Trim();
+            if(string.IsNullOrEmpty(ipString)) {
+                return new IPEndPoint(IPAddress.Any, port);
             }
 
-            adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
+            var addresses = Dns.GetHostAddresses(ipString);
+            var adr = addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
             if(adr != null) {
                 return new IPEndPoint(adr, port);
             }

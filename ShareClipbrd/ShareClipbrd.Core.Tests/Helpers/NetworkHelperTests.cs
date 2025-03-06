@@ -6,19 +6,16 @@ using ShareClipbrd.Core.Helpers;
 namespace ShareClipbrd.Core.Tests.Helpers {
     public class NetworkHelperTests {
         [Test]
-        public void ResolveHostName_Default_IP_Test() {
-            var adr = NetworkHelper.ResolveHostName(":55542");
-            Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork).Or.EqualTo(AddressFamily.InterNetworkV6));
-            Assert.That(adr.Address, Is.Not.EqualTo(IPAddress.Any).And.Not.EqualTo(IPAddress.IPv6Any));
-            Assert.That(adr.Port, Is.EqualTo(55542));
-        }
-
-        [Test]
         public void ResolveHostName_IPv4_Any_Test() {
             var adr = NetworkHelper.ResolveHostName("0.0.0.0:55542");
             Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork));
             Assert.That(adr.Address, Is.EqualTo(IPAddress.Any));
             Assert.That(adr.Port, Is.EqualTo(55542));
+
+            adr = NetworkHelper.ResolveHostName(":55543");
+            Assert.That(adr.AddressFamily, Is.EqualTo(AddressFamily.InterNetwork));
+            Assert.That(adr.Address, Is.EqualTo(IPAddress.Any));
+            Assert.That(adr.Port, Is.EqualTo(55543));
         }
 
         [Test]
