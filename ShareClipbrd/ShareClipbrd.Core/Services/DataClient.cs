@@ -212,7 +212,7 @@ namespace ShareClipbrd.Core.Services {
             await semaphore.WaitAsync();
             try {
                 client.Close();
-                if(string.IsNullOrEmpty(systemConfiguration.PartnerAddress) && string.IsNullOrEmpty(hostId)) {
+                if(string.IsNullOrEmpty(partnerId) && string.IsNullOrEmpty(hostId)) {
                     return;
                 }
                 client = new();
