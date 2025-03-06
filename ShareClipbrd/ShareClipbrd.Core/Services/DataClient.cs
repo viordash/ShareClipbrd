@@ -213,9 +213,6 @@ namespace ShareClipbrd.Core.Services {
             await semaphore.WaitAsync();
             try {
                 client.Close();
-                if(string.IsNullOrEmpty(partnerId) && string.IsNullOrEmpty(hostId)) {
-                    return;
-                }
                 client = new();
 
                 using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
