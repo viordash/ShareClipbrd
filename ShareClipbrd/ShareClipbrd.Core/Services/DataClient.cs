@@ -183,7 +183,8 @@ namespace ShareClipbrd.Core.Services {
             IPEndPoint ipEndPoint;
             var partnerId = string.Empty;
             var hostId = string.Empty;
-            if(AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out partnerId, out var mandatoryPort)
+            bool useHostAddressOrDefaulId = string.IsNullOrEmpty(systemConfiguration.PartnerAddress);
+            if((!useHostAddressOrDefaulId && AddressResolver.UseAddressDiscoveryService(systemConfiguration.PartnerAddress, out partnerId, out var mandatoryPort))
                     || AddressResolver.UseAddressDiscoveryService(systemConfiguration.HostAddress, out hostId, out mandatoryPort)) {
                 if(string.IsNullOrEmpty(partnerId) && string.IsNullOrEmpty(hostId)) {
                     return;
