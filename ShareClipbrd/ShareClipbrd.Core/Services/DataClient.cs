@@ -249,7 +249,6 @@ namespace ShareClipbrd.Core.Services {
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
-                Debug.WriteLine($"Ping canceled");
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
