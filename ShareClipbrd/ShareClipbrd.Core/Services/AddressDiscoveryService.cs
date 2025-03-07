@@ -62,7 +62,7 @@ namespace ShareClipbrd.Core.Services {
                         var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>()
                             .FirstOrDefault();
                         var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
-                            .Select(x => x.Address.MapToIPv6())
+                            .Select(x => x.Address)
                             .Except(badIpAdresses)
                             .FirstOrDefault();
 
