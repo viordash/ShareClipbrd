@@ -9,10 +9,10 @@
       <Value Profile="(Default)">100, 100</Value>
     </Setting>
     <Setting Name="HostAddress0" Type="System.String" Scope="User">
-      <Value Profile="(Default)">127.0.0.1:8090</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="PartnerAddress0" Type="System.String" Scope="User">
-      <Value Profile="(Default)">127.0.0.1:8091</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="HostAddress1" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

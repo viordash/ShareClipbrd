@@ -49,7 +49,7 @@ namespace ShareClipbrdApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1:8090")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string HostAddress0 {
             get {
                 return ((string)(this["HostAddress0"]));
@@ -61,7 +61,7 @@ namespace ShareClipbrdApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1:8091")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string PartnerAddress0 {
             get {
                 return ((string)(this["PartnerAddress0"]));
