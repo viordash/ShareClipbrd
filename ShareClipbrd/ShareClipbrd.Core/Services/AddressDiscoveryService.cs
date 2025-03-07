@@ -14,8 +14,37 @@ namespace ShareClipbrd.Core.Services {
         const string serviceName = "_shareclipbrd28CBA1._tcp";
         protected const string selfIdPropertyName = "selfId";
         protected readonly string selfIdProperty = Guid.NewGuid().ToString();
+        readonly MulticastService mdns;
 
-        public AddressDiscoveryService() { }
+        public AddressDiscoveryService() {
+            mdns = new();
+
+            foreach(var a in MulticastService.GetIPAddresses()) {
+                Debug.WriteLine($"------- IP address {a}");
+            }
+
+            mdns.QueryReceived += (s, e) => {
+                var names = e.Message.Questions
+                    .Select(q => q.Name + " " + q.Type);
+                Debug.WriteLine($"------- got a query for {String.Join(", ", names)}");
+            };
+            mdns.AnswerReceived += (s, e) => {
+                var names = e.Message.Answers
+                    .Select(q => q.Name + " " + q.Type)
+                    .Distinct();
+                Debug.WriteLine($"------- got answer for {String.Join(", ", names)}");
+            };
+            mdns.NetworkInterfaceDiscovered += (s, e) => {
+                foreach(var nic in e.NetworkInterfaces) {
+                    Debug.WriteLine($"------- discovered NIC '{nic.Name}'");
+                }
+            };
+
+
+            mdns.Start();
+
+
+        }
 
         static string HashId(string id) {
             var bytes = Encoding.ASCII.GetBytes(id);
@@ -28,9 +57,9 @@ namespace ShareClipbrd.Core.Services {
             var hashId = HashId(id);
             var service = new ServiceProfile(hashId, serviceName, (ushort)port);
             Debug.WriteLine($"Advertise id:{id}, port:{port}, service:{service.FullyQualifiedName}");
-            var sd = new ServiceDiscovery();
             service.AddProperty(selfIdPropertyName, selfIdProperty);
 
+            var sd = new ServiceDiscovery(mdns);
             sd.Advertise(service);
         }
 
@@ -54,7 +83,7 @@ namespace ShareClipbrd.Core.Services {
                 Debug.WriteLine($"Discover timeout");
                 tcs.TrySetCanceled();
             })) {
-                using var sd = new ServiceDiscovery();
+                using var sd = new ServiceDiscovery(mdns);
                 sd.ServiceInstanceDiscovered += (s, e) => {
                     Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
 
