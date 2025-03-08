@@ -1,4 +1,5 @@
 ﻿using Makaretu.Dns;
+using ShareClipbrd.Core.Helpers;
 using System.Diagnostics;
 using System.IO.Hashing;
 using System.Net;
@@ -71,7 +72,7 @@ namespace ShareClipbrd.Core.Services {
                             .FirstOrDefault();
                         var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
                             .Select(x => x.Address)
-                            .Except(badIpAdresses)
+                            .Except(badIpAdresses, new IPAddressEqualityComparer())
                             .FirstOrDefault();
 
                         var externalRecord = HasExternalSign(e.Message.AdditionalRecords.OfType<Makaretu.Dns.TXTRecord>());

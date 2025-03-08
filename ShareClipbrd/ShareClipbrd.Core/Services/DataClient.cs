@@ -31,7 +31,7 @@ namespace ShareClipbrd.Core.Services {
         TcpClient client;
         CancellationTokenSource cts;
         readonly SemaphoreSlim semaphore = new(1);
-        readonly HashSet<IPAddress> badIpAdresses = new();
+        readonly HashSet<IPAddress> badIpAdresses = new(new IPAddressEqualityComparer());
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
