@@ -14,8 +14,16 @@ namespace ShareClipbrd.Core.Services {
         const string serviceName = "_shareclipbrd28CBA1._tcp";
         protected const string selfIdPropertyName = "selfId";
         protected readonly string selfIdProperty = Guid.NewGuid().ToString();
+        readonly Lazy<MulticastService> mdns;
 
-        public AddressDiscoveryService() { }
+        public AddressDiscoveryService() {
+            var sessionDir =
+            mdns = new Lazy<MulticastService>(() => {
+                var m = new MulticastService();
+                m.Start();
+                return m;
+            });
+        }
 
         static string HashId(string id) {
             var bytes = Encoding.ASCII.GetBytes(id);
@@ -28,7 +36,7 @@ namespace ShareClipbrd.Core.Services {
             var hashId = HashId(id);
             var service = new ServiceProfile(hashId, serviceName, (ushort)port);
             Debug.WriteLine($"Advertise id:{id}, port:{port}, service:{service.FullyQualifiedName}");
-            var sd = new ServiceDiscovery();
+            var sd = new ServiceDiscovery(mdns.Value);
             service.AddProperty(selfIdPropertyName, selfIdProperty);
 
             sd.Advertise(service);
@@ -54,7 +62,7 @@ namespace ShareClipbrd.Core.Services {
                 Debug.WriteLine($"Discover timeout");
                 tcs.TrySetCanceled();
             })) {
-                using var sd = new ServiceDiscovery();
+                using var sd = new ServiceDiscovery(mdns.Value);
                 sd.ServiceInstanceDiscovered += (s, e) => {
                     Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
 
@@ -62,7 +70,7 @@ namespace ShareClipbrd.Core.Services {
                         var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>()
                             .FirstOrDefault();
                         var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
-                            .Select(x => x.Address.MapToIPv6())
+                            .Select(x => x.Address)
                             .Except(badIpAdresses)
                             .FirstOrDefault();
 

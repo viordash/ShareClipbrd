@@ -203,7 +203,6 @@ namespace ShareClipbrd.Core.Services {
                     ipEndPoint = await addressDiscoveryService.Discover(id, badIpAdresses.ToList());
                 } catch(OperationCanceledException) {
                     badIpAdresses.Clear();
-                    Debug.WriteLine($"badIpAdresses cleared");
                     throw;
                 }
             } else {
@@ -217,7 +216,7 @@ namespace ShareClipbrd.Core.Services {
 
                 using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
                 using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
-                badIpAdresses.Add(ipEndPoint.Address.MapToIPv6());
+                badIpAdresses.Add(ipEndPoint.Address);
                 await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
             } finally {
                 semaphore.Release();
@@ -249,7 +248,6 @@ namespace ShareClipbrd.Core.Services {
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
-                Debug.WriteLine($"Ping canceled");
             } catch(Exception) {
             }
             pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
@@ -276,7 +274,7 @@ namespace ShareClipbrd.Core.Services {
 
         void MarkAsGoodAddress() {
             if(client.Client?.RemoteEndPoint is IPEndPoint iPEndPoint) {
-                badIpAdresses.Remove(iPEndPoint.Address.MapToIPv6());
+                badIpAdresses.Remove(iPEndPoint.Address);
                 Debug.WriteLine($"MarkAsGoodAddress IpAdress:{iPEndPoint.Address}");
             }
         }
