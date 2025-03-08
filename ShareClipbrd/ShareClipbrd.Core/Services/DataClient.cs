@@ -20,7 +20,6 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataClient : IDataClient {
-        public const string OnFlyPrefix = "on-fly";
         readonly ISystemConfiguration systemConfiguration;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
