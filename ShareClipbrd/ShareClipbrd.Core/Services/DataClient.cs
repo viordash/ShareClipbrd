@@ -169,7 +169,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(OperationCanceledException) {
                 client.Close();
             } finally {
-                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+                pingTimer.Enabled = true;
             }
         }
 
@@ -250,7 +250,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(OperationCanceledException) {
             } catch(Exception) {
             }
-            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+            pingTimer.Enabled = true;
             if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
                 pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
             }
