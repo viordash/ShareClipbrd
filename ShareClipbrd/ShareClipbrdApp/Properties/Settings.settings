@@ -9,7 +9,7 @@
       <Value Profile="(Default)">100, 100</Value>
     </Setting>
     <Setting Name="HostAddress0" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">mdns::61001</Value>
     </Setting>
     <Setting Name="PartnerAddress0" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
