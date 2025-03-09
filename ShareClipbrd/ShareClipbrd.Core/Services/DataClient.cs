@@ -73,7 +73,9 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task SendFileDropList(StringCollection fileDropList) {
             cts.Cancel();
-            cts = new();
+            if(!cts.TryReset()) {
+                cts = new();
+            }
             var cancellationToken = cts.Token;
             try {
                 await Connect(cancellationToken);
@@ -115,7 +117,9 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task SendData(ClipboardData clipboardData) {
             cts.Cancel();
-            cts = new();
+            if(!cts.TryReset()) {
+                cts = new();
+            }
             var cancellationToken = cts.Token;
             try {
                 await Connect(cancellationToken);
@@ -266,7 +270,9 @@ namespace ShareClipbrd.Core.Services {
         public void Stop() {
             pingTimer.Enabled = false;
             cts.Cancel();
-            cts = new();
+            if(!cts.TryReset()) {
+                cts = new();
+            }
             client.Close();
             badIpAdresses.Clear();
         }
