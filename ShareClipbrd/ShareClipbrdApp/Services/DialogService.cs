@@ -41,10 +41,6 @@ namespace ShareClipbrdApp.Services {
                         Topmost = true,
                         SystemDecorations = SystemDecorations.Full
                     });
-                if(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                        && desktop.MainWindow != null) {
-                    return await msgbox.ShowWindowDialogAsync(desktop.MainWindow);
-                }
                 return await msgbox.ShowWindowAsync();
             }));
         }
