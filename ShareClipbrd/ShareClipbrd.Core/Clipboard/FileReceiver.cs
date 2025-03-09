@@ -1,10 +1,8 @@
-﻿using System.Buffers;
-using System.Collections.Specialized;
-using System.IO;
+﻿using ShareClipbrd.Core.Extensions;
+using ShareClipbrd.Core.Services;
+using System.Buffers;
 using System.Net.Sockets;
 using System.Text;
-using ShareClipbrd.Core.Extensions;
-using ShareClipbrd.Core.Services;
 
 namespace ShareClipbrd.Core.Clipboard {
     public class FileReceiver {
@@ -36,7 +34,7 @@ namespace ShareClipbrd.Core.Clipboard {
 
             var nameBuffer = ArrayPool<byte>.Shared.Rent(nameLength);
             try {
-                var receivedBytes = await networkStream.ReadAsync(nameBuffer, 0, nameLength, cancellationToken);
+                var receivedBytes = await networkStream.ReadNotEmptyAsync(nameBuffer, 0, nameLength, cancellationToken);
                 var name = Encoding.UTF8.GetString(nameBuffer, 0, receivedBytes);
                 ValidateName(name);
 
@@ -63,7 +61,7 @@ namespace ShareClipbrd.Core.Clipboard {
                             progressService.SetMaxMinorTick(dataLength);
                             while(fileStream.Length < dataLength) {
                                 var readCount = Math.Min(dataLength - fileStream.Length, (Int64)CommunProtocol.ChunkSize);
-                                int readed = await networkStream.ReadAsync(buffer, 0, (int)readCount, cancellationToken).ConfigureAwait(false);
+                                int readed = await networkStream.ReadNotEmptyAsync(buffer, 0, (int)readCount, cancellationToken).ConfigureAwait(false);
                                 await fileStream.WriteAsync(buffer, 0, readed, cancellationToken).ConfigureAwait(false);
                                 progressService.MinorTick(readed);
                             }

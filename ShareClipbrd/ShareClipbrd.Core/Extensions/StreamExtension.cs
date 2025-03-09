@@ -37,9 +37,24 @@ namespace ShareClipbrd.Core.Extensions {
         }
         public static async ValueTask<string> ReadUTF8StringAsync(this Stream stream, CancellationToken cancellationToken) {
             var receiveBuffer = new byte[65536];
-            var receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+            var receivedBytes = await stream.ReadNotEmptyAsync(receiveBuffer, cancellationToken);
             return Encoding.UTF8.GetString(receiveBuffer, 0, receivedBytes);
         }
 
+        public static async Task<int> ReadNotEmptyAsync(this Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellationToken) {
+            var receivedBytes = await stream.ReadAsync(buffer, offset, count, cancellationToken);
+            if(receivedBytes == 0) {
+                throw new OperationCanceledException("empty read");
+            }
+            return receivedBytes;
+        }
+
+        public static async ValueTask<int> ReadNotEmptyAsync(this Stream stream, Memory<byte> buffer, CancellationToken cancellationToken) {
+            var receivedBytes = await stream.ReadAsync(buffer, cancellationToken);
+            if(receivedBytes == 0) {
+                throw new OperationCanceledException("empty read");
+            }
+            return receivedBytes;
+        }
     }
 }

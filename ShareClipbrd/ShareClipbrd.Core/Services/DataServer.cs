@@ -58,7 +58,7 @@ namespace ShareClipbrd.Core.Services {
             byte[] receiveBuffer = ArrayPool<byte>.Shared.Rent(CommunProtocol.ChunkSize);
             try {
                 while(memoryStream.Length < dataSize) {
-                    int receivedBytes = await stream.ReadAsync(receiveBuffer, cancellationToken);
+                    int receivedBytes = await stream.ReadNotEmptyAsync(receiveBuffer, cancellationToken);
                     if(receivedBytes == 0) {
                         break;
                     }

@@ -59,7 +59,7 @@ namespace ShareClipbrd.Core.Clipboard {
                         Int64 dataLength = 0;
                         while(dataLength < fileStream.Length) {
                             var sendCount = Math.Min(fileStream.Length - dataLength, (Int64)CommunProtocol.ChunkSize);
-                            int sended = await fileStream.ReadAsync(buffer, 0, (int)sendCount, cancellationToken).ConfigureAwait(false);
+                            int sended = await fileStream.ReadNotEmptyAsync(buffer, 0, (int)sendCount, cancellationToken).ConfigureAwait(false);
                             await networkStream.WriteAsync(buffer, 0, sended, cancellationToken).ConfigureAwait(false);
                             progressService.MinorTick(sended);
                             dataLength += sended;
