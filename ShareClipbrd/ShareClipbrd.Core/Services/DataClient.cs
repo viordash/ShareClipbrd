@@ -93,7 +93,7 @@ namespace ShareClipbrd.Core.Services {
             } catch(OperationCanceledException) {
                 client.Close();
             } finally {
-                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+                pingTimer.Enabled = true;
             }
         }
 
