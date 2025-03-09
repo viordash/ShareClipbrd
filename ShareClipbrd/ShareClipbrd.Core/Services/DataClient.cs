@@ -20,7 +20,6 @@ namespace ShareClipbrd.Core.Services {
     }
 
     public class DataClient : IDataClient {
-        public const string OnFlyPrefix = "on-fly";
         readonly ISystemConfiguration systemConfiguration;
         readonly IProgressService progressService;
         readonly IConnectStatusService connectStatusService;
@@ -31,7 +30,7 @@ namespace ShareClipbrd.Core.Services {
         TcpClient client;
         CancellationTokenSource cts;
         readonly SemaphoreSlim semaphore = new(1);
-        readonly HashSet<IPAddress> badIpAdresses = new();
+        readonly HashSet<IPAddress> badIpAdresses = new(new IPAddressEqualityComparer());
 
         public DataClient(
             ISystemConfiguration systemConfiguration,
@@ -73,10 +72,13 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            pingTimer.Enabled = false;
             cts.Cancel();
-            cts = new();
-            var cancellationToken = cts.Token;
+            await semaphore.WaitAsync();
             try {
+                cts = new();
+                var cancellationToken = cts.Token;
+
                 await Connect(cancellationToken);
                 if(!IsSocketConnected(client.Client)) {
                     return;
@@ -94,7 +96,8 @@ namespace ShareClipbrd.Core.Services {
             } catch(OperationCanceledException) {
                 client.Close();
             } finally {
-                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+                pingTimer.Enabled = true;
+                semaphore.Release();
             }
         }
 
@@ -115,11 +118,14 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            pingTimer.Enabled = false;
             cts.Cancel();
-            cts = new();
-            var cancellationToken = cts.Token;
+            await semaphore.WaitAsync();
             try {
+                cts = new();
+                var cancellationToken = cts.Token;
                 await Connect(cancellationToken);
+
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
@@ -169,12 +175,12 @@ namespace ShareClipbrd.Core.Services {
             } catch(OperationCanceledException) {
                 client.Close();
             } finally {
-                pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
+                pingTimer.Enabled = true;
+                semaphore.Release();
             }
         }
 
         async Task Connect(CancellationToken cancellationToken) {
-            pingTimer.Enabled = false;
             var connected = IsSocketConnected(client.Client);
             if(connected) {
                 return;
@@ -209,18 +215,14 @@ namespace ShareClipbrd.Core.Services {
                 ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             }
 
-            await semaphore.WaitAsync();
-            try {
-                client.Close();
-                client = new();
 
-                using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
-                using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
-                badIpAdresses.Add(ipEndPoint.Address);
-                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
-            } finally {
-                semaphore.Release();
-            }
+            client.Close();
+            client = new();
+
+            using var timed_cts = new CancellationTokenSource(timeService.DataClientTimeout);
+            using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
+            badIpAdresses.Add(ipEndPoint.Address);
+            await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
         }
 
         static bool IsSocketConnected(Socket s) {
@@ -235,8 +237,10 @@ namespace ShareClipbrd.Core.Services {
         }
 
         async Task Ping() {
-            var cancellationToken = cts.Token;
+            pingTimer.Enabled = false;
+            await semaphore.WaitAsync();
             try {
+                var cancellationToken = cts.Token;
                 await Connect(cancellationToken);
                 if(!IsSocketConnected(client.Client)) {
                     return;
@@ -249,10 +253,12 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
             } catch(Exception) {
-            }
-            pingTimer.Enabled = !cancellationToken.IsCancellationRequested;
-            if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
-                pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
+            } finally {
+                pingTimer.Enabled = true;
+                if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
+                    pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
+                }
+                semaphore.Release();
             }
         }
 
@@ -267,7 +273,9 @@ namespace ShareClipbrd.Core.Services {
         public void Stop() {
             pingTimer.Enabled = false;
             cts.Cancel();
-            cts = new();
+            if(!cts.TryReset()) {
+                cts = new();
+            }
             client.Close();
             badIpAdresses.Clear();
         }

@@ -33,11 +33,5 @@ namespace ShareClipbrdApp.Configuration {
                 return Math.Clamp(Settings.Default.SettingsProfile, 0, 2);
             }
         }
-
-        public TimeSpan ClientTimeout {
-            get {
-                return Settings.Default.ClientTimeout;
-            }
-        }
     }
 }

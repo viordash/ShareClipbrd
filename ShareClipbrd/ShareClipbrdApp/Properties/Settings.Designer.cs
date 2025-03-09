@@ -130,17 +130,5 @@ namespace ShareClipbrdApp.Properties {
                 this["SettingsProfile"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("00:00:05")]
-        public global::System.TimeSpan ClientTimeout {
-            get {
-                return ((global::System.TimeSpan)(this["ClientTimeout"]));
-            }
-            set {
-                this["ClientTimeout"] = value;
-            }
-        }
     }
 }

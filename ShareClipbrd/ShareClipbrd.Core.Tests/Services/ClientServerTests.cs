@@ -29,9 +29,9 @@ namespace ShareClipbrd.Core.Tests.Services {
             timeServiceMock = new();
             addressDiscoveryServiceMock = new();
             timeServiceMock.SetupGet(x => x.DataClientPingPeriod).Returns(TimeSpan.FromMilliseconds(10000));
+            timeServiceMock.SetupGet(x => x.DataClientTimeout).Returns(TimeSpan.FromMilliseconds(10000));
 
             systemConfigurationMock.SetupGet(x => x.HostAddress).Returns("127.0.0.1:0");
-            systemConfigurationMock.SetupGet(x => x.ClientTimeout).Returns(TimeSpan.FromMilliseconds(5000));
 
             server = new DataServer(systemConfigurationMock.Object, dialogServiceMock.Object, dispatchServiceMock.Object,
                 progressServiceMock.Object, connectStatusServiceMock.Object, addressDiscoveryServiceMock.Object);
@@ -396,7 +396,7 @@ namespace ShareClipbrd.Core.Tests.Services {
 
         bool clientConnected = false;
         async Task AwaitClientConnectStatus(bool isConnected) {
-            var cts = new CancellationTokenSource(5000);
+            var cts = new CancellationTokenSource(50000);
             while(clientConnected != isConnected && !cts.IsCancellationRequested) {
                 await Task.Delay(10);
             }

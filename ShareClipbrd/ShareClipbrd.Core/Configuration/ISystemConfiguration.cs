@@ -4,6 +4,5 @@ namespace ShareClipbrd.Core.Configuration {
         string HostAddress { get; }
         string PartnerAddress { get; }
         int SettingsProfile { get; }
-        TimeSpan ClientTimeout { get; }
     }
 }

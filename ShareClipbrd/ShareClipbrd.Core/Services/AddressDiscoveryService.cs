@@ -1,4 +1,5 @@
 ﻿using Makaretu.Dns;
+using ShareClipbrd.Core.Helpers;
 using System.Diagnostics;
 using System.IO.Hashing;
 using System.Net;
@@ -54,7 +55,7 @@ namespace ShareClipbrd.Core.Services {
 
         public async Task<IPEndPoint> Discover(string id, List<IPAddress> badIpAdresses) {
             var hashId = HashId(id);
-            Debug.WriteLine($"Discover id:{id} ({hashId})");
+            Debug.WriteLine($"[{Environment.CurrentManagedThreadId}] Discover id:{id} ({hashId})");
             var tcs = new TaskCompletionSource<IPEndPoint>();
 
             using var timed_cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(5000));
@@ -64,31 +65,31 @@ namespace ShareClipbrd.Core.Services {
             })) {
                 using var sd = new ServiceDiscovery(mdns.Value);
                 sd.ServiceInstanceDiscovered += (s, e) => {
-                    Debug.WriteLine($"ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
+                    Debug.WriteLine($"[{Environment.CurrentManagedThreadId}] ServiceInstanceDiscovered {s} {e.ServiceInstanceName.Labels.FirstOrDefault()}, badIpAdresses:[{string.Join(", ", badIpAdresses)}]");
 
                     if(e.ServiceInstanceName.Labels.FirstOrDefault() == hashId) {
                         var srvRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.SRVRecord>()
                             .FirstOrDefault();
                         var aRecord = e.Message.AdditionalRecords.OfType<Makaretu.Dns.ARecord>()
                             .Select(x => x.Address)
-                            .Except(badIpAdresses)
+                            .Except(badIpAdresses, new IPAddressEqualityComparer())
                             .FirstOrDefault();
 
                         var externalRecord = HasExternalSign(e.Message.AdditionalRecords.OfType<Makaretu.Dns.TXTRecord>());
 
                         if(srvRecord != null && aRecord != null && externalRecord) {
                             var ipEndPoint = new IPEndPoint(aRecord, srvRecord.Port);
-                            Debug.WriteLine($"Discover client: {ipEndPoint}");
+                            Debug.WriteLine($"[{Environment.CurrentManagedThreadId}] Discover client: {ipEndPoint}");
                             tcs.TrySetResult(ipEndPoint);
                         } else {
-                            Debug.WriteLine($"Discover wrong client, ext:{externalRecord}, srv:'{srvRecord}', a:'{aRecord}'");
+                            Debug.WriteLine($"[{Environment.CurrentManagedThreadId}] Discover wrong client, ext:{externalRecord}, srv:'{srvRecord}', a:'{aRecord}'");
                         }
                     }
                 };
                 sd.QueryUnicastServiceInstances(serviceName);
 
                 var res = await tcs.Task;
-                Debug.WriteLine($"Discover return res: {res}");
+                Debug.WriteLine($"[{Environment.CurrentManagedThreadId}] Discover return res: {res}");
                 return res;
             }
         }
