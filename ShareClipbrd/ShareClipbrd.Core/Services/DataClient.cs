@@ -72,12 +72,13 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendFileDropList(StringCollection fileDropList) {
+            pingTimer.Enabled = false;
             cts.Cancel();
-            if(!cts.TryReset()) {
-                cts = new();
-            }
-            var cancellationToken = cts.Token;
+            await semaphore.WaitAsync();
             try {
+                cts = new();
+                var cancellationToken = cts.Token;
+
                 await Connect(cancellationToken);
                 if(!IsSocketConnected(client.Client)) {
                     return;
@@ -96,6 +97,7 @@ namespace ShareClipbrd.Core.Services {
                 client.Close();
             } finally {
                 pingTimer.Enabled = true;
+                semaphore.Release();
             }
         }
 
@@ -116,13 +118,14 @@ namespace ShareClipbrd.Core.Services {
         }
 
         public async Task SendData(ClipboardData clipboardData) {
+            pingTimer.Enabled = false;
             cts.Cancel();
-            if(!cts.TryReset()) {
-                cts = new();
-            }
-            var cancellationToken = cts.Token;
+            await semaphore.WaitAsync();
             try {
+                cts = new();
+                var cancellationToken = cts.Token;
                 await Connect(cancellationToken);
+
                 if(!IsSocketConnected(client.Client)) {
                     return;
                 }
@@ -173,11 +176,11 @@ namespace ShareClipbrd.Core.Services {
                 client.Close();
             } finally {
                 pingTimer.Enabled = true;
+                semaphore.Release();
             }
         }
 
         async Task Connect(CancellationToken cancellationToken) {
-            pingTimer.Enabled = false;
             var connected = IsSocketConnected(client.Client);
             if(connected) {
                 return;
@@ -212,18 +215,14 @@ namespace ShareClipbrd.Core.Services {
                 ipEndPoint = NetworkHelper.ResolveHostName(systemConfiguration.PartnerAddress);
             }
 
-            await semaphore.WaitAsync();
-            try {
-                client.Close();
-                client = new();
 
-                using var timed_cts = new CancellationTokenSource(timeService.DataClientTimeout);
-                using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
-                badIpAdresses.Add(ipEndPoint.Address);
-                await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
-            } finally {
-                semaphore.Release();
-            }
+            client.Close();
+            client = new();
+
+            using var timed_cts = new CancellationTokenSource(timeService.DataClientTimeout);
+            using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
+            badIpAdresses.Add(ipEndPoint.Address);
+            await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
         }
 
         static bool IsSocketConnected(Socket s) {
@@ -238,8 +237,10 @@ namespace ShareClipbrd.Core.Services {
         }
 
         async Task Ping() {
-            var cancellationToken = cts.Token;
+            pingTimer.Enabled = false;
+            await semaphore.WaitAsync();
             try {
+                var cancellationToken = cts.Token;
                 await Connect(cancellationToken);
                 if(!IsSocketConnected(client.Client)) {
                     return;
@@ -252,10 +253,12 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
             } catch(Exception) {
-            }
-            pingTimer.Enabled = true;
-            if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
-                pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
+            } finally {
+                pingTimer.Enabled = true;
+                if(pingTimer.Interval != timeService.DataClientPingPeriod.TotalMilliseconds) {
+                    pingTimer.Interval = timeService.DataClientPingPeriod.TotalMilliseconds;
+                }
+                semaphore.Release();
             }
         }
 
