@@ -217,7 +217,7 @@ namespace ShareClipbrd.Core.Services {
                 client.Close();
                 client = new();
 
-                using var timed_cts = new CancellationTokenSource(systemConfiguration.ClientTimeout);
+                using var timed_cts = new CancellationTokenSource(timeService.DataClientTimeout);
                 using var ccts = CancellationTokenSource.CreateLinkedTokenSource(timed_cts.Token, cancellationToken);
                 badIpAdresses.Add(ipEndPoint.Address);
                 await client.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port, ccts.Token);
