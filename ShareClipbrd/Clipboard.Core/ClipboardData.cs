@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Clipboard.Core.Helpers;
 
 namespace Clipboard.Core {
     public class ClipboardData {
@@ -288,7 +289,7 @@ namespace Clipboard.Core {
 
                     if(OperatingSystem.IsLinux()) {
                         return stream switch {
-                            MemoryStream memoryStream => memoryStream.ToArray(),
+                            MemoryStream memoryStream => WindowsHtmlFormatHelper.ExtractHtmlFragment(memoryStream.ToArray()),
                             _ => throw new ArgumentException(nameof(stream))
                         };
                     }
