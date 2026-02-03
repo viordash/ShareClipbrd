@@ -45,14 +45,14 @@
         </ComboBox>
 
         <MenuItem Header="Host address">
-          <MenuItem>
+          <MenuItem StaysOpenOnClick="True" PropertyChanged="muHostAddress_PropertyChanged">
             <MenuItem.Header>
               <TextBox x:Name="edHostAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edHostAddress_PropertyChanged" />
             </MenuItem.Header>
           </MenuItem>
         </MenuItem>
         <MenuItem Header="Partner address" >
-          <MenuItem>
+          <MenuItem StaysOpenOnClick="True" PropertyChanged="muPartnerAddress_PropertyChanged">
             <MenuItem.Header>
               <TextBox x:Name="edPartnerAddress" Width="250" Margin="0,0,-10,0" PropertyChanged="edPartnerAddress_PropertyChanged"/>
             </MenuItem.Header>

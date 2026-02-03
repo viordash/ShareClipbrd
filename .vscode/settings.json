@@ -1,3 +1,9 @@
 {
-    "dotnet.defaultSolution": "ShareClipbrd/ShareClipbrd.sln"
+    "dotnet.defaultSolution": "ShareClipbrd/ShareClipbrd.sln",
+    "tabMagnet.rules": [
+        {
+            "left": "$(name).axaml.cs",
+            "right": "$(name).axaml"
+        }
+    ]
 }

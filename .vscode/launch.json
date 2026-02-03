@@ -5,15 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": ".NET Core Launch",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/ShareClipbrd/ShareClipbrdApp/bin/Debug/net8.0-windows/ShareClipbrdApp.dll",
+            "program": "${workspaceFolder}/ShareClipbrd/ShareClipbrdApp/bin/Debug/net10.0/ShareClipbrdApp.dll",
             "args": [],
             "cwd": "${workspaceFolder}/ShareClipbrd/ShareClipbrdApp",
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "justMyCode": false,
         },
         {
             "name": ".NET Core Attach",

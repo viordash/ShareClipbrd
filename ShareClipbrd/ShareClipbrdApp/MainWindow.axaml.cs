@@ -107,6 +107,13 @@ namespace ShareClipbrdApp {
             Opacity = 0.6;
         }
 
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+            base.OnPropertyChanged(change);
+            if(change.Property == WindowStateProperty && change.NewValue is WindowState newState) {
+                ShowInTaskbar = newState == WindowState.Minimized;
+            }
+        }
+
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
             if(e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
                 originalPoint = e.GetCurrentPoint(this);
@@ -154,6 +161,13 @@ namespace ShareClipbrdApp {
             }
         }
 
+        private void muHostAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.IsFocusedProperty) {
+                edHostAddress.Focus();
+                return;
+            }
+        }
+
         private void edPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
                 switch(systemConfiguration!.SettingsProfile) {
@@ -167,6 +181,13 @@ namespace ShareClipbrdApp {
                         Settings.Default.PartnerAddress2 = edPartnerAddress.Text;
                         break;
                 }
+            }
+        }
+
+        private void muPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.IsFocusedProperty) {
+                edPartnerAddress.Focus();
+                return;
             }
         }
 

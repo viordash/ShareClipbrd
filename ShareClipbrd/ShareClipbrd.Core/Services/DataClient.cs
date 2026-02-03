@@ -91,6 +91,8 @@ namespace ShareClipbrd.Core.Services {
                 await dialogService.ShowError(ex);
             } catch(IOException ex) {
                 await dialogService.ShowError(ex);
+            } catch(UnauthorizedAccessException ex) {
+                await dialogService.ShowError(ex);
             } catch(ArgumentException ex) {
                 await dialogService.ShowError(ex);
             } catch(OperationCanceledException) {
