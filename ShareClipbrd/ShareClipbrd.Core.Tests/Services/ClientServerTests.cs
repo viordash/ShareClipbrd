@@ -221,7 +221,7 @@ namespace ShareClipbrd.Core.Tests.Services {
                 Assert.That(fs.Length, Is.EqualTo(4096L * 1024 * 1024 + 1));
 
                 var otherBytes = new byte[1_000_003];
-                fs.Read(otherBytes);
+                fs.ReadExactly(otherBytes);
                 Assert.That(otherBytes, Is.EquivalentTo(bytes));
             }
             File.Delete(otherFilename);
