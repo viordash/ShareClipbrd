@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using Clipboard.Core;
 using Moq;
 using ShareClipbrd.Core.Configuration;
@@ -438,5 +439,35 @@ namespace ShareClipbrd.Core.Tests.Services {
             await server.Stop();
             client.Stop();
         }
+
+        [Test]
+        [Platform("Linux")]
+        [SupportedOSPlatform("linux")]
+        public async Task SendFileDropList_UnauthorizedAccessException_ShowsError() {
+            var testsPath = Path.Combine(Path.GetTempPath(), "tests_unauthorized");
+            Directory.CreateDirectory(testsPath);
+            var filename = Path.Combine(testsPath, "no_access.bin");
+            File.WriteAllBytes(filename, [1, 2, 3]);
+            File.SetUnixFileMode(filename, UnixFileMode.None);
+
+            var files = new StringCollection { filename };
+
+            var port = await server.Start();
+            systemConfigurationMock.SetupGet(x => x.PartnerAddress).Returns($"127.0.0.1:{port}");
+
+            try {
+                await client.SendFileDropList(files);
+
+                dialogServiceMock.Verify(
+                    x => x.ShowError(It.Is<UnauthorizedAccessException>(ex => ex != null)),
+                    Times.Once);
+            } finally {
+                File.SetUnixFileMode(filename, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+                Directory.Delete(testsPath, true);
+                await server.Stop();
+                client.Stop();
+            }
+        }
+
     }
 }
