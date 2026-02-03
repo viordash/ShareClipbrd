@@ -154,6 +154,13 @@ namespace ShareClipbrdApp {
             }
         }
 
+        private void muHostAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.IsFocusedProperty) {
+                edHostAddress.Focus();
+                return;
+            }
+        }
+
         private void edPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
             if(e.Property == TextBox.TextProperty) {
                 switch(systemConfiguration!.SettingsProfile) {
@@ -167,6 +174,13 @@ namespace ShareClipbrdApp {
                         Settings.Default.PartnerAddress2 = edPartnerAddress.Text;
                         break;
                 }
+            }
+        }
+
+        private void muPartnerAddress_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+            if(e.Property == TextBox.IsFocusedProperty) {
+                edPartnerAddress.Focus();
+                return;
             }
         }
 
