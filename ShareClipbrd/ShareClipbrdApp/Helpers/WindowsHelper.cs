@@ -8,20 +8,10 @@ namespace ShareClipbrdApp.Helpers {
             if(point.IsEmpty) {
                 return;
             }
-            if(point.X + window.Width < 0) {
-                return;
-            }
-            if(point.Y + window.Height < 0) {
-                return;
-            }
+            var pixelPoint = new PixelPoint(point.X, point.Y);
 
-            var screensMaxWidth = window.Screens.All.Select(x => x.Bounds.X + x.Bounds.Width).Max();
-            if(point.X + window.Width / 2 > screensMaxWidth) {
-                return;
-            }
-
-            var screensMaxHeight = window.Screens.All.Select(y => y.Bounds.Y + y.Bounds.Height).Max();
-            if(point.Y + window.Height / 2 > screensMaxHeight) {
+            var fitToAnyScreen = window.Screens.All.Any(x => x.Bounds.Contains(pixelPoint));
+            if(!fitToAnyScreen) {
                 return;
             }
             window.Position = new PixelPoint(point.X, point.Y);
