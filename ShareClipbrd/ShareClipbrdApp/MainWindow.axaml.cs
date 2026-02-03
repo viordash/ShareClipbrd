@@ -107,6 +107,13 @@ namespace ShareClipbrdApp {
             Opacity = 0.6;
         }
 
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+            base.OnPropertyChanged(change);
+            if(change.Property == WindowStateProperty && change.NewValue is WindowState newState) {
+                ShowInTaskbar = newState == WindowState.Minimized;
+            }
+        }
+
         void OnPointerPressedEvent(object? sender, PointerPressedEventArgs e) {
             if(e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) {
                 originalPoint = e.GetCurrentPoint(this);
